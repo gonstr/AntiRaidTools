@@ -49,7 +49,7 @@ end
 
 local function validateType(import)
     if import.type ~= "RAID_CDS" then
-        return false, "Import has an unknown type: " .. stringSafe(import.type) .. ". Supported types are `RAID_CDS`."
+        return false, "Import has an unknown type: " .. stringSafe(import.type) .. ". Supported values are `RAID_CDS`."
     end
 
     return true
@@ -65,12 +65,12 @@ end
 
 local function validateRaidCDs(import, spells)
     if import.type == "RAID_CDS" then
-        if not import.raid_cds then
-            return false, "Import with type RAID_CDS is missing a raid_cds field."
+        if not import.assignments then
+            return false, "Import with type RAID_CDS is missing a assignments field."
         end
 
-        if type(import.raid_cds) ~= "table" then
-            return false, "Import has an invalid raid_cds value: " .. stringSafe(import.raid_cds) .. "."
+        if type(import.assignments) ~= "table" then
+            return false, "Import has an invalid assignments value: " .. stringSafe(import.assignments) .. "."
         end
 
         if not import.trigger then
@@ -85,27 +85,35 @@ local function validateRaidCDs(import, spells)
             return false, "Import has an invalid spell_id value: " .. stringSafe(import.spell_id) .. "."
         end
 
-        for _, raid_cds_group in pairs(import.raid_cds) do
-            if type(raid_cds_group) ~= "table" then
-                return false, "Import has an invalid raid_cds value: " .. stringSafe(raid_cds_group) .. "."
+        if not import.strategy then
+            return false, "Import with type RAID_CDS is missing a strategy field."
+        end
+
+        if import.strategy ~= "BEST_MATCH" and import.strategy ~= "CHAIN" then
+            return false, "Import has an unknown strategy: " .. stringSafe(import.strategy) .. ". Supported values are `BEST_MATCH`, `CHAIN`."
+        end
+
+        for _, group in pairs(import.assignments) do
+            if type(group) ~= "table" then
+                return false, "Import has an invalid assignments value: " .. stringSafe(group) .. "."
             end
 
-            for _, raid_cd in pairs(raid_cds_group) do
-                if type(raid_cd) ~= "table" then
-                    return false, "Import has an invalid raid_cds value: " .. stringSafe(raid_cd) .. "."
+            for _, assignment in pairs(group) do
+                if type(assignment) ~= "table" then
+                    return false, "Import has an invalid assignments value: " .. stringSafe(assignment) .. "."
                 end
 
-                if not raid_cd.player then
-                    return false, "Import has a malformed raid_cds field. Missing player: " .. stringSafe(raid_cd)
+                if not assignment.player then
+                    return false, "Import has a malformed assignments field. Missing player: " .. stringSafe(assignment)
                 end
-                if not raid_cd.spell_id then
-                    return false, "Import has a malformed raid_cds field. Missing spell_id: " .. stringSafe(raid_cd)
+                if not assignment.spell_id then
+                    return false, "Import has a malformed assignments field. Missing spell_id: " .. stringSafe(assignment)
                 end
-                if type(raid_cd.spell_id) ~= "number" or raid_cd.spell_id ~= math.floor(raid_cd.spell_id) then
-                    return false, "Import has an unknown spell_id value: " .. stringSafe(raid_cd.spell_id) .. "."
+                if type(assignment.spell_id) ~= "number" or assignment.spell_id ~= math.floor(assignment.spell_id) then
+                    return false, "Import has an unknown spell_id value: " .. stringSafe(assignment.spell_id) .. "."
                 end
-                if not spells[raid_cd.spell_id] then
-                    return false, "Import has a spell_id that's not supported (yet): " .. stringSafe(raid_cd.spell_id) .. "."
+                if not spells[assignment.spell_id] then
+                    return false, "Import has a spell_id that's not supported (yet): " .. stringSafe(assignment.spell_id) .. "."
                 end
             end
         end
@@ -121,7 +129,7 @@ local function validateTrigger(import)
         end
 
         if import.trigger.type ~= "FOJJI_NUMEN_TIMER" and import.trigger.type ~= "UNIT_HEALTH" then
-            return false, "Import trigger has an unknown type. Valid types are `FOJJI_NUMEN_TIMER` and `UNIT_HEALTH`"
+            return false, "Import trigger has an unknown type. Supported values are `FOJJI_NUMEN_TIMER`, `UNIT_HEALTH`"
         end
 
         if import.trigger.type == "FOJJI_NUMEN_TIMER" then

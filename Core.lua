@@ -1,4 +1,4 @@
-AntiRaidTools = LibStub("AceAddon-3.0"):NewAddon("AntiFrames", "AceConsole-3.0", "AceEvent-3.0")
+AntiRaidTools = LibStub("AceAddon-3.0"):NewAddon("AntiRaidTools", "AceConsole-3.0", "AceEvent-3.0")
 
 function AntiRaidTools:OnInitialize()
     self:InitDB() 
@@ -7,6 +7,8 @@ end
 
 function AntiRaidTools:OnEnable()
     self:RegisterEvent("ENCOUNTER_START")
+
+    self:RegisterMessage("ART_WA_EVENT")
 end
 
 function AntiRaidTools:OnDisable()
@@ -23,4 +25,8 @@ end
 
 function AntiRaidTools:ENCOUNTER_START()
     self:ResetCooldowns()
+end
+
+function AntiRaidTools:ART_WA_EVENT(event, ...)
+    --DevTool:AddData(LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db), "Options")
 end
