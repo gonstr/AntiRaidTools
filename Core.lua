@@ -1,8 +1,21 @@
 AntiRaidTools = LibStub("AceAddon-3.0"):NewAddon("AntiRaidTools", "AceConsole-3.0", "AceEvent-3.0")
 
+-- AceDB defaults
+AntiRaidTools.defaults = {
+    profile = {
+        options = {
+            import = ""
+        },
+        data = {
+            encounters = {}
+        },
+    },
+}
+
 function AntiRaidTools:OnInitialize()
     self:InitDB() 
     self:InitOptions()
+    self:InitOverview()
 end
 
 function AntiRaidTools:OnEnable()
@@ -13,6 +26,8 @@ end
 
 function AntiRaidTools:OnDisable()
     self:UnregisterEvent("ENCOUNTER_START")
+
+    self:UnregisterMessage("ART_WA_EVENT")
 end
 
 function AntiRaidTools:InitDB()
@@ -28,5 +43,9 @@ function AntiRaidTools:ENCOUNTER_START()
 end
 
 function AntiRaidTools:ART_WA_EVENT(event, ...)
-    --DevTool:AddData(LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db), "Options")
+    --TODO
+end
+
+function AntiRaidTools:OnImport()
+    self:UpdateOverview()
 end

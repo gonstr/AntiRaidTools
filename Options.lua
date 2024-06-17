@@ -1,4 +1,5 @@
 local AntiRaidTools = AntiRaidTools
+local insert = table.insert
 
 local AceGUI = LibStub("AceGUI-3.0")
 
@@ -8,7 +9,7 @@ do
 
     local function Constructor()
         local widget = AceGUI:Create("MultiLineEditBox")
-        --widget.frame:SetHeight(400)
+        widget.button:Disable()
 
         -- Error label
         -- TODO: Improve this.
@@ -27,31 +28,15 @@ do
         function widget:Validate()
             local text = self:GetText()
 
-            if text == nil or string.len(text) == 0 then
-                return false
+            if text == nil or text == "" then
+                return true
             end
 
-            local ok, result = pcall(AntiRaidTools.YAML.evalm, text)
+            local ok, result = AntiRaidTools:ImportYAML(text)
 
             if not ok then
-                self.errorLabel:SetText("ParseError: " .. result or "Invalid import.")
+                self.errorLabel:SetText(result)
                 return false
-            end
-
-            for _, part in ipairs(result) do
-                if type(part) ~= "table" then
-                    self.errorLabel:SetText("ParseError: Invalid import.")
-                    return false
-                end
-            end
-
-            for _, part in ipairs(result) do
-                local ok, result = AntiRaidTools:ValidateImports(result)
-
-                if not ok then
-                    self.errorLabel:SetText("Invalid import: " .. result) 
-                    return false
-                end
             end
 
             self.errorLabel:SetText("")
@@ -59,8 +44,8 @@ do
         end
 
         -- Validate on text changed
-        widget.editBox:HookScript("OnTextChanged", function()
-            if widget.button then
+        widget.editBox:HookScript("OnTextChanged", function(_, userInput)
+            if userInput then
                 if widget:Validate() then
                     widget.button:Enable()
                 else
@@ -75,64 +60,37 @@ do
     AceGUI:RegisterWidgetType(Type, Constructor, Version)
 end
 
--- AceDB defaults
-AntiRaidTools.defaults = {
-    profile = {},
-}
-
-local getOpt, setOpt
-do
-	function getOpt(info)
-		local key = info[#info]
-		return AntiRaidTools.db.profile[key]
-	end
-
-	function setOpt(info, value)
-		local key = info[#info]
-		AntiRaidTools.db.profile[key] = value
-	end
-end
-
 local mainOptions = {
     name = "Anti Raid Tools v1-beta",
     type = "group",
     args = {
-        unlock = {
-            type = "execute",
-            name = "Toggle Frame Lock",
-            desc = "Unlock the Frames to be able to move them around.",
-            func = function()
-                AntiRaidTools:ToggleFrameLock(false)
-            end,
-            order = 1,
-        },
         weakAuraHeader = {
             type = "header",
             name = "Anti Raid Tools Helper WeakAura",
-            order = 2,
+            order = 1,
         },
         weakAuraText = {
             type = "description",
             name = "Certain features of Anti Raid Tools require the use of a Helper WeakAura. This WeakAura is required if you are the Raid Leader and set up assignments that are activated by other WeakAuras, such as Fojji timers.",
-            order = 3,
+            order = 2,
         },
         separator = {
             type = "description",
             name = " ",
-            order = 4,
+            order = 3,
         },
         weakAurasNotInstalledError = {
             type = "description",
             fontSize = "medium",
             name = "|cffff0000WeakAuras is not installed.|r",
-            order = 5,
+            order = 4,
             hidden = function() return AntiRaidTools:IsWeakAurasInstalled() end
         },
         helperWeakAuraInstalledMessage = {
             type = "description",
             fontSize = "medium",
             name = "|cff00ff00Anti Raid Tools Helper WeakAura Installed.|r",
-            order = 6,
+            order = 5,
             hidden = function() return not AntiRaidTools:IsHelperWeakauraInstalled() end
         },
         installWeakAuraButton = {
@@ -142,7 +100,7 @@ local mainOptions = {
             func = function() AntiRaidTools:InstallHelperWeakAura(function()
                 LibStub("AceConfigRegistry-3.0"):NotifyChange("AntiRaidTools")
             end) end,
-            order = 7,
+            order = 6,
             hidden = function() return not AntiRaidTools:IsWeakAurasInstalled() or AntiRaidTools:IsHelperWeakauraInstalled() end
         },
     },
@@ -158,9 +116,7 @@ Example import:
 local importCodeExample = [[
 type: RAID_CDS
 encounter: 1030
-trigger:
-  type: FOJJI_NUMEN_TIMER
-  key: HALFUS_PROTO_BREATH
+trigger: { type: FOJJI_NUMEN_TIMER, key: HALFUS_PROTO_BREATH }
 spell_id: 83707
 strategy: BEST_MATCH
 assignments:
@@ -169,15 +125,12 @@ assignments:
 ---
 type: RAID_CDS
 encounter: 1024
-trigger:
-  type: UNIT_HEALTH
-  unit: boss1
-  percentage: 35
+trigger: { type: UNIT_HEALTH, unit: boss1, percentage: 35 }
 strategy: CD_CHAIN
 assignments:
-- { player: Anticipâte, spell_id: 31821 }
-- { player: Kondec, spell_id: 62618 }
-- { player: Venmir, spell_id: 98008 }
+- [{ player: Anticipâte, spell_id: 31821 }]
+- [{ player: Kondec, spell_id: 62618 }]
+- [{ player: Venmir, spell_id: 98008 }]
 ]]
 
 local importOptions = {
@@ -204,8 +157,19 @@ local importOptions = {
             width = "full",
             dialogControl = "ImportMultiLineEditBox",
             order = 3,
-            get = getOpt,
-            set = setOpt,
+            get = function() return AntiRaidTools.db.profile.options.import end,
+            set = function(_, val)
+                AntiRaidTools.db.profile.options.import = val
+
+                AntiRaidTools.db.profile.data.encounters = {}
+
+                if val ~= nil and val ~= "" then
+                    local _, result = AntiRaidTools:ImportYAML(val)
+                    AntiRaidTools.db.profile.data.encounters = AntiRaidTools:GroupImportByEncounter(result)
+                end
+
+                AntiRaidTools:OnImport()
+            end,
         },
     },
 }

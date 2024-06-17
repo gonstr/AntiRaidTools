@@ -2,7 +2,7 @@ local AntiRaidTools = AntiRaidTools
 
 local function stringSafe(thing, indent)
     if type(thing) ~= "table" then
-        return thing
+        return thing or ""
     end
 
     local result = {}
@@ -55,9 +55,13 @@ local function validateType(import)
     return true
 end
 
-local function validateEncounter(import)
+local function validateEncounter(import, encounters)
     if type(import.encounter) ~= "number" or import.encounter ~= math.floor(import.encounter) then
         return false, "Import has an invalid encounter value: " .. stringSafe(import.encounter) .. ".."
+    end
+
+    if not encounters[import.encounter] then
+        return false, "Import has an unknown encounter value: " .. stringSafe(import.encounter) .. "."
     end
 
     return true
@@ -71,6 +75,12 @@ local function validateRaidCDs(import, spells)
 
         if type(import.assignments) ~= "table" then
             return false, "Import has an invalid assignments value: " .. stringSafe(import.assignments) .. "."
+        end
+
+        for _, assignment in ipairs(import.assignments) do
+            if type(assignment) ~= "table" then
+                return false, "Import has an invalid assignments value: " .. stringSafe(assignments) .. "."
+            end
         end
 
         if not import.trigger then
@@ -154,6 +164,7 @@ end
 
 function AntiRaidTools:ValidateImports(imports)
     local spells = self:GetSpells()
+    local encounters = self:GetEncounters()
 
     for _, import in pairs(imports) do
         local ok, err = validateRequiredFields(import)
@@ -162,7 +173,7 @@ function AntiRaidTools:ValidateImports(imports)
         ok, err = validateType(import)
         if not ok then return false, err end
         
-        ok, err = validateEncounter(import)
+        ok, err = validateEncounter(import, encounters)
         if not ok then return false, err end
 
         ok, err = validateTrigger(import)
