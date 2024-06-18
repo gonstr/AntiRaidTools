@@ -9,6 +9,9 @@ AntiRaidTools.defaults = {
         data = {
             encounters = {}
         },
+        overview = {
+            selectedEncounterId = nil
+        }
     },
 }
 
@@ -19,12 +22,14 @@ function AntiRaidTools:OnInitialize()
 end
 
 function AntiRaidTools:OnEnable()
+    self:RegisterEvent("PLAYER_LOGIN")
     self:RegisterEvent("ENCOUNTER_START")
 
     self:RegisterMessage("ART_WA_EVENT")
 end
 
 function AntiRaidTools:OnDisable()
+    self:UnregisterEvent("PLAYER_LOGIN")
     self:UnregisterEvent("ENCOUNTER_START")
 
     self:UnregisterMessage("ART_WA_EVENT")
@@ -35,6 +40,8 @@ function AntiRaidTools:InitDB()
 end
 
 function AntiRaidTools:PLAYER_LOGIN(event, isInitialLogin, isReloadingUi)
+    self:InitEncounters()
+    self:UpdateOverview()
     --self:Print("Anti Raid Tools loaded. open options with /art")
 end
 
@@ -48,4 +55,8 @@ end
 
 function AntiRaidTools:OnImport()
     self:UpdateOverview()
+end
+
+function AntiRaidTools:OnOverviewSelectedEncounter()
+    self:UpdateOverviewHeaderText()
 end

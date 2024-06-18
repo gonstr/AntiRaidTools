@@ -3,8 +3,7 @@ local insert = table.insert
 
 local encounters = {}
 
--- Build encounters cache
-do
+function AntiRaidTools:InitEncounters()
     local instance_index = 1
     local instance_id = EJ_GetInstanceByIndex(instance_index, true)
 
