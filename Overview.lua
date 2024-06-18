@@ -3,12 +3,13 @@ local AntiRaidTools = AntiRaidTools
 function AntiRaidTools:InitOverview()
     local container = CreateFrame("Frame", "AntiRaidToolsOverview", UIParent, "BackdropTemplate")
     container:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    container:SetSize(200, 400)
     container:SetBackdrop({
         bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
         tile = true,
         tileSize = 32,
     })
-    container:SetBackdropColor(0, 0, 0, 0.7) -- 70% opacity
+    container:SetBackdropColor(0, 0, 0, 0.7)
     container:SetMovable(true)
     container:EnableMouse(true)
     container:SetUserPlaced(true)
@@ -38,12 +39,12 @@ function AntiRaidTools:InitOverview()
     popup:SetSize(200, 50)
     --popup:SetPoint("TOPRIGHT", headerButton, "CENTER", 0, 0)
     popup:SetBackdrop({
-        bgFile = "Interface/Tooltips/UI-Tooltip-Background",  -- Background texture
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",    -- Border texture
-        tile = true,  -- Tile the background texture
-        tileSize = 16,  -- Size of the tiles (if bgFile is tiled)
-        edgeSize = 12,  -- Size of the border edges
-        insets = {  -- Insets for the background
+        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 12,
+        insets = {
             left = 2,
             right = 2,
             top = 2,
@@ -74,7 +75,7 @@ function AntiRaidTools:InitOverview()
         tile = true,
         tileSize = 32,
     })
-    header:SetBackdropColor(0, 0, 0, 0.7) -- 70% opacity
+    header:SetBackdropColor(0, 0, 0, 0.7)
     header:SetScript("OnMouseDown", function(self, button)
         if button == "LeftButton" then
             self:GetParent():StartMoving()
@@ -107,11 +108,20 @@ function AntiRaidTools:InitOverview()
     end)
     headerButton:RegisterForClicks("AnyDown", "AnyUp")
 
+    local main = CreateFrame("Frame", "AntiRaidToolsOvervieMain", container, "BackdropTemplate")
+    main:SetPoint("TOPLEFT", 0, -20)
+    main:SetPoint("TOPRIGHT", 0, -20)
+    main:SetPoint("BOTTOMLEFT", 0, 20)
+    main:SetPoint("BOTTOMRIGHT", 0, 20)
+
     self.overviewFrame = container
     self.overviewPopup = popup
     self.overviewPopupListItems = {}
     self.overviewHeader = header
     self.overvieweHeaderText = encounterName
+    self.overviewMain = main
+    self.overviewMainHeaders = {}
+    self.overviewMainRows = {}
 end
 
 function AntiRaidTools:UpdateOverview()
@@ -146,6 +156,7 @@ function AntiRaidTools:UpdateOverview()
 
     self:UpdateOverviewHeaderText()
     self:UpdateOverviewPopup()
+    self:UpdateOverviewMain()
     self.overviewFrame:Show()
 end
 
@@ -235,4 +246,101 @@ function AntiRaidTools:UpdateOverviewPopup()
 
     -- Update popup size
     self.overviewPopup:SetHeight(popupHeight)
+end
+
+local function animateProgressBar(self, elapsed)
+    self.elapsed = (self.elapsed or 0) + elapsed
+    if self.elapsed < 10 then
+        local progress = 100 - (self.elapsed / 10 * 100)
+        self:SetValue(progress)
+    else
+        self:SetScript("OnUpdate", nil)
+        self:SetValue(0)
+    end
+end
+
+local function createOverviewMainHeader(mainFrame)
+    local header = CreateFrame("Frame", nil, mainFrame)
+    header:SetPoint("TOPLEFT", 0)
+    header:SetPoint("TOPRIGHT", 0)
+    header:SetHeight(20)
+
+    header.icon = header:CreateTexture(nil, "ARTWORK")
+    header.icon:SetSize(20, 20)
+    header.icon:SetPoint("BOTTOMLEFT", 0, 0)
+    header.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+
+    header.progress = CreateFrame("StatusBar", nil, header)
+    header.progress:SetPoint("TOPLEFT", 20, 0)
+    header.progress:SetPoint("BOTTOMRIGHT", 0, 0)
+    header.progress:SetStatusBarTexture("Interface\\TARGETINGFRAME\\UI-StatusBar")
+    header.progress:SetStatusBarColor(0, 1, 0)
+    header.progress:SetMinMaxValues(0, 100)
+    header.progress:SetValue(100)
+    header.progress:SetScript("OnUpdate", animateProgressBar)
+
+    header.progress.text = header.progress:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    header.progress.text:SetFont("Fonts\\FRIZQT__.TTF", 10)
+    header.progress.text:SetTextColor(1, 1, 1)
+    header.progress.text:SetPoint("BOTTOMLEFT", 5, 5)
+
+    return header
+end
+
+function AntiRaidTools:ShowOverviewMainHeader(index, spellId)
+    if not self.overviewMainHeaders[index] then
+        self.overviewMainHeaders[index] = createOverviewMainHeader(self.overviewMain, spellId)
+    end
+
+    local item = self.overviewPopupListItems[index]
+
+    local yOfs = -10 - (20 * (index -1))
+
+    if finalItem then
+        yOfs = yOfs - 10
+    end
+
+    item:SetPoint("TOPLEFT", 0, yOfs)
+    item:SetPoint("TOPRIGHT", 0, yOfs)
+
+    item.text:SetText(text)
+    item.onClick = onClick
+
+    item:Show()
+
+    return yOfs
+end
+
+function AntiRaidTools:UpdateOverviewMain()
+    local selectedEncounterId = self.db.profile.overview.selectedEncounterId
+    local encounter = self.db.profile.data.encounters[selectedEncounterId]
+
+    for _, header in pairs(self.overviewMainHeaders) do
+        header:Hide()
+    end
+
+    for _, row in pairs(self.overviewMainRows) do
+        row:Hide()
+    end
+
+    local index = 1
+
+    for _, part in pairs(encounter) do
+        if part.type == "RAID_CDS" then
+            -- Update header
+            if not self.overviewMainHeaders[index] then
+                self.overviewMainHeaders[index] = createOverviewMainHeader(self.overviewMain, part.spell_id)
+            end
+
+            local header = self.overviewMainHeaders[index]
+
+            local name, _, icon = GetSpellInfo(part.spell_id)
+
+            header.icon:SetTexture(icon)
+            header.progress.text:SetText(name)
+
+            -- Update rows
+
+        end
+    end
 end
