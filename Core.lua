@@ -9,8 +9,10 @@ AntiRaidTools.defaults = {
         data = {
             encounters = {}
         },
+        minimap = {},
         overview = {
-            selectedEncounterId = nil
+            selectedEncounterId = nil,
+            show = true
         }
     },
 }
@@ -18,6 +20,7 @@ AntiRaidTools.defaults = {
 function AntiRaidTools:OnInitialize()
     self:InitDB() 
     self:InitOptions()
+    self:InitMinimap()
     self:InitOverview()
 end
 
@@ -42,7 +45,6 @@ end
 function AntiRaidTools:PLAYER_LOGIN(event, isInitialLogin, isReloadingUi)
     self:InitEncounters()
     self:UpdateOverview()
-    --self:Print("Anti Raid Tools loaded. open options with /art")
 end
 
 function AntiRaidTools:ENCOUNTER_START()
@@ -58,5 +60,5 @@ function AntiRaidTools:OnImport()
 end
 
 function AntiRaidTools:OnOverviewSelectedEncounter()
-    self:UpdateOverviewHeaderText()
+    self:UpdateOverview()
 end

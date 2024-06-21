@@ -77,9 +77,9 @@ local function validateRaidCDs(import, spells)
             return false, "Import has an invalid assignments value: " .. stringSafe(import.assignments) .. "."
         end
 
-        for _, assignment in ipairs(import.assignments) do
-            if type(assignment) ~= "table" then
-                return false, "Import has an invalid assignments value: " .. stringSafe(assignments) .. "."
+        for _, group in ipairs(import.assignments) do
+            if type(group) ~= "table" then
+                return false, "Import has an invalid assignments value: " .. stringSafe(group) .. "."
             end
         end
 
@@ -106,6 +106,10 @@ local function validateRaidCDs(import, spells)
         for _, group in pairs(import.assignments) do
             if type(group) ~= "table" then
                 return false, "Import has an invalid assignments value: " .. stringSafe(group) .. "."
+            end
+
+            if #group > 2 then
+                return false, "Import has invalid assignments: " .. stringSafe(group) .. ". The group size is more than 2."
             end
 
             for _, assignment in pairs(group) do
