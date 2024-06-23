@@ -28,7 +28,11 @@ do
         function widget:Validate()
             local text = self:GetText()
 
-            if text == nil or text == "" then
+            if text then
+                text = text:trim()
+            end
+            
+            if not text or text == "" then
                 return true
             end
 
@@ -115,18 +119,31 @@ Example import:
 
 local importCodeExample = [[
 type: RAID_CDS
-encounter: 1030
-trigger: { type: FOJJI_NUMEN_TIMER, key: HALFUS_PROTO_BREATH }
-spell_id: 83707
-strategy: BEST_MATCH
-assignments:
-- [{ player: Anticipâte, spell_id: 31821 }, { player: Kondec, spell_id: 62618 }]
-- [{ player: Venmir, spell_id, 98008 }]
----
-type: RAID_CDS
 encounter: 1024
 trigger: { type: UNIT_HEALTH, unit: boss1, percentage: 35 }
-strategy: CD_CHAIN
+metadata: { name: "Boss 25%", icon: 134153 }
+strategy: CHAIN
+assignments:
+- [{ player: Anticipâte, spell_id: 31821 }]
+- [{ player: Kondec, spell_id: 62618 }]
+- [{ player: Venmir, spell_id: 98008 }]
+---
+type: RAID_CDS
+encounter: 1027
+trigger: { type: SPELL_CAST, spell_id: 91849 }
+metadata: { name: "Roar Rotation", icon: 77764 }
+strategy: BEST_MATCH
+assignments:
+- [{ player: Riphyrra, spell_id: 77764 }]
+- [{ player: Jamón, spell_id: 77764 }]
+- [{ player: Clutex, spell_id: 77764 }]
+- [{ player: Crawlern, spell_id: 77764 }]
+---
+type: RAID_CDS
+encounter: 1026
+trigger: { type: RAID_BOSS_EMOTE, text: "The air crackles with electricity!", duration: 5 }
+metadata: { name: "Crackle", icon: 136050 }
+strategy: BEST_MATCH
 assignments:
 - [{ player: Anticipâte, spell_id: 31821 }]
 - [{ player: Kondec, spell_id: 62618 }]
@@ -159,6 +176,10 @@ local importOptions = {
             order = 3,
             get = function() return AntiRaidTools.db.profile.options.import end,
             set = function(_, val)
+                if val then
+                    val = val:trim()
+                end
+
                 AntiRaidTools.db.profile.options.import = val
 
                 AntiRaidTools.db.profile.data.encounters = {}
@@ -168,7 +189,8 @@ local importOptions = {
                     AntiRaidTools.db.profile.data.encounters = AntiRaidTools:GroupImportByEncounter(result)
                 end
 
-                AntiRaidTools:OnImport()
+                -- Update overview after import
+                AntiRaidTools:UpdateOverview()
             end,
         },
     },

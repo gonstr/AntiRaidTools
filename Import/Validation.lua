@@ -87,11 +87,19 @@ local function validateRaidCDs(import, spells)
             return false, "Import with type RAID_CDS is missing a trigger field."
         end
 
-        if not import.spell_id then
-            return false, "Import with type RAID_CDS is missing a spell_id field."
+        if not import.metadata then
+            return false, "Import with type RAID_CDS is missing a metadata field."
         end
 
-        if type(import.spell_id) ~= "number" or import.spell_id ~= math.floor(import.spell_id) then
+        if not import.metadata.spell_id and not (import.metadata.name and import.metadata.icon) then
+            return false, "Import has an invalid metadata field. Requires spell_id or name and icon."
+        end
+
+        if import.metadata.icon and (type(import.metadata.icon) ~= "number" or import.metadata.icon ~= math.floor(import.metadata.icon)) then
+            return false, "Import has an invalid icon value: " .. stringSafe(import.metadata.icon) .. "."
+        end
+
+        if import.metadata.spell_id and (type(import.metadata.spell_id) ~= "number" or import.metadata.spell_id ~= math.floor(import.metadata.spell_id)) then
             return false, "Import has an invalid spell_id value: " .. stringSafe(import.spell_id) .. "."
         end
 
@@ -99,10 +107,34 @@ local function validateRaidCDs(import, spells)
             return false, "Import with type RAID_CDS is missing a strategy field."
         end
 
-        if import.strategy ~= "BEST_MATCH" and import.strategy ~= "CHAIN" then
-            return false, "Import has an unknown strategy: " .. stringSafe(import.strategy) .. ". Supported values are `BEST_MATCH`, `CHAIN`."
+        if type(import.strategy) ~= "table" then
+            return false, "Import has an invalid strategy value: " .. stringSafe(import.strategy) .. "."
         end
 
+        if not import.strategy.type then
+            return false, "Import has an invalid strategy field. Requires type."
+        end
+
+        if import.strategy.type ~= "BEST_MATCH" then -- and import.strategy.type ~= "CHAIN" then
+            return false, "Import has an unknown strategy: " .. stringSafe(import.strategy.type) .. ". Supported values are `BEST_MATCH`." --, `CHAIN`."
+        end
+
+        if import.strategy.duration and (type(import.strategy.duration) ~= "number" or import.strategy.duration ~= math.floor(import.strategy.duration)) then
+            return false, "Import has an invalid duration field: " .. stringSafe(import.strategy.duration) .. "."
+        end
+
+        if not import.assignments then
+            return false, "Import with type RAID_CDS is missing an assignments field."
+        end
+
+        if type(import.assignments) ~= "table" then
+            return false, "Import has an invalid assignments value: " .. stringSafe(import.assignments) .. "."
+        end
+
+        if table.getn(import.assignments) == 0 then
+            return false, "Import assignments is empty."
+        end
+        
         for _, group in pairs(import.assignments) do
             if type(group) ~= "table" then
                 return false, "Import has an invalid assignments value: " .. stringSafe(group) .. "."
@@ -142,8 +174,8 @@ local function validateTrigger(import)
             return false, "Import trigger is missing a type field."
         end
 
-        if import.trigger.type ~= "FOJJI_NUMEN_TIMER" and import.trigger.type ~= "UNIT_HEALTH" then
-            return false, "Import trigger has an unknown type. Supported values are `FOJJI_NUMEN_TIMER`, `UNIT_HEALTH`"
+        if import.trigger.type ~= "FOJJI_NUMEN_TIMER" and import.trigger.type ~= "UNIT_HEALTH" and import.trigger.type ~= "SPELL_CAST" and import.trigger.type ~= "RAID_BOSS_EMOTE" then
+            return false, "Import trigger has an unknown type. Supported values are `FOJJI_NUMEN_TIMER`, `UNIT_HEALTH`, `SPELL_CAST`, `RAID_BOSS_EMOTE`"
         end
 
         if import.trigger.type == "FOJJI_NUMEN_TIMER" then
@@ -153,14 +185,38 @@ local function validateTrigger(import)
         end
 
         if import.trigger.type == "UNIT_HEALTH" then
-            if not import.trigger.key then
+            if not import.trigger.unit then
                 return false, "Import with trigger type UNIT_HEALTH is missing a unit field."
             end
 
             if not import.trigger.percentage then
                 return false, "Import with trigger type UNIT_HEALTH is missing a percentage field."
             end
-        end   
+        end
+
+        if import.trigger.type == "SPELL_CAST" then
+            if not import.trigger.spell_id then
+                return false, "Import with trigger type SPELL_CAST is missing a spell_id field."
+            end
+
+            if type(import.trigger.spell_id) ~= "number" or import.trigger.spell_id ~= math.floor(import.trigger.spell_id) then
+                return false, "Import has an invalid spell_id value: " .. stringSafe(import.trigger.spell_id) .. "."
+            end
+        end
+
+        if import.trigger.type == "RAID_BOSS_EMOTE" then
+            if not import.trigger.text then
+                return false, "Import with trigger type UNIT_HEALTH is missing a text field."
+            end
+
+            if not import.trigger.duration then
+                return false, "Import with trigger type UNIT_HEALTH is missing a duration field."
+            end
+
+            if type(import.trigger.duration) ~= "number" or import.trigger.duration ~= math.floor(import.trigger.duration) then
+                return false, "Import has an invalid duration value: " .. stringSafe(import.trigger.duration) .. "."
+            end
+        end
     end
 
     return true

@@ -29,3 +29,7 @@ end
 function AntiRaidTools:GetEncounters()
     return encounters
 end
+
+function AntiRaidTools:EncounterExists(encounterId)
+    return encounters[encounterId] and true or false
+end

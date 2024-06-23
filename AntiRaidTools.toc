@@ -21,12 +21,16 @@ Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 
 Core.lua
-YAML.lua
-Spells.lua
-Encounters.lua
-WeakAuras.lua
-Import.lua
-Options.lua
-Validation.lua
-Minimap.lua
-Overview.lua
+Test.lua
+Utils.lua
+Options\Chat.lua
+Options\WeakAuras.lua
+Options\Options.lua
+Import\YAML.lua
+Import\Import.lua
+Import\Validation.lua
+State\Spells.lua
+State\Encounters.lua
+State\RaidCooldowns.lua
+UI\Minimap.lua
+UI\Overview.lua

@@ -26,6 +26,10 @@ function AntiRaidTools:ImportYAML(str)
         end
     end
 
+    for _, part in ipairs(result) do
+        part.uuid = AntiRaidTools:GenerateUUID()
+    end
+
     return true, result
 end
 
