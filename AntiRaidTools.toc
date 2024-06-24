@@ -2,7 +2,8 @@
 ## Title: Anti Raid Tools
 ## Notes: Raid Automation and Coordination
 ## Author: Anti
-## Version: 0.1
+## Version: @project-version@
+## X-Curse-Project-ID: 1048555
 ## SavedVariables: AntiRaidTools
 ## OptionalDeps: Ace3
 
