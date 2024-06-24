@@ -78,7 +78,7 @@ function AntiRaidTools:UNIT_HEALTH(_, unitId)
         self:UpdateOverviewSpells()
     end
 
-    self:RaidCooldownsProcessUnitHealth(unitId)
+    --self:RaidCooldownsProcessUnitHealth(unitId)
 end
 
 function AntiRaidTools:GROUP_ROSTER_UPDATE()
