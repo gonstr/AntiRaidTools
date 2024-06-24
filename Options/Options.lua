@@ -67,47 +67,48 @@ end
 local mainOptions = {
     name = "Anti Raid Tools v1-beta",
     type = "group",
-    args = {
-        weakAuraHeader = {
-            type = "header",
-            name = "Anti Raid Tools Helper WeakAura",
-            order = 1,
-        },
-        weakAuraText = {
-            type = "description",
-            name = "Certain features of Anti Raid Tools require the use of a Helper WeakAura. This WeakAura is required if you are the Raid Leader and set up assignments that are activated by other WeakAuras, such as Fojji timers.",
-            order = 2,
-        },
-        separator = {
-            type = "description",
-            name = " ",
-            order = 3,
-        },
-        weakAurasNotInstalledError = {
-            type = "description",
-            fontSize = "medium",
-            name = "|cffff0000WeakAuras is not installed.|r",
-            order = 4,
-            hidden = function() return AntiRaidTools:IsWeakAurasInstalled() end
-        },
-        helperWeakAuraInstalledMessage = {
-            type = "description",
-            fontSize = "medium",
-            name = "|cff00ff00Anti Raid Tools Helper WeakAura Installed.|r",
-            order = 5,
-            hidden = function() return not AntiRaidTools:IsHelperWeakauraInstalled() end
-        },
-        installWeakAuraButton = {
-            type = "execute",
-            name = "Install WeakAura",
-            desc = "Install the Anti Raid Tools Helper WeakAura.",
-            func = function() AntiRaidTools:InstallHelperWeakAura(function()
-                LibStub("AceConfigRegistry-3.0"):NotifyChange("AntiRaidTools")
-            end) end,
-            order = 6,
-            hidden = function() return not AntiRaidTools:IsWeakAurasInstalled() or AntiRaidTools:IsHelperWeakauraInstalled() end
-        },
-    },
+    args = {},
+    -- args = {
+    --     weakAuraHeader = {
+    --         type = "header",
+    --         name = "Anti Raid Tools Helper WeakAura",
+    --         order = 1,
+    --     },
+    --     weakAuraText = {
+    --         type = "description",
+    --         name = "Certain features of Anti Raid Tools require the use of a Helper WeakAura. This WeakAura is required if you are the Raid Leader and set up assignments that are activated by other WeakAuras, such as Fojji timers.",
+    --         order = 2,
+    --     },
+    --     separator = {
+    --         type = "description",
+    --         name = " ",
+    --         order = 3,
+    --     },
+    --     weakAurasNotInstalledError = {
+    --         type = "description",
+    --         fontSize = "medium",
+    --         name = "|cffff0000WeakAuras is not installed.|r",
+    --         order = 4,
+    --         hidden = function() return AntiRaidTools:IsWeakAurasInstalled() end
+    --     },
+    --     helperWeakAuraInstalledMessage = {
+    --         type = "description",
+    --         fontSize = "medium",
+    --         name = "|cff00ff00Anti Raid Tools Helper WeakAura Installed.|r",
+    --         order = 5,
+    --         hidden = function() return not AntiRaidTools:IsHelperWeakauraInstalled() end
+    --     },
+    --     installWeakAuraButton = {
+    --         type = "execute",
+    --         name = "Install WeakAura",
+    --         desc = "Install the Anti Raid Tools Helper WeakAura.",
+    --         func = function() AntiRaidTools:InstallHelperWeakAura(function()
+    --             LibStub("AceConfigRegistry-3.0"):NotifyChange("AntiRaidTools")
+    --         end) end,
+    --         order = 6,
+    --         hidden = function() return not AntiRaidTools:IsWeakAurasInstalled() or AntiRaidTools:IsHelperWeakauraInstalled() end
+    --     },
+    -- },
 }
 
 local importDescription = [[

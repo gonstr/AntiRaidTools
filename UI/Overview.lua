@@ -5,7 +5,7 @@ function AntiRaidTools:InitOverview()
     container:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     container:SetSize(300, 400)
     container:SetBackdrop({
-        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
         tile = true,
         tileSize = 32,
     })
@@ -152,6 +152,7 @@ function AntiRaidTools:UpdateOverview()
     self:UpdateOverviewHeaderText()
     self:UpdateOverviewPopup()
     self:UpdateOverviewMain()
+    self:UpdateOverviewSpells()
     self.overviewFrame:Show()
 end
 
@@ -253,7 +254,6 @@ local function createOverviewMainHeader(mainFrame, prevFrame)
     frame:SetHeight(20)
     frame:SetBackdrop({
         bgFile = "Interface\\Addons\\AntiRaidTools\\Media\\gradient32x32.tga",
-        --bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
         tile = true,
         tileSize = 32
     })
@@ -278,15 +278,6 @@ local function createOverviewMainHeader(mainFrame, prevFrame)
     frame.text:SetTextColor(1, 1, 1, 1)
     frame.text:SetPoint("BOTTOMLEFT", 28, 5)
 
-    -- frame.icon = frame:CreateTexture(nil, "ARTWORK")
-    -- frame.icon:SetSize(22, 22)
-    -- frame.icon:SetPoint("BOTTOMLEFT", 10, 4)
-    -- frame.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-
-    -- frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    -- frame.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
-    -- frame.text:SetPoint("BOTTOMLEFT", 38, 9)
-
     return frame
 end
 
@@ -296,8 +287,8 @@ local function updateOverviewMainHeader(frame, prevFrame, icon, name)
     frame:ClearAllPoints()
 
     if prevFrame then
-        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0)
-        frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0)
+        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0, -10)
+        frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0, -10)
     else
         frame:SetPoint("TOPLEFT", 0)
         frame:SetPoint("TOPRIGHT", 0)
@@ -311,21 +302,12 @@ local function createOverviewMainCDGroup(mainFrame, prevFrame)
     local frame = CreateFrame("Frame", nil, mainFrame, "BackdropTemplate")
     frame:SetHeight(20)
     frame:SetBackdrop({
-        --bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
         bgFile = "Interface\\Addons\\AntiRaidTools\\Media\\gradient32x32.tga",
-        -- edgeFile = "Interface\\Addons\\AntiRaidTools\\Media\\border1px.tga",
         tile = true,
         tileSize = 32,
-        -- edgeSize = 2,
-        -- insets = {
-        --     left = 2,
-        --     right = 2,
-        --     top = 2,
-        --     bottom = 2,
-        -- }
     })
 
-    frame.cds = {}
+    frame.assignments = {}
 
     return frame
 end
@@ -339,9 +321,12 @@ local function createOverviewMainCDGroupAssignment(parentFrame)
     })
     frame:SetBackdropColor(0, 0, 0, 0)
 
-    frame.icon = frame:CreateTexture(nil, "ARTWORK")
-    frame.icon:SetSize(12, 12)
-    frame.icon:SetPoint("BOTTOMLEFT", 10, 4)
+    frame.iconFrame = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+    frame.iconFrame:SetSize(12, 12)
+    frame.iconFrame:SetPoint("BOTTOMLEFT", 10, 4)
+
+    frame.icon = frame.iconFrame:CreateTexture(nil, "ARTWORK")
+    frame.icon:SetAllPoints()
     frame.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 
     frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -354,6 +339,9 @@ end
 
 local function updateOverviewMainCDGroupAssignment(frame, assignment, index, total)
     frame:Show()
+
+    frame.player = assignment.player
+    frame.spellId = assignment.spell_id
 
     local _, _, icon = GetSpellInfo(assignment.spell_id)
 
@@ -386,8 +374,6 @@ local function updateOverviewMainCDGroup(frame, prevFrame, group, uuid, index)
     frame.uuid = uuid
     frame.index = index
 
-    --local even = index % 2 == 0
-
     frame:SetBackdropColor(0, 0, 0, 0)
 
     frame:ClearAllPoints()
@@ -400,16 +386,16 @@ local function updateOverviewMainCDGroup(frame, prevFrame, group, uuid, index)
         frame:SetPoint("TOPRIGHT", 0)
     end
 
-    for _, cd in pairs(frame.cds) do
+    for _, cd in pairs(frame.assignments) do
         cd:Hide()
     end
     
     for i, assignment in ipairs(group) do
-        if not frame.cds[i] then
-            frame.cds[i] = createOverviewMainCDGroupAssignment(frame)
+        if not frame.assignments[i] then
+            frame.assignments[i] = createOverviewMainCDGroupAssignment(frame)
         end
 
-        updateOverviewMainCDGroupAssignment(frame.cds[i], assignment, i, #group)
+        updateOverviewMainCDGroupAssignment(frame.assignments[i], assignment, i, #group)
     end
 end
 
@@ -473,13 +459,31 @@ function AntiRaidTools:UpdateOverviewMain()
 end
 
 function AntiRaidTools:UpdateOverviewActiveGroups()
-    DevTool:AddData(self.overviewMainRaidCDGroups, "groups")
-
-    for _, frame in ipairs(self.overviewMainRaidCDGroups) do
-        if self:GetActiveGroupIndex(frame.uuid) == frame.index then
-            frame:SetBackdropColor(1, 1, 1, 0.5)
+    for _, groupFrame in ipairs(self.overviewMainRaidCDGroups) do
+        if self:GetActiveGroupIndex(groupFrame.uuid) == groupFrame.index then
+            groupFrame:SetBackdropColor(1, 1, 1, 0.6)
         else
-            frame:SetBackdropColor(0, 0, 0, 0)
+            groupFrame:SetBackdropColor(0, 0, 0, 0)
         end
     end    
+end
+
+
+function AntiRaidTools:UpdateOverviewSpells()
+    for _, groupFrame in pairs(self.overviewMainRaidCDGroups) do
+        for _, assignmentFrame in pairs(groupFrame.assignments) do
+            if self:IsSpellActive(assignmentFrame.player, assignmentFrame.spellId) then
+                ActionButton_ShowOverlayGlow(assignmentFrame.iconFrame)
+                assignmentFrame:SetAlpha(1)
+            else
+                ActionButton_HideOverlayGlow(assignmentFrame.iconFrame)
+
+                if self:IsSpellReady(assignmentFrame.player, assignmentFrame.spellId) then
+                    assignmentFrame:SetAlpha(1)
+                else
+                    assignmentFrame:SetAlpha(0.4)
+                end
+            end
+        end
+    end
 end

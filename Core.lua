@@ -29,8 +29,7 @@ function AntiRaidTools:OnEnable()
     self:RegisterEvent("ENCOUNTER_START")
     self:RegisterEvent("ENCOUNTER_END")
     self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-
-    self:RegisterMessage("ART_WA_EVENT")
+    self:RegisterEvent("UNIT_HEALTH")
 
     self:RegisterChatCommand("art", "HandleChatCommand")
 end
@@ -40,8 +39,7 @@ function AntiRaidTools:OnDisable()
     self:UnregisterEvent("ENCOUNTER_START")
     self:UnregisterEvent("ENCOUNTER_END")
     self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-
-    self:UnregisterMessage("ART_WA_EVENT")
+    self:UnregisterEvent("UNIT_HEALTH")
 
     self:UnregisterChatCommand("art")
 end
@@ -62,24 +60,34 @@ end
 
 function AntiRaidTools:ENCOUNTER_END()
     self:RaidCooldownsEndEncounter()
-    self:ResetCooldowns()
+    self:ResetSpellsCache()
+    self:ResetDeadCache()
+    self:UpdateOverviewSpells()
+end
+
+function AntiRaidTools:UNIT_HEALTH(_, unitId)
+    local guid = UnitGUID(unitId)
+
+    if self:IsCachedUnitDead(guid) and UnitHealth(unitId) > 0 and not UnitIsGhost(unitId) then
+        self:ClearCachedUnitDead(guid)
+        self:UpdateOverviewSpells()
+    end
 end
 
 function AntiRaidTools:COMBAT_LOG_EVENT_UNFILTERED()
-    local inInstance, instanceType = IsInInstance()
-
-    if inInstance and instanceType == "raid" then
-        local _, subEvent, _,_, sourceName, _, _,_, destName, _, _,spellId = CombatLogGetCurrentEventInfo()
-        self:HandleCombatLog(subEvent, sourceName, destName, spellId)
-    end
+    local _, subEvent, _,_, sourceName, _, _, destGUID, destName, _, _,spellId = CombatLogGetCurrentEventInfo()
+    self:HandleCombatLog(subEvent, sourceName, destGUID, destName, spellId)
 end
 
-function AntiRaidTools:HandleCombatLog(subEvent, sourceName, destName, spellId)
-    if subEvent == "SPELL_CAST_START" or subEvent == "SPELL_CAST_SUCCESS" then
-        self:RegisterSpellCast(sourceName, spellId)
+function AntiRaidTools:HandleCombatLog(subEvent, sourceName, destGUID, destName, spellId)
+    if subEvent == "SPELL_CAST_SUCCESS" then
+        self:CacheSpellCast(sourceName, spellId, function() self:UpdateOverviewSpells() end)
+        self:RaidCooldownsProcessGroups()
+    elseif subEvent == "UNIT_DIED" then
+        if self:IsFriendlyRaidMemberOrPlayer(destGUID) then
+            self:CacheUnitDied(destGUID)
+            self:RaidCooldownsProcessGroups()
+            self:UpdateOverviewSpells()
+        end
     end
-end
-
-function AntiRaidTools:ART_WA_EVENT(event, ...)
-    --TODO
 end

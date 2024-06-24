@@ -1,6 +1,7 @@
 local AntiRaidTools = AntiRaidTools
 
-local cooldowns = {}
+local activeCache = {}
+local cooldownCache = {}
 
 local spells = {
     -- Divine Hymn
@@ -65,34 +66,73 @@ local spells = {
     }
 }
 
-function AntiRaidTools:ResetCooldowns()
-    cooldowns = {}
+function AntiRaidTools:ResetSpellsCache()
+    activeCache = {}
+    cooldownCache = {}
 end
 
 function AntiRaidTools:IsSpellReady(unit, spellId, timestamp)
+    if UnitIsDeadOrGhost(unit) then
+        return false
+    end
+    
+    -- if not UnitIsPlayer(unit) and not UnitInRaid(unit) then
+    --     return false
+    -- end
+    
+    timestamp = timestamp or GetTime()
+
+    local key = unit .. ":" .. spellId
+
+    local cachedTimestamp = cooldownCache[key]
+
+    if not cachedTimestamp then
+        return true
+    end
+    
+    if timestamp < cachedTimestamp then
+        return false
+    end
+
+    cooldownCache[key] = nil
+    
     return true
+end
 
-    -- if UnitIsDeadOrGhost(unit) then
+function AntiRaidTools:IsSpellActive(unit, spellId)
+    if UnitIsDeadOrGhost(unit) then
+        return false
+    end
+    
+    -- if not UnitIsPlayer(unit) and not UnitInRaid(unit) then
     --     return false
     -- end
-    
-    -- if not UnitInRaid(unit) then
-    --     return false
-    -- end
-    
-    -- timestamp = timestamp or GetTime()
 
-    -- local cooldown = cooldowns[unit .. ":" .. spellId] 
+    timestamp = GetTime()
+
+    local key = unit .. ":" .. spellId
+
+    local cachedTimestamp = activeCache[key]
+
+    if not cachedTimestamp then
+        return false
+    end
     
-    -- if cooldown and timestamp < cooldown then
-    --     return false
-    -- end
+    if timestamp < cachedTimestamp then
+        return true
+    end
+
+    activeCache[key] = nil
     
-    -- return true
+    return false
 end
 
 function AntiRaidTools:GetSpells()
     return spells
+end
+
+function AntiRaidTools:GetSpell(spellId)
+    return spells[spellId]
 end
 
 function AntiRaidTools:GetSpellDuration(spellId)
@@ -105,12 +145,29 @@ function AntiRaidTools:GetSpellDuration(spellId)
     return nil
 end
 
-function AntiRaidTools:RegisterSpellCast(unit, spellId)
+function AntiRaidTools:GetSpellCooldown(spellId)
+    local spell = spell[spellId]
+    
+    if spell then
+        return spell.cooldown
+    end
+    
+    return nil
+end
+
+function AntiRaidTools:CacheSpellCast(unit, spellId, updateFunc)
     if UnitIsPlayer(unit) or UnitInRaid(unit) then
         local spell = spells[spellId]
         
         if spell then
-            cooldowns[unit .. ":" .. spellId] = GetTime() + spell.cooldown
+            local key = unit .. ":" .. spellId
+
+            activeCache[key] = GetTime() + spell.duration
+            cooldownCache[key] = GetTime() + spell.cooldown
+
+            updateFunc()
+            C_Timer.After(spell.duration, updateFunc)
+            C_Timer.After(spell.cooldown, updateFunc)
         end
     end
 end

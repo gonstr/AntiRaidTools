@@ -65,7 +65,7 @@ function AntiRaidTools:RaidCooldownsSelectGroup(assignments)
             end
         end
         
-        if ready_spells > max_ready_spells then
+        if readySpells > maxReadySpells then
             bestMatchIndex = i
             maxReadySpells = readySpells
         end

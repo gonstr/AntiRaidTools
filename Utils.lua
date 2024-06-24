@@ -32,3 +32,19 @@ function AntiRaidTools:GetClassColor(class)
 
     return color
 end
+
+function AntiRaidTools:IsFriendlyRaidMemberOrPlayer(guid)
+    if UnitGUID("player") == guid then
+        return true
+    end
+
+    for i = 1, GetNumGroupMembers() do
+        local raidUnit = "raid" .. i
+
+        if UnitGUID(raidUnit) == guid then
+            return true
+        end
+    end
+
+    return false
+end
