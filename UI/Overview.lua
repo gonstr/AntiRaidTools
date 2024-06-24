@@ -468,7 +468,6 @@ function AntiRaidTools:UpdateOverviewActiveGroups()
     end    
 end
 
-
 function AntiRaidTools:UpdateOverviewSpells()
     for _, groupFrame in pairs(self.overviewMainRaidCDGroups) do
         for _, assignmentFrame in pairs(groupFrame.assignments) do

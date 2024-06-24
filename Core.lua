@@ -70,6 +70,7 @@ function AntiRaidTools:UNIT_HEALTH(_, unitId)
 
     if self:IsCachedUnitDead(guid) and UnitHealth(unitId) > 0 and not UnitIsGhost(unitId) then
         self:ClearCachedUnitDead(guid)
+        self:RaidCooldownsProcessGroups()
         self:UpdateOverviewSpells()
     end
 end
