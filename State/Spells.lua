@@ -35,7 +35,7 @@ local spells = {
         duration = 12
     },
     -- Tranquility
-    [740] = {
+    [44203] = {
         class = "DRUID",
         cooldown = 60 * 8,
         duration = 8
@@ -72,13 +72,15 @@ function AntiRaidTools:ResetSpellsCache()
 end
 
 function AntiRaidTools:IsSpellReady(unit, spellId, timestamp)
-    if UnitIsDeadOrGhost(unit) then
-        return false
+    if not self.TEST then
+        if UnitIsDeadOrGhost(unit) then
+            return false
+        end
+        
+        if not UnitIsPlayer(unit) and not UnitInRaid(unit) then
+            return false
+        end
     end
-    
-    -- if not UnitIsPlayer(unit) and not UnitInRaid(unit) then
-    --     return false
-    -- end
     
     timestamp = timestamp or GetTime()
 
@@ -100,13 +102,15 @@ function AntiRaidTools:IsSpellReady(unit, spellId, timestamp)
 end
 
 function AntiRaidTools:IsSpellActive(unit, spellId)
-    if UnitIsDeadOrGhost(unit) then
-        return false
+    if not self.TEST then
+        if UnitIsDeadOrGhost(unit) then
+            return false
+        end
+        
+        if not UnitIsPlayer(unit) and not UnitInRaid(unit) then
+            return false
+        end
     end
-    
-    -- if not UnitIsPlayer(unit) and not UnitInRaid(unit) then
-    --     return false
-    -- end
 
     timestamp = GetTime()
 
@@ -156,18 +160,22 @@ function AntiRaidTools:GetSpellCooldown(spellId)
 end
 
 function AntiRaidTools:CacheSpellCast(unit, spellId, updateFunc)
-    if UnitIsPlayer(unit) or UnitInRaid(unit) then
-        local spell = spells[spellId]
-        
-        if spell then
-            local key = unit .. ":" .. spellId
-
-            activeCache[key] = GetTime() + spell.duration
-            cooldownCache[key] = GetTime() + spell.cooldown
-
-            updateFunc()
-            C_Timer.After(spell.duration, updateFunc)
-            C_Timer.After(spell.cooldown, updateFunc)
+    if not self.TEST then
+        if not UnitIsPlayer(unit) and not UnitInRaid(unit) then
+            return
         end
+    end
+
+    local spell = spells[spellId]
+    
+    if spell then
+        local key = unit .. ":" .. spellId
+
+        activeCache[key] = GetTime() + spell.duration
+        cooldownCache[key] = GetTime() + spell.cooldown
+
+        updateFunc()
+        C_Timer.After(spell.duration, updateFunc)
+        C_Timer.After(spell.cooldown, updateFunc)
     end
 end

@@ -13,13 +13,13 @@ function AntiRaidTools:InitMinimap()
                 AntiRaidTools.db.profile.overview.show = not AntiRaidTools.db.profile.overview.show
                 AntiRaidTools:UpdateOverview()
             else
-                InterfaceOptionsFrame_OpenToCategory("Anti Raid Tools")
+                AntiRaidTools:RaidNotificationsToggleFrameLock()
             end
         end,
         OnTooltipShow = function(tooltip)
             tooltip:AddLine("Anti Raid Tools")
-            tooltip:AddLine("Left click to toggle visibility")
-            tooltip:AddLine("Right click to open options")
+            tooltip:AddLine("Left click to toggle overview visibility")
+            tooltip:AddLine("Right click to open toggle framelock")
         end,
     })
     

@@ -19,5 +19,5 @@ function AntiRaidTools:ClearCachedUnitDead(destGUID)
 end
 
 function AntiRaidTools:ResetDeadCache()
-    deadCache = nil
+    deadCache = {}
 end

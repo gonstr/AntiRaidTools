@@ -5,20 +5,35 @@ local activeEncounter = nil
 -- Key: UUID, value = assignment group index
 local activeGroups = {}
 
-local function resetCooldowns()
+-- Key: UnitId, value = { trigger, triggered }
+local unitHealthTriggersCache = {}
+
+local function resetRaidCooldowns()
     activeEncounter = nil
     activeGroups = {}
+    unitHealthTriggersCache = {}
 end
 
 function AntiRaidTools:RaidCooldownsStartEncounter(encounterId)
     if AntiRaidTools:EncounterExists(encounterId) then
         activeEncounter = self.db.profile.data.encounters[encounterId]
+
+        -- Cache unit health triggers for faster lookups
+        for _, part in ipairs(activeEncounter) do
+            if part.type == "RAID_CDS" and part.trigger.type == "UNIT_HEALTH" then
+                unitHealthTriggersCache[part.trigger.unit] = {
+                    triggered = false,
+                    trigger = unit.trigger
+                }
+            end
+        end
+
         self:RaidCooldownsProcessGroups()
     end
 end
 
 function AntiRaidTools:RaidCooldownsEndEncounter()
-    resetCooldowns()
+    resetRaidCooldowns()
     self:UpdateOverviewActiveGroups()
 end
 
@@ -28,7 +43,7 @@ function AntiRaidTools:RaidCooldownsProcessGroups()
     end
 
     for i, part in ipairs(activeEncounter) do
-        if part.type == "RAID_CDS" and part.strategy.type == "BEST_MATCH" then
+        if part.type == "RAID_CDS" then
             activeGroups[part.uuid] = self:RaidCooldownsSelectGroup(part.assignments)
         end
     end
@@ -76,4 +91,20 @@ end
 
 function AntiRaidTools:GetActiveGroupIndex(uuid)
     return activeGroups[uuid]
+end
+
+function AntiRaidTools:RaidCooldownsProcessUnitHealth(unit)
+    if activeEncounter then
+        local unitHealthTrigger = unitHealthTriggersCache[unit]
+        if unitHealthTrigger and not unitHealthTrigger.triggered then
+            local maxHealth = UnitHealthMax(unit)
+            local health = UnitHealth(unit)
+            local percentage = health / maxHealth * 100
+
+            if percentage < unitHealthTrigger.trigger.percentage then
+                unitHealthTrigger.triggered = true
+                --self:RaidNotificationsShow()
+            end
+        end
+    end
 end

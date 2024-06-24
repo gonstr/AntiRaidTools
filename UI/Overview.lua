@@ -5,7 +5,7 @@ function AntiRaidTools:InitOverview()
     container:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     container:SetSize(300, 400)
     container:SetBackdrop({
-        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        bgFile = "Interface\\Addons\\AntiRaidTools\\Media\\gradient32x32.tga",
         tile = true,
         tileSize = 32,
     })
@@ -268,15 +268,15 @@ local function createOverviewMainHeader(mainFrame, prevFrame)
         frame:SetPoint("TOPRIGHT", 0)
     end
 
-    frame.icon = frame:CreateTexture(nil, "ARTWORK")
-    frame.icon:SetSize(12, 12)
-    frame.icon:SetPoint("BOTTOMLEFT", 10, 4)
-    frame.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    -- frame.icon = frame:CreateTexture(nil, "ARTWORK")
+    -- frame.icon:SetSize(12, 12)
+    -- frame.icon:SetPoint("BOTTOMLEFT", 10, 4)
+    -- frame.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 
     frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     frame.text:SetFont("Fonts\\FRIZQT__.TTF", 10)
     frame.text:SetTextColor(1, 1, 1, 1)
-    frame.text:SetPoint("BOTTOMLEFT", 28, 5)
+    frame.text:SetPoint("BOTTOMLEFT", 10, 5)
 
     return frame
 end
@@ -287,14 +287,14 @@ local function updateOverviewMainHeader(frame, prevFrame, icon, name)
     frame:ClearAllPoints()
 
     if prevFrame then
-        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0, -10)
-        frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0, -10)
+        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0, -8)
+        frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0, -8)
     else
         frame:SetPoint("TOPLEFT", 0)
         frame:SetPoint("TOPRIGHT", 0)
     end
 
-    frame.icon:SetTexture(icon)
+    -- frame.icon:SetTexture(icon)
     frame.text:SetText(name)
 end
 
@@ -322,8 +322,8 @@ local function createOverviewMainCDGroupAssignment(parentFrame)
     frame:SetBackdropColor(0, 0, 0, 0)
 
     frame.iconFrame = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    frame.iconFrame:SetSize(12, 12)
-    frame.iconFrame:SetPoint("BOTTOMLEFT", 10, 4)
+    frame.iconFrame:SetSize(14, 14)
+    frame.iconFrame:SetPoint("BOTTOMLEFT", 10, 3)
 
     frame.icon = frame.iconFrame:CreateTexture(nil, "ARTWORK")
     frame.icon:SetAllPoints()
@@ -379,8 +379,8 @@ local function updateOverviewMainCDGroup(frame, prevFrame, group, uuid, index)
     frame:ClearAllPoints()
     
     if prevFrame then
-        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0)
-        frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0)
+        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0, index == 1 and -2 or 0)
+        frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0, index == 1 and -2 or 0)
     else
         frame:SetPoint("TOPLEFT", 0)
         frame:SetPoint("TOPRIGHT", 0)

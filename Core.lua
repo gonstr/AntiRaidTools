@@ -22,6 +22,7 @@ function AntiRaidTools:OnInitialize()
     self:InitOptions()
     self:InitMinimap()
     self:InitOverview()
+    self:InitRaidNotification()
 end
 
 function AntiRaidTools:OnEnable()
@@ -30,6 +31,7 @@ function AntiRaidTools:OnEnable()
     self:RegisterEvent("ENCOUNTER_END")
     self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     self:RegisterEvent("UNIT_HEALTH")
+    self:RegisterEvent("GROUP_ROSTER_UPDATE")
 
     self:RegisterChatCommand("art", "HandleChatCommand")
 end
@@ -40,6 +42,7 @@ function AntiRaidTools:OnDisable()
     self:UnregisterEvent("ENCOUNTER_END")
     self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     self:UnregisterEvent("UNIT_HEALTH")
+    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
 
     self:UnregisterChatCommand("art")
 end
@@ -56,6 +59,7 @@ end
 function AntiRaidTools:ENCOUNTER_START(encounterId)
     self:OverviewSelectEncounter(encounterId)
     self:RaidCooldownsStartEncounter(encounterId)
+    self:RaidNotificationsToggleFrameLock(true)
 end
 
 function AntiRaidTools:ENCOUNTER_END()
@@ -73,6 +77,12 @@ function AntiRaidTools:UNIT_HEALTH(_, unitId)
         self:RaidCooldownsProcessGroups()
         self:UpdateOverviewSpells()
     end
+
+    self:RaidCooldownsProcessUnitHealth(unitId)
+end
+
+function AntiRaidTools:GROUP_ROSTER_UPDATE()
+    self:UpdateOverviewSpells()
 end
 
 function AntiRaidTools:COMBAT_LOG_EVENT_UNFILTERED()

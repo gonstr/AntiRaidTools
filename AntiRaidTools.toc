@@ -34,3 +34,4 @@ State\RaidCooldowns.lua
 State\Units.lua
 UI\Minimap.lua
 UI\Overview.lua
+UI\RaidNotifications.lua
