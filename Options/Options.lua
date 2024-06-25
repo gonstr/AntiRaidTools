@@ -119,36 +119,36 @@ Example import:
 ]]
 
 local importCodeExample = [[
-type: RAID_CDS
+type: RAID_ASSIGNMENTS
 encounter: 1024
 trigger: { type: UNIT_HEALTH, unit: boss1, percentage: 35 }
 metadata: { name: "Boss 25%", icon: 134153 }
-strategy: CHAIN
+strategy: { type: CHAIN }
 assignments:
-- [{ player: Anticipâte, spell_id: 31821 }]
-- [{ player: Kondec, spell_id: 62618 }]
-- [{ player: Venmir, spell_id: 98008 }]
+- [{ type: SPELL, player: Anticipâte, spell_id: 31821 }]
+- [{ type: SPELL, player: Kondec, spell_id: 62618 }]
+- [{ type: SPELL, player: Venmir, spell_id: 98008 }]
 ---
-type: RAID_CDS
+type: RAID_ASSIGNMENTS
 encounter: 1027
 trigger: { type: SPELL_CAST, spell_id: 91849 }
-metadata: { name: "Roar Rotation", icon: 77764 }
-strategy: BEST_MATCH
+metadata: { name: "Grip of Death", icon: 77764 }
+strategy: { type: BEST_MATCH }
 assignments:
-- [{ player: Riphyrra, spell_id: 77764 }]
-- [{ player: Jamón, spell_id: 77764 }]
-- [{ player: Clutex, spell_id: 77764 }]
-- [{ player: Crawlern, spell_id: 77764 }]
+- [{ type: SPELL, player: Riphyrra, spell_id: 77764 }]
+- [{ type: SPELL, player: Jamón, spell_id: 77764 }]
+- [{ type: SPELL, player: Clutex, spell_id: 77764 }]
+- [{ type: SPELL, player: Crawlern, spell_id: 77764 }]
 ---
-type: RAID_CDS
+type: RAID_ASSIGNMENTS
 encounter: 1026
 trigger: { type: RAID_BOSS_EMOTE, text: "The air crackles with electricity!", duration: 5 }
 metadata: { name: "Crackle", icon: 136050 }
-strategy: BEST_MATCH
+strategy: { type: BEST_MATCH }
 assignments:
-- [{ player: Anticipâte, spell_id: 31821 }]
-- [{ player: Kondec, spell_id: 62618 }]
-- [{ player: Venmir, spell_id: 98008 }]
+- [{ type: SPELL, player: Anticipâte, spell_id: 31821 }]
+- [{ type: SPELL, player: Kondec, spell_id: 62618 }]
+- [{ type: SPELL, player: Venmir, spell_id: 98008 }]
 ]]
 
 local importOptions = {

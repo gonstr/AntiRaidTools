@@ -121,7 +121,7 @@ function AntiRaidTools:InitOverview()
     self.overvieweHeaderText = encounterName
     self.overviewMain = main
     self.overviewMainHeaders = {}
-    self.overviewMainRaidCDGroups = {}
+    self.overviewMainRaidAssignmentGroups = {}
 end
 
 function AntiRaidTools:UpdateOverview()
@@ -404,7 +404,7 @@ function AntiRaidTools:UpdateOverviewMain()
         header:Hide()
     end
 
-    for _, group in pairs(self.overviewMainRaidCDGroups) do
+    for _, group in pairs(self.overviewMainRaidAssignmentGroups) do
         group:Hide()
     end
 
@@ -416,7 +416,7 @@ function AntiRaidTools:UpdateOverviewMain()
         local groupIndex = 1
         local prevFrame = nil
         for _, part in pairs(encounter) do
-            if part.type == "RAID_CDS" then
+            if part.type == "RAID_ASSIGNMENTS" then
                 -- Update header
                 if not self.overviewMainHeaders[headerIndex] then
                     self.overviewMainHeaders[headerIndex] = createOverviewMainHeader(self.overviewMain)
@@ -442,11 +442,11 @@ function AntiRaidTools:UpdateOverviewMain()
 
                 -- Update assignment groups
                 for i, group in ipairs(part.assignments) do
-                    if not self.overviewMainRaidCDGroups[groupIndex] then
-                        self.overviewMainRaidCDGroups[groupIndex] = createOverviewMainCDGroup(self.overviewMain)
+                    if not self.overviewMainRaidAssignmentGroups[groupIndex] then
+                        self.overviewMainRaidAssignmentGroups[groupIndex] = createOverviewMainCDGroup(self.overviewMain)
                     end
 
-                    local frame = self.overviewMainRaidCDGroups[groupIndex]
+                    local frame = self.overviewMainRaidAssignmentGroups[groupIndex]
 
                     updateOverviewMainCDGroup(frame, prevFrame, group, part.uuid, i)
 
@@ -459,7 +459,7 @@ function AntiRaidTools:UpdateOverviewMain()
 end
 
 function AntiRaidTools:UpdateOverviewActiveGroups()
-    for _, groupFrame in ipairs(self.overviewMainRaidCDGroups) do
+    for _, groupFrame in ipairs(self.overviewMainRaidAssignmentGroups) do
         if self:GetActiveGroupIndex(groupFrame.uuid) == groupFrame.index then
             groupFrame:SetBackdropColor(1, 1, 1, 0.6)
         else
@@ -469,7 +469,7 @@ function AntiRaidTools:UpdateOverviewActiveGroups()
 end
 
 function AntiRaidTools:UpdateOverviewSpells()
-    for _, groupFrame in pairs(self.overviewMainRaidCDGroups) do
+    for _, groupFrame in pairs(self.overviewMainRaidAssignmentGroups) do
         for _, assignmentFrame in pairs(groupFrame.assignments) do
             if self:IsSpellActive(assignmentFrame.player, assignmentFrame.spellId) then
                 ActionButton_ShowOverlayGlow(assignmentFrame.iconFrame)

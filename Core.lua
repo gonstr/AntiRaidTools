@@ -58,12 +58,12 @@ end
 
 function AntiRaidTools:ENCOUNTER_START(encounterId)
     self:OverviewSelectEncounter(encounterId)
-    self:RaidCooldownsStartEncounter(encounterId)
+    self:RaidAssignmentsStartEncounter(encounterId)
     self:RaidNotificationsToggleFrameLock(true)
 end
 
 function AntiRaidTools:ENCOUNTER_END()
-    self:RaidCooldownsEndEncounter()
+    self:RaidAssignmentsEndEncounter()
     self:ResetSpellsCache()
     self:ResetDeadCache()
     self:UpdateOverviewSpells()
@@ -74,11 +74,11 @@ function AntiRaidTools:UNIT_HEALTH(_, unitId)
 
     if self:IsCachedUnitDead(guid) and UnitHealth(unitId) > 0 and not UnitIsGhost(unitId) then
         self:ClearCachedUnitDead(guid)
-        self:RaidCooldownsProcessGroups()
+        self:RaidAssignmentsProcessGroups()
         self:UpdateOverviewSpells()
     end
 
-    --self:RaidCooldownsProcessUnitHealth(unitId)
+    --self:RaidAssignmentsProcessUnitHealth(unitId)
 end
 
 function AntiRaidTools:GROUP_ROSTER_UPDATE()
@@ -93,11 +93,11 @@ end
 function AntiRaidTools:HandleCombatLog(subEvent, sourceName, destGUID, destName, spellId)
     if subEvent == "SPELL_CAST_SUCCESS" then
         self:CacheSpellCast(sourceName, spellId, function() self:UpdateOverviewSpells() end)
-        self:RaidCooldownsProcessGroups()
+        self:RaidAssignmentsProcessGroups()
     elseif subEvent == "UNIT_DIED" then
         if self:IsFriendlyRaidMemberOrPlayer(destGUID) then
             self:CacheUnitDied(destGUID)
-            self:RaidCooldownsProcessGroups()
+            self:RaidAssignmentsProcessGroups()
             self:UpdateOverviewSpells()
         end
     end

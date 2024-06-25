@@ -5,57 +5,57 @@ local activeEncounter = nil
 -- Key: UUID, value = assignment group index
 local activeGroups = {}
 
--- Key: UnitId, value = { trigger, triggered }
+-- Key: UnitId, value = { raidAssignment, triggered }
 local unitHealthTriggersCache = {}
 
-local function resetRaidCooldowns()
+local function resetRaidAssignments()
     activeEncounter = nil
     activeGroups = {}
     unitHealthTriggersCache = {}
 end
 
-function AntiRaidTools:RaidCooldownsStartEncounter(encounterId)
+function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
     if AntiRaidTools:EncounterExists(encounterId) then
         activeEncounter = self.db.profile.data.encounters[encounterId]
 
         -- Cache unit health triggers for faster lookups
         for _, part in ipairs(activeEncounter) do
-            if part.type == "RAID_CDS" and part.trigger.type == "UNIT_HEALTH" then
+            if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "UNIT_HEALTH" then
                 unitHealthTriggersCache[part.trigger.unit] = {
                     triggered = false,
-                    trigger = unit.trigger
+                    raidAssignment = part
                 }
             end
         end
 
-        self:RaidCooldownsProcessGroups()
+        self:RaidAssignmentsProcessGroups()
     end
 end
 
-function AntiRaidTools:RaidCooldownsEndEncounter()
-    resetRaidCooldowns()
+function AntiRaidTools:RaidAssignmentsEndEncounter()
+    resetRaidAssignments()
     self:UpdateOverviewActiveGroups()
 end
 
-function AntiRaidTools:RaidCooldownsProcessGroups()
+function AntiRaidTools:RaidAssignmentsProcessGroups()
     if not activeEncounter then
         return
     end
 
     for i, part in ipairs(activeEncounter) do
-        if part.type == "RAID_CDS" then
-            activeGroups[part.uuid] = self:RaidCooldownsSelectGroup(part.assignments)
+        if part.type == "RAID_ASSIGNMENTS" then
+            activeGroups[part.uuid] = self:RaidAssignmentsSelectGroup(part.assignments)
         end
     end
 
     self:UpdateOverviewActiveGroups()
 end
 
-function AntiRaidTools:RaidCooldownsSelectGroup(assignments)
+function AntiRaidTools:RaidAssignmentsSelectGroup(assignments)
     local bestMatchIndex = nil
     local maxReadySpells = 0
     
-    -- First pass: check for a group where all CDs are ready
+    -- First pass: check for a group where all assignments are ready
     for i, group in ipairs(assignments) do
         local ready = true
         for _, assignment in ipairs(group) do
@@ -70,7 +70,7 @@ function AntiRaidTools:RaidCooldownsSelectGroup(assignments)
         end
     end
     
-    -- Second pass: Find the group with the most ready CDs
+    -- Second pass: Find the group with the most ready assignemnts
     for i, group in pairs(assignments) do
         local readySpells = 0
         
@@ -93,7 +93,7 @@ function AntiRaidTools:GetActiveGroupIndex(uuid)
     return activeGroups[uuid]
 end
 
-function AntiRaidTools:RaidCooldownsProcessUnitHealth(unit)
+function AntiRaidTools:RaidAssignmentsProcessUnitHealth(unit)
     if activeEncounter then
         local unitHealthTrigger = unitHealthTriggersCache[unit]
         if unitHealthTrigger and not unitHealthTrigger.triggered then
@@ -103,7 +103,7 @@ function AntiRaidTools:RaidCooldownsProcessUnitHealth(unit)
 
             if percentage < unitHealthTrigger.trigger.percentage then
                 unitHealthTrigger.triggered = true
-                --self:RaidNotificationsShow()
+                self:RaidNotificationsShowRaidAssignment(unitHealthTrigger.raidAssignment)
             end
         end
     end

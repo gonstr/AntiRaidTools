@@ -31,7 +31,7 @@ Import\Import.lua
 Import\Validation.lua
 State\Spells.lua
 State\Encounters.lua
-State\RaidCooldowns.lua
+State\RaidAssignments.lua
 State\Units.lua
 UI\Minimap.lua
 UI\Overview.lua

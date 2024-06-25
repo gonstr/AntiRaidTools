@@ -48,8 +48,8 @@ local function validateRequiredFields(import)
 end
 
 local function validateType(import)
-    if import.type ~= "RAID_CDS" then
-        return false, "Import has an unknown type: " .. stringSafe(import.type) .. ". Supported values are `RAID_CDS`."
+    if import.type ~= "RAID_ASSIGNMENTS" then
+        return false, "Import has an unknown type: " .. stringSafe(import.type) .. ". Supported values are `RAID_ASSIGNMENTS`."
     end
 
     return true
@@ -67,10 +67,10 @@ local function validateEncounter(import, encounters)
     return true
 end
 
-local function validateRaidCDs(import, spells)
-    if import.type == "RAID_CDS" then
+local function validateRaidAssignments(import, spells)
+    if import.type == "RAID_ASSIGNMENTS" then
         if not import.assignments then
-            return false, "Import with type RAID_CDS is missing a assignments field."
+            return false, "Import with type RAID_ASSIGNMENTS is missing a assignments field."
         end
 
         if type(import.assignments) ~= "table" then
@@ -84,15 +84,15 @@ local function validateRaidCDs(import, spells)
         end
 
         if not import.trigger then
-            return false, "Import with type RAID_CDS is missing a trigger field."
+            return false, "Import with type RAID_ASSIGNMENTS is missing a trigger field."
         end
 
         if not import.metadata then
-            return false, "Import with type RAID_CDS is missing a metadata field."
+            return false, "Import with type RAID_ASSIGNMENTS is missing a metadata field."
         end
 
-        if not import.metadata.spell_id and not (import.metadata.name and import.metadata.icon) then
-            return false, "Import has an invalid metadata field. Requires spell_id or name and icon."
+        if not import.metadata.spell_id and not import.metadata.name then
+            return false, "Import has an invalid metadata field. Requires spell_id or name."
         end
 
         if import.metadata.icon and (type(import.metadata.icon) ~= "number" or import.metadata.icon ~= math.floor(import.metadata.icon)) then
@@ -104,7 +104,7 @@ local function validateRaidCDs(import, spells)
         end
 
         if not import.strategy then
-            return false, "Import with type RAID_CDS is missing a strategy field."
+            return false, "Import with type RAID_ASSIGNMENTS is missing a strategy field."
         end
 
         if type(import.strategy) ~= "table" then
@@ -115,8 +115,8 @@ local function validateRaidCDs(import, spells)
             return false, "Import has an invalid strategy field. Requires type."
         end
 
-        if import.strategy.type ~= "BEST_MATCH" then -- and import.strategy.type ~= "CHAIN" then
-            return false, "Import has an unknown strategy: " .. stringSafe(import.strategy.type) .. ". Supported values are `BEST_MATCH`." --, `CHAIN`."
+        if import.strategy.type ~= "BEST_MATCH" and import.strategy.type ~= "CHAIN" then
+            return false, "Import has an unknown strategy: " .. stringSafe(import.strategy.type) .. ". Supported values are `BEST_MATCH`, `CHAIN`."
         end
 
         if import.strategy.duration and (type(import.strategy.duration) ~= "number" or import.strategy.duration ~= math.floor(import.strategy.duration)) then
@@ -124,7 +124,7 @@ local function validateRaidCDs(import, spells)
         end
 
         if not import.assignments then
-            return false, "Import with type RAID_CDS is missing an assignments field."
+            return false, "Import with type RAID_ASSIGNMENTS is missing an assignments field."
         end
 
         if type(import.assignments) ~= "table" then
@@ -149,11 +149,15 @@ local function validateRaidCDs(import, spells)
                     return false, "Import has an invalid assignments value: " .. stringSafe(assignment) .. "."
                 end
 
+                if not assignment.type then
+                    return false, "Import has a invalid assignments field. Missing type: " .. stringSafe(assignment)
+                end
+
                 if not assignment.player then
-                    return false, "Import has a malformed assignments field. Missing player: " .. stringSafe(assignment)
+                    return false, "Import has a invalid assignments field. Missing player: " .. stringSafe(assignment)
                 end
                 if not assignment.spell_id then
-                    return false, "Import has a malformed assignments field. Missing spell_id: " .. stringSafe(assignment)
+                    return false, "Import has a invalid assignments field. Missing spell_id: " .. stringSafe(assignment)
                 end
                 if type(assignment.spell_id) ~= "number" or assignment.spell_id ~= math.floor(assignment.spell_id) then
                     return false, "Import has an unknown spell_id value: " .. stringSafe(assignment.spell_id) .. "."
@@ -239,7 +243,7 @@ function AntiRaidTools:ValidateImports(imports)
         ok, err = validateTrigger(import)
         if not ok then return false, err end
 
-        ok, err = validateRaidCDs(import, spells)
+        ok, err = validateRaidAssignments(import, spells)
         if not ok then return false, err end
     end
     

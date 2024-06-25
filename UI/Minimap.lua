@@ -7,7 +7,7 @@ function AntiRaidTools:InitMinimap()
     local broker = LDB:NewDataObject("AntiRaidTools", {
         type = "data source",
         text = "AntiRaidTools",
-        icon = "Interface\\Icons\\Spell_Nature_ElementalPrecision_1",
+        icon = "Interface\\Icons\\Spell_Shadow_GatherShadows",
         OnClick = function(self, button)
             if button == "LeftButton" then
                 AntiRaidTools.db.profile.overview.show = not AntiRaidTools.db.profile.overview.show
