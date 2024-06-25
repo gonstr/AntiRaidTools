@@ -94,8 +94,6 @@ function AntiRaidTools:IsSpellReady(unit, spellId, timestamp)
     if timestamp < cachedCastTimestamp + spells[spellId].cooldown then
         return false
     end
-
-    cooldownCache[key] = nil
     
     return true
 end
@@ -111,7 +109,7 @@ function AntiRaidTools:IsSpellActive(unit, spellId)
         end
     end
 
-    timestamp = GetTime()
+    local timestamp = GetTime()
 
     local key = unit .. ":" .. spellId
 
@@ -124,8 +122,6 @@ function AntiRaidTools:IsSpellActive(unit, spellId)
     if timestamp < cachedCastTimestamp + spells[spellId].duration then
         return true
     end
-
-    spellCastCache[key] = nil
     
     return false
 end

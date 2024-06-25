@@ -33,7 +33,7 @@ function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
             end
         end
 
-        self:RaidAssignmentsProcessGroups()
+        self:RaidAssignmentsUpdateGroups()
     end
 end
 
@@ -42,7 +42,7 @@ function AntiRaidTools:RaidAssignmentsEndEncounter()
     self:UpdateOverviewActiveGroups()
 end
 
-function AntiRaidTools:RaidAssignmentsProcessGroups()
+function AntiRaidTools:RaidAssignmentsUpdateGroups()
     if not activeEncounter then
         return
     end
@@ -126,7 +126,7 @@ function AntiRaidTools:GetActiveGroups(uuid)
     return activeGroups[uuid]
 end
 
-function AntiRaidTools:RaidAssignmentsProcessUnitHealth(unit)
+function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
     if activeEncounter then
         local part = unitHealthRaidAssignmentCache[unit]
 
@@ -144,4 +144,12 @@ function AntiRaidTools:RaidAssignmentsProcessUnitHealth(unit)
             end
         end
     end
+end
+
+function AntiRaidTools:RaidAssignmentsHandleSpellCastStart(spellId)
+-- TODO
+end
+
+function AntiRaidTools:RaidAssignmentsHandleSpellCastSuccess(spellId)
+-- TODO
 end

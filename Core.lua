@@ -79,7 +79,7 @@ function AntiRaidTools:UNIT_HEALTH(_, unitId)
         self:UpdateNotificationSpells()
     end
 
-    self:RaidAssignmentsProcessUnitHealth(unitId)
+    self:RaidAssignmentsHandleUnitHealth(unitId)
 end
 
 function AntiRaidTools:GROUP_ROSTER_UPDATE()
@@ -93,11 +93,14 @@ function AntiRaidTools:COMBAT_LOG_EVENT_UNFILTERED()
 end
 
 function AntiRaidTools:HandleCombatLog(subEvent, sourceName, destGUID, destName, spellId)
-    if subEvent == "SPELL_CAST_SUCCESS" then
+    if subEvent == "SPELL_CAST_START" then
+        self:RaidAssignmentsHandleSpellCastStart(spellId)
+    elseif subEvent == "SPELL_CAST_SUCCESS" then
         self:CacheSpellCast(sourceName, spellId, function()
             self:UpdateOverviewSpells()
             self:UpdateNotificationSpells()
         end)
+        self:RaidAssignmentsHandleSpellCastSuccess(spellId)
         self:RaidAssignmentsProcessGroups()
     elseif subEvent == "UNIT_DIED" then
         if self:IsFriendlyRaidMemberOrPlayer(destGUID) then
