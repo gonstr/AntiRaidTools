@@ -95,10 +95,6 @@ local function validateRaidAssignments(import, spells)
             return false, "Import has an invalid metadata field. Requires spell_id or name."
         end
 
-        if import.metadata.icon and (type(import.metadata.icon) ~= "number" or import.metadata.icon ~= math.floor(import.metadata.icon)) then
-            return false, "Import has an invalid icon value: " .. stringSafe(import.metadata.icon) .. "."
-        end
-
         if import.metadata.spell_id and (type(import.metadata.spell_id) ~= "number" or import.metadata.spell_id ~= math.floor(import.metadata.spell_id)) then
             return false, "Import has an invalid spell_id value: " .. stringSafe(import.spell_id) .. "."
         end

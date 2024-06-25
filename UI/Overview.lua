@@ -268,11 +268,6 @@ local function createOverviewMainHeader(mainFrame, prevFrame)
         frame:SetPoint("TOPRIGHT", 0)
     end
 
-    -- frame.icon = frame:CreateTexture(nil, "ARTWORK")
-    -- frame.icon:SetSize(12, 12)
-    -- frame.icon:SetPoint("BOTTOMLEFT", 10, 4)
-    -- frame.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-
     frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     frame.text:SetFont("Fonts\\FRIZQT__.TTF", 10)
     frame.text:SetTextColor(1, 1, 1, 1)
@@ -281,7 +276,7 @@ local function createOverviewMainHeader(mainFrame, prevFrame)
     return frame
 end
 
-local function updateOverviewMainHeader(frame, prevFrame, icon, name)
+local function updateOverviewMainHeader(frame, prevFrame, name)
     frame:Show()
 
     frame:ClearAllPoints()
@@ -294,11 +289,10 @@ local function updateOverviewMainHeader(frame, prevFrame, icon, name)
         frame:SetPoint("TOPRIGHT", 0)
     end
 
-    -- frame.icon:SetTexture(icon)
     frame.text:SetText(name)
 end
 
-local function createOverviewMainCDGroup(mainFrame, prevFrame)
+local function createOverviewMainGroup(mainFrame, prevFrame)
     local frame = CreateFrame("Frame", nil, mainFrame, "BackdropTemplate")
     frame:SetHeight(20)
     frame:SetBackdrop({
@@ -312,14 +306,8 @@ local function createOverviewMainCDGroup(mainFrame, prevFrame)
     return frame
 end
 
-local function createOverviewMainCDGroupAssignment(parentFrame)
-    local frame = CreateFrame("Frame", nil, parentFrame, "BackdropTemplate")
-    frame:SetBackdrop({
-        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-        tile = true,
-        tileSize = 16,
-    })
-    frame:SetBackdropColor(0, 0, 0, 0)
+local function createOverviewMainGroupAssignment(parentFrame)
+    local frame = CreateFrame("Frame", nil, parentFrame)
 
     frame.iconFrame = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     frame.iconFrame:SetSize(14, 14)
@@ -337,7 +325,7 @@ local function createOverviewMainCDGroupAssignment(parentFrame)
     return frame
 end
 
-local function updateOverviewMainCDGroupAssignment(frame, assignment, index, total)
+local function updateOverviewMainGroupAssignment(frame, assignment, index, total)
     frame:Show()
 
     frame.player = assignment.player
@@ -368,7 +356,7 @@ local function updateOverviewMainCDGroupAssignment(frame, assignment, index, tot
     end
 end
 
-local function updateOverviewMainCDGroup(frame, prevFrame, group, uuid, index)
+local function updateOverviewMainGroup(frame, prevFrame, group, uuid, index)
     frame:Show()
 
     frame.uuid = uuid
@@ -392,10 +380,10 @@ local function updateOverviewMainCDGroup(frame, prevFrame, group, uuid, index)
     
     for i, assignment in ipairs(group) do
         if not frame.assignments[i] then
-            frame.assignments[i] = createOverviewMainCDGroupAssignment(frame)
+            frame.assignments[i] = createOverviewMainGroupAssignment(frame)
         end
 
-        updateOverviewMainCDGroupAssignment(frame.assignments[i], assignment, i, #group)
+        updateOverviewMainGroupAssignment(frame.assignments[i], assignment, i, #group)
     end
 end
 
@@ -424,18 +412,16 @@ function AntiRaidTools:UpdateOverviewMain()
     
                 local frame = self.overviewMainHeaders[headerIndex]
 
-                local headerText, headerIcon
+                local headerText
 
                 if part.metadata.spell_id then
-                    local name, _, icon = GetSpellInfo(part.metadata.spell_id)
+                    local name = GetSpellInfo(part.metadata.spell_id)
                     headerText = name
-                    headerIcon = icon
                 else
                     headerText = part.metadata.name
-                    headerIcon = part.metadata.icon
                 end
 
-                updateOverviewMainHeader(frame, prevFrame, headerIcon, headerText)
+                updateOverviewMainHeader(frame, prevFrame, headerText)
                 
                 prevFrame = frame
                 headerIndex = headerIndex + 1
@@ -443,12 +429,12 @@ function AntiRaidTools:UpdateOverviewMain()
                 -- Update assignment groups
                 for i, group in ipairs(part.assignments) do
                     if not self.overviewMainRaidAssignmentGroups[groupIndex] then
-                        self.overviewMainRaidAssignmentGroups[groupIndex] = createOverviewMainCDGroup(self.overviewMain)
+                        self.overviewMainRaidAssignmentGroups[groupIndex] = createOverviewMainGroup(self.overviewMain)
                     end
 
                     local frame = self.overviewMainRaidAssignmentGroups[groupIndex]
 
-                    updateOverviewMainCDGroup(frame, prevFrame, group, part.uuid, i)
+                    updateOverviewMainGroup(frame, prevFrame, group, part.uuid, i)
 
                     prevFrame = frame
                     groupIndex = groupIndex + 1
@@ -460,8 +446,16 @@ end
 
 function AntiRaidTools:UpdateOverviewActiveGroups()
     for _, groupFrame in ipairs(self.overviewMainRaidAssignmentGroups) do
-        if self:GetActiveGroupIndex(groupFrame.uuid) == groupFrame.index then
-            groupFrame:SetBackdropColor(1, 1, 1, 0.6)
+        local activeGroups = self:GetActiveGroups(groupFrame.uuid)
+
+        if activeGroups and #activeGroups == 1 then
+            for _, index in ipairs(activeGroups) do
+                if index == groupFrame.index then
+                    groupFrame:SetBackdropColor(1, 1, 1, 0.4)
+                else
+                    groupFrame:SetBackdropColor(0, 0, 0, 0)
+                end
+            end
         else
             groupFrame:SetBackdropColor(0, 0, 0, 0)
         end

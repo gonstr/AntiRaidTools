@@ -59,7 +59,6 @@ end
 function AntiRaidTools:ENCOUNTER_START(encounterId)
     self:OverviewSelectEncounter(encounterId)
     self:RaidAssignmentsStartEncounter(encounterId)
-    self:RaidNotificationsToggleFrameLock(true)
 end
 
 function AntiRaidTools:ENCOUNTER_END()
@@ -67,6 +66,7 @@ function AntiRaidTools:ENCOUNTER_END()
     self:ResetSpellsCache()
     self:ResetDeadCache()
     self:UpdateOverviewSpells()
+    self:UpdateNotificationSpells()
 end
 
 function AntiRaidTools:UNIT_HEALTH(_, unitId)
@@ -76,13 +76,15 @@ function AntiRaidTools:UNIT_HEALTH(_, unitId)
         self:ClearCachedUnitDead(guid)
         self:RaidAssignmentsProcessGroups()
         self:UpdateOverviewSpells()
+        self:UpdateNotificationSpells()
     end
 
-    --self:RaidAssignmentsProcessUnitHealth(unitId)
+    self:RaidAssignmentsProcessUnitHealth(unitId)
 end
 
 function AntiRaidTools:GROUP_ROSTER_UPDATE()
     self:UpdateOverviewSpells()
+    self:UpdateNotificationSpells()
 end
 
 function AntiRaidTools:COMBAT_LOG_EVENT_UNFILTERED()
@@ -92,13 +94,17 @@ end
 
 function AntiRaidTools:HandleCombatLog(subEvent, sourceName, destGUID, destName, spellId)
     if subEvent == "SPELL_CAST_SUCCESS" then
-        self:CacheSpellCast(sourceName, spellId, function() self:UpdateOverviewSpells() end)
+        self:CacheSpellCast(sourceName, spellId, function()
+            self:UpdateOverviewSpells()
+            self:UpdateNotificationSpells()
+        end)
         self:RaidAssignmentsProcessGroups()
     elseif subEvent == "UNIT_DIED" then
         if self:IsFriendlyRaidMemberOrPlayer(destGUID) then
             self:CacheUnitDied(destGUID)
             self:RaidAssignmentsProcessGroups()
             self:UpdateOverviewSpells()
+            self:UpdateNotificationSpells()
         end
     end
 end

@@ -1,3 +1,5 @@
+local insert = table.insert
+
 local AntiRaidTools = AntiRaidTools
 
 local activeEncounter = nil
@@ -6,7 +8,8 @@ local activeEncounter = nil
 local activeGroups = {}
 
 -- Key: UnitId, value = { raidAssignment, triggered }
-local unitHealthTriggersCache = {}
+-- We use this so we can do fast lookups for a trigger / raid assignment when a units health changes
+local unitHealthRaidAssignmentCache = {}
 
 local function resetRaidAssignments()
     activeEncounter = nil
@@ -15,16 +18,18 @@ local function resetRaidAssignments()
 end
 
 function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
+    resetRaidAssignments()
+
     if AntiRaidTools:EncounterExists(encounterId) then
         activeEncounter = self.db.profile.data.encounters[encounterId]
 
         -- Cache unit health triggers for faster lookups
         for _, part in ipairs(activeEncounter) do
             if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "UNIT_HEALTH" then
-                unitHealthTriggersCache[part.trigger.unit] = {
-                    triggered = false,
-                    raidAssignment = part
-                }
+                local partCopy = AntiRaidTools:ShallowCopyTable(part)
+                partCopy.triggered = false
+
+                unitHealthRaidAssignmentCache[part.trigger.unit] = partCopy
             end
         end
 
@@ -44,17 +49,17 @@ function AntiRaidTools:RaidAssignmentsProcessGroups()
 
     for i, part in ipairs(activeEncounter) do
         if part.type == "RAID_ASSIGNMENTS" then
-            activeGroups[part.uuid] = self:RaidAssignmentsSelectGroup(part.assignments)
+            activeGroups[part.uuid] = self:RaidAssignmentsSelectGroup(part.assignments, part.strategy.type)
         end
     end
 
     self:UpdateOverviewActiveGroups()
 end
 
-function AntiRaidTools:RaidAssignmentsSelectGroup(assignments)
+function AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignments)
     local bestMatchIndex = nil
     local maxReadySpells = 0
-    
+
     -- First pass: check for a group where all assignments are ready
     for i, group in ipairs(assignments) do
         local ready = true
@@ -89,21 +94,53 @@ function AntiRaidTools:RaidAssignmentsSelectGroup(assignments)
     return bestMatchIndex
 end
 
-function AntiRaidTools:GetActiveGroupIndex(uuid)
+function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
+    local groups = {}
+
+    if strategy == "CHAIN" then
+        -- CHAIN uses BEST_MATCH recursivly
+        local assignmentsCopy = AntiRaidTools:ShallowCopyTable(assignments)
+
+        local bestMatchIndex = self:RaidAssignmentsSelectBestMatchIndex(assignmentsCopy)
+        if bestMatchIndex then assignmentsCopy[bestMatchIndex] = nil end
+
+        while bestMatchIndex do
+            insert(groups, bestMatchIndex)
+
+            bestMatchIndex = self:RaidAssignmentsSelectBestMatchIndex(assignmentsCopy)
+            if bestMatchIndex then assignmentsCopy[bestMatchIndex] = nil end
+        end
+    else
+        -- Must be BEST_MATCH
+        local bestMatchIndex = self:RaidAssignmentsSelectBestMatchIndex(assignments)
+
+        if bestMatchIndex then
+            insert(groups, bestMatchIndex)
+        end 
+    end
+
+    return groups
+end
+
+function AntiRaidTools:GetActiveGroups(uuid)
     return activeGroups[uuid]
 end
 
 function AntiRaidTools:RaidAssignmentsProcessUnitHealth(unit)
     if activeEncounter then
-        local unitHealthTrigger = unitHealthTriggersCache[unit]
-        if unitHealthTrigger and not unitHealthTrigger.triggered then
+        local part = unitHealthRaidAssignmentCache[unit]
+
+        if part and not part.triggered then
             local maxHealth = UnitHealthMax(unit)
             local health = UnitHealth(unit)
             local percentage = health / maxHealth * 100
 
-            if percentage < unitHealthTrigger.trigger.percentage then
-                unitHealthTrigger.triggered = true
-                self:RaidNotificationsShowRaidAssignment(unitHealthTrigger.raidAssignment)
+            local trigger = part.trigger
+
+            if percentage < trigger.percentage then
+                part.triggered = true
+
+                self:RaidNotificationsShowRaidAssignment(part.uuid)
             end
         end
     end

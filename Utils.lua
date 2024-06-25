@@ -14,7 +14,7 @@ end
 local fallbackColor = { r = 0, g = 0, b = 0 }
 
 function AntiRaidTools:GetSpellColor(spellId)
-    local spell = self:GetSpells()[spellId]
+    local spell = self:GetSpell(spellId)
 
     if not spell then
         return fallbackColor
@@ -47,4 +47,41 @@ function AntiRaidTools:IsFriendlyRaidMemberOrPlayer(guid)
     end
 
     return false
+end
+
+function AntiRaidTools:CreateFadeOut(frame, onFinished)
+    local fadeOutGroup = frame:CreateAnimationGroup()
+
+    local fadeOut = fadeOutGroup:CreateAnimation("Alpha")
+    fadeOut:SetFromAlpha(1)
+    fadeOut:SetToAlpha(0)
+    fadeOut:SetDuration(0.5)
+    fadeOut:SetSmoothing("OUT")
+
+    fadeOutGroup:SetScript("OnFinished", function(self)
+        if onFinished then onFinished() end
+        self:GetParent():Hide()
+    end)
+
+    return fadeOutGroup
+end
+
+function AntiRaidTools:ShallowCopyTable(table)
+    if not table then return nil end
+
+    local copy = {}
+
+    for k, v in pairs(table) do
+        copy[k] = v
+    end
+    
+    return copy
+end
+
+function AntiRaidTools:StringEllipsis(str, len)
+    if string.len(str) > len + 3 then
+        return str:sub(1, len) .. "..."
+    end
+
+    return str
 end

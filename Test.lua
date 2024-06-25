@@ -15,9 +15,9 @@ function AntiRaidTools:InternalTestStart()
         AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Kondec", nil, nil, 62618)
     end)
 
-    C_Timer.After(9, function()
-        AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Venmir", nil, nil, 98008)
-    end)
+    -- C_Timer.After(9, function()
+    --     AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Venmir", nil, nil, 98008)
+    -- end)
 
     C_Timer.After(12, function()
         AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Managobrr", nil, nil, 64843)
