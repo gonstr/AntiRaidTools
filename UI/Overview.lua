@@ -3,7 +3,7 @@ local AntiRaidTools = AntiRaidTools
 function AntiRaidTools:InitOverview()
     local container = CreateFrame("Frame", "AntiRaidToolsOverview", UIParent, "BackdropTemplate")
     container:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    container:SetSize(300, 400)
+    container:SetSize(200, 300)
     container:SetBackdrop({
         bgFile = "Interface\\Addons\\AntiRaidTools\\Media\\gradient32x32.tga",
         tile = true,
