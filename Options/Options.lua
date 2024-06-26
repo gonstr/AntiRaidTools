@@ -114,7 +114,7 @@ local mainOptions = {
 local importDescription = [[
 Paste your raid assignments and other import data below. The import should be valid YAML.
 
-For the full API spec, visit https://github.com/gonstr/AntiRaidTools.
+For the full Import API spec, visit https://github.com/gonstr/AntiRaidTools.
 ]]
 
 local importOptions = {
