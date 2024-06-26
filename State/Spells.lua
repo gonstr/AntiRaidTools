@@ -35,7 +35,7 @@ local spells = {
         duration = 12
     },
     -- Tranquility
-    [44203] = {
+    [740] = {
         class = "DRUID",
         cooldown = 60 * 8,
         duration = 8

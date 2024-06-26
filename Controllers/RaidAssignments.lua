@@ -71,7 +71,7 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
     end
 
     self:SendRaidMessage("ACTIVE_GROUPS", self:GetAllActiveGroups())
-    self:UpdateOverviewActiveGroups()
+    --self:UpdateOverviewActiveGroups()
 end
 
 function AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignments)
@@ -155,7 +155,7 @@ function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
                 part.triggered = true
 
                 self:SendRaidMessage("SHOW_NOTIFICATION", part.uuid)
-                self:RaidNotificationsShowRaidAssignment(part.uuid)
+                --self:RaidNotificationsShowRaidAssignment(part.uuid)
             end
         end
     end
@@ -170,7 +170,7 @@ function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
             local part = spellCastAssignmentCache[spellId]
             if part then
                 self:SendRaidMessage("SHOW_NOTIFICATION", part.uuid)
-                self:RaidNotificationsShowRaidAssignment(part.uuid)
+                --self:RaidNotificationsShowRaidAssignment(part.uuid)
             end
         end
     end
@@ -181,7 +181,7 @@ function AntiRaidTools:RaidAssignmentsHandleRaidBossEmote(text)
         for _, part in ipairs(activeEncounter) do
             if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) then
                 self:SendRaidMessage("SHOW_NOTIFICATION", part.uuid)
-                self:RaidNotificationsShowRaidAssignment(part.uuid)
+                --self:RaidNotificationsShowRaidAssignment(part.uuid)
             end
         end
     end

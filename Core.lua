@@ -73,13 +73,16 @@ function AntiRaidTools:SendRaidMessage(event, data)
     end
 end
 
-function AntiRaidTools:OnCommReceived(prefix, message)
+function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
     if prefix == ADDON_PREFIX then
         local ok, payload = self:Deserialize(message)
         if ok then
             if payload.event == "ENCOUNTERS" then
-                self.db.profile.data.encounters = payload.data
-                self:UpdateOverview()
+                if sender ~= UnitName("player") then
+                    -- For encounter events we don't need to handle messages sent by ourselves
+                    self.db.profile.data.encounters = payload.data
+                    self:UpdateOverview()
+                end
             elseif payload.event == "ACTIVE_GROUPS" then
                 self:SetAllActiveGroups(payload.data)
                 self:UpdateOverviewActiveGroups()
@@ -120,7 +123,7 @@ function AntiRaidTools:GROUP_ROSTER_UPDATE()
     self:UpdateOverviewSpells()
     self:UpdateNotificationSpells()
 
-    if self:isRaidLeader() then
+    if self:IsPlayerRaidLeader() then
         self:SendRaidMessage("ENCOUNTERS", self.db.profile.data.encounters)
     end
 end

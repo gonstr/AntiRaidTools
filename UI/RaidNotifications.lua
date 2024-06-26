@@ -30,7 +30,7 @@ function AntiRaidTools:InitRaidNotification()
     content:SetAllPoints()
 
     content.header = CreateFrame("Frame", nil, content, "BackdropTemplate")
-    content.header:SetHeight(30)
+    content.header:SetHeight(20)
     content.header:SetBackdrop({
         bgFile = "Interface\\Addons\\AntiRaidTools\\Media\\gradient32x32.tga",
         tile = true,
@@ -41,17 +41,23 @@ function AntiRaidTools:InitRaidNotification()
     content.header:SetPoint("TOPRIGHT", 0, 0)
 
     content.header.text = content.header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    content.header.text:SetFont("Fonts\\FRIZQT__.TTF", 14)
+    content.header.text:SetFont("Fonts\\FRIZQT__.TTF", 10)
     content.header.text:SetTextColor(1, 1, 1, 1)
-    content.header.text:SetPoint("BOTTOMLEFT", 10, 7)
+    content.header.text:SetPoint("BOTTOMLEFT", 10, 5)
 
     content.header.countdown = content.header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    content.header.countdown:SetFont("Fonts\\FRIZQT__.TTF", 14)
+    content.header.countdown:SetFont("Fonts\\FRIZQT__.TTF", 10)
     content.header.countdown:SetTextColor(1, 1, 1, 1)
-    content.header.countdown:SetPoint("BOTTOMRIGHT", -10, 7)
+    content.header.countdown:SetPoint("BOTTOMRIGHT", -10, 5)
     content.header.countdown:Hide()
 
     content:Hide()
+
+    self.notificationFrameFadeOut = AntiRaidTools:CreateFadeOut(content, function()
+        AntiRaidTools.notificationContentFrame:Hide()
+    end)
+
+    self.notificationShowId = ""
 
     self.notificationRaidAssignmentGroups = {}
     self.notificationsCountdown = 0
@@ -74,7 +80,7 @@ function AntiRaidTools:RaidNotificationsToggleFrameLock(lock)
 end
 
 function AntiRaidTools:RaidNotificationsUpdateHeader(text)
-    self.notificationContentFrame.header.text:SetText(self:StringEllipsis(text, 24))
+    self.notificationContentFrame.header.text:SetText(self:StringEllipsis(text, 32))
 end
 
 local function updateCountdown(self, elapsed)
@@ -194,20 +200,18 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid)
         group:Hide()
     end
 
-    if encounter then    
-        self:RaidNotificationsToggleFrameLock(true)
-    
-        if self.notificationFrameFadeOut then
-            self.notificationFrameFadeOut:Stop()
-            self.notificationFrameFadeOut = nil
-        end
-    
-        PlaySoundFile(SONAR_SOUND_FILE, "Master")    
-        
+    if encounter then            
         local groupIndex = 1
         local prevFrame = self.notificationContentFrame.header
         for _, part in pairs(encounter) do
             if part.type == "RAID_ASSIGNMENTS" and part.uuid == uuid then
+                self:RaidNotificationsToggleFrameLock(true)
+    
+                self.notificationFrameFadeOut:Stop()
+                self.notificationContentFrame:Show()
+            
+                PlaySoundFile(SONAR_SOUND_FILE, "Master")
+
                 -- Update header
                 local headerText
 
@@ -246,13 +250,13 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid)
                     duration = part.strategy.duration
                 end
 
+                local showId = self:GenerateUUID()
+                self.notificationShowId = showId
+
                 C_Timer.After(duration + countdown, function()
-                    local onFinished = function()
-                        AntiRaidTools.notificationFrameFadeOut = nil
-                        AntiRaidTools.notificationContentFrame:Hide()
+                    if showId == self.notificationShowId then
+                        AntiRaidTools.notificationFrameFadeOut:Play()
                     end
-                    AntiRaidTools.notificationFrameFadeOut = AntiRaidTools:CreateFadeOut(AntiRaidTools.notificationContentFrame, onFinished)
-                    AntiRaidTools.notificationFrameFadeOut:Play()
                 end)
 
                 local activeGroups = self:GetActiveGroups(uuid)
@@ -274,8 +278,6 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid)
                 break
             end
         end
-
-        self.notificationContentFrame:Show()
     end
 end
 
