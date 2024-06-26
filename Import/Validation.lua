@@ -115,14 +115,6 @@ local function validateRaidAssignments(import, spells)
             return false, "Import has an unknown strategy: " .. stringSafe(import.strategy.type) .. ". Supported values are `BEST_MATCH`, `CHAIN`."
         end
 
-        if import.strategy.type == "CHAIN" and not import.strategy.duration then
-            return false, "Import strategy of type `CHAIN` is missing a duration field: " .. stringSafe(import.strategy)
-        end
-
-        if import.strategy.duration and (type(import.strategy.duration) ~= "number" or import.strategy.duration ~= math.floor(import.strategy.duration)) then
-            return false, "Import has an invalid duration field: " .. stringSafe(import.strategy.duration) .. "."
-        end
-
         if not import.assignments then
             return false, "Import with type RAID_ASSIGNMENTS is missing an assignments field."
         end
@@ -202,14 +194,14 @@ local function validateTrigger(import)
             if not import.trigger.text then
                 return false, "Import with trigger type UNIT_HEALTH is missing a text field."
             end
+        end
 
-            if not import.trigger.countdown then
-                return false, "Import with trigger type UNIT_HEALTH is missing a duration field."
-            end
+        if import.trigger.countdown and (type(import.trigger.countdown) ~= "number" or import.trigger.countdown ~= math.floor(import.trigger.countdown)) then
+            return false, "Import has an invalid countdown value: " .. stringSafe(import.trigger.countdown) .. "."
+        end
 
-            if type(import.trigger.countdown) ~= "number" or import.trigger.countdown ~= math.floor(import.trigger.countdown) then
-                return false, "Import has an invalid countdown value: " .. stringSafe(import.trigger.countdown) .. "."
-            end
+        if import.trigger.duration and (type(import.trigger.duration) ~= "number" or import.trigger.duration ~= math.floor(import.trigger.duration)) then
+            return false, "Import has an invalid duration field: " .. stringSafe(import.trigger.duration) .. "."
         end
     end
 
