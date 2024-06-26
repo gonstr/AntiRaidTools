@@ -446,18 +446,29 @@ end
 
 function AntiRaidTools:UpdateOverviewActiveGroups()
     for _, groupFrame in ipairs(self.overviewMainRaidAssignmentGroups) do
-        local activeGroups = self:GetActiveGroups(groupFrame.uuid)
+        local encounterId = self.db.profile.overview.selectedEncounterId
+        local encounter = self.db.profile.data.encounters[encounterId]
 
-        if activeGroups and #activeGroups == 1 then
-            for _, index in ipairs(activeGroups) do
-                if index == groupFrame.index then
-                    groupFrame:SetBackdropColor(1, 1, 1, 0.4)
-                else
-                    groupFrame:SetBackdropColor(0, 0, 0, 0)
+
+        if encounter then
+            for _, part in ipairs(encounter) do
+                if part.uuid == groupFrame.uuid and part.strategy.type == 'BEST_MATCH' then
+                    local activeGroups = self:GetActiveGroups(groupFrame.uuid)
+
+                    if activeGroups then
+                        for _, index in ipairs(activeGroups) do
+                            if index == groupFrame.index then
+                                groupFrame:SetBackdropColor(1, 1, 1, 0.4)
+                            else
+                                groupFrame:SetBackdropColor(0, 0, 0, 0)
+                            end
+                        end
+                    else
+                        groupFrame:SetBackdropColor(0, 0, 0, 0)
+                    end
+                    break
                 end
             end
-        else
-            groupFrame:SetBackdropColor(0, 0, 0, 0)
         end
     end    
 end
