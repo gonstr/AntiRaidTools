@@ -1,35 +1,51 @@
 local insert = table.insert
+local stringFind = string.find
 
 local AntiRaidTools = AntiRaidTools
 
+local isRaidLeader = false
+
 local activeEncounter = nil
 
--- Key: UUID, value = assignment group index
-local activeGroups = {}
-
--- Key: UnitId, value = { raidAssignment, triggered }
--- We use this so we can do fast lookups for a trigger / raid assignment when a units health changes
+-- We use caches so we can do fast lookups for a trigger
+-- key: unitId, value = { raidAssignment, triggered }
 local unitHealthRaidAssignmentCache = {}
 
-local function resetRaidAssignments()
+-- ley: spellId, value = raidAssignment
+local spellCastAssignmentCache = {}
+
+local function resetState()
+    enabled = false
     activeEncounter = nil
-    activeGroups = {}
     unitHealthTriggersCache = {}
+    spellCastAssignmentCache = {}
 end
 
 function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
-    resetRaidAssignments()
+    resetState()
+
+    if self.TEST or self:IsPlayerRaidLeader() then
+        isRaidLeader = true
+    end
+
+    if not isRaidLeader then
+        return
+    end
 
     if AntiRaidTools:EncounterExists(encounterId) then
         activeEncounter = self.db.profile.data.encounters[encounterId]
 
-        -- Cache unit health triggers for faster lookups
+        -- Populate caches
         for _, part in ipairs(activeEncounter) do
-            if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "UNIT_HEALTH" then
-                local partCopy = AntiRaidTools:ShallowCopyTable(part)
-                partCopy.triggered = false
+            if part.type == "RAID_ASSIGNMENTS" then
+                if part.trigger.type == "UNIT_HEALTH" then
+                    local partCopy = AntiRaidTools:ShallowCopyTable(part)
+                    partCopy.triggered = false
 
-                unitHealthRaidAssignmentCache[part.trigger.unit] = partCopy
+                    unitHealthRaidAssignmentCache[part.trigger.unit] = partCopy
+                elseif part.trigger.type == "SPELL_CAST" then
+                    spellCastAssignmentCache[part.trigger.spell_id] = part
+                end
             end
         end
 
@@ -38,21 +54,23 @@ function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
 end
 
 function AntiRaidTools:RaidAssignmentsEndEncounter()
-    resetRaidAssignments()
+    resetState()
+    self:ResetGroups()
     self:UpdateOverviewActiveGroups()
 end
 
 function AntiRaidTools:RaidAssignmentsUpdateGroups()
-    if not activeEncounter then
+    if not activeEncounter or not isRaidLeader then
         return
     end
 
     for i, part in ipairs(activeEncounter) do
         if part.type == "RAID_ASSIGNMENTS" then
-            activeGroups[part.uuid] = self:RaidAssignmentsSelectGroup(part.assignments, part.strategy.type)
+            self:SetActiveGroup(part.uuid, self:RaidAssignmentsSelectGroup(part.assignments, part.strategy.type))
         end
     end
 
+    self:SendRaidMessage("ACTIVE_GROUPS", self:GetAllActiveGroups())
     self:UpdateOverviewActiveGroups()
 end
 
@@ -122,10 +140,6 @@ function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
     return groups
 end
 
-function AntiRaidTools:GetActiveGroups(uuid)
-    return activeGroups[uuid]
-end
-
 function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
     if activeEncounter then
         local part = unitHealthRaidAssignmentCache[unit]
@@ -140,16 +154,35 @@ function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
             if percentage < trigger.percentage then
                 part.triggered = true
 
+                self:SendRaidMessage("SHOW_NOTIFICATION", part.uuid)
                 self:RaidNotificationsShowRaidAssignment(part.uuid)
             end
         end
     end
 end
 
-function AntiRaidTools:RaidAssignmentsHandleSpellCastStart(spellId)
--- TODO
+function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
+    if activeEncounter then
+        local _, _, _, castTime = GetSpellInfo(spellid)
+        
+        -- We don't want to handle a spellcast twice so we only look for start events or success events for instant cast spells
+        if event == "SPELL_CAST_START" or (event == "SPELL_CAST_SUCCESS" and castTime == 0) then
+            local part = spellCastAssignmentCache[spellId]
+            if part then
+                self:SendRaidMessage("SHOW_NOTIFICATION", part.uuid)
+                self:RaidNotificationsShowRaidAssignment(part.uuid)
+            end
+        end
+    end
 end
 
-function AntiRaidTools:RaidAssignmentsHandleSpellCastSuccess(spellId)
--- TODO
+function AntiRaidTools:RaidAssignmentsHandleRaidBossEmote(text)
+    if activeEncounter then
+        for _, part in ipairs(activeEncounter) do
+            if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) then
+                self:SendRaidMessage("SHOW_NOTIFICATION", part.uuid)
+                self:RaidNotificationsShowRaidAssignment(part.uuid)
+            end
+        end
+    end
 end

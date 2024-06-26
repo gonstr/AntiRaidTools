@@ -108,8 +108,8 @@ local function createNotificationGroupAssignment(parentFrame)
     local frame = CreateFrame("Frame", nil, parentFrame)
 
     frame.iconFrame = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    frame.iconFrame:SetSize(18, 18)
-    frame.iconFrame:SetPoint("BOTTOMLEFT", 10, 5)
+    frame.iconFrame:SetSize(16, 16)
+    frame.iconFrame:SetPoint("BOTTOMLEFT", 10, 6)
 
     frame.cooldownFrame = CreateFrame("Cooldown", nil, frame.iconFrame, "CooldownFrameTemplate")
     frame.cooldownFrame:SetAllPoints()
@@ -121,9 +121,9 @@ local function createNotificationGroupAssignment(parentFrame)
     frame.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 
     frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    frame.text:SetFont("Fonts\\FRIZQT__.TTF", 14)
+    frame.text:SetFont("Fonts\\FRIZQT__.TTF", 12)
     frame.text:SetTextColor(1, 1, 1, 1)
-    frame.text:SetPoint("BOTTOMLEFT", 34, 7)
+    frame.text:SetPoint("BOTTOMLEFT", 32, 8)
 
     return frame
 end
@@ -142,6 +142,9 @@ local function updateNotificationGroupAssignment(frame, assignment, index, total
     local color = AntiRaidTools:GetSpellColor(assignment.spell_id)
 
     frame.text:SetTextColor(color.r, color.g, color.b)
+
+    ActionButton_HideOverlayGlow(frame.iconFrame)
+    frame.cooldownFrame:Clear()
 
     frame:ClearAllPoints()
 
@@ -187,6 +190,10 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid)
     local selectedEncounterId = self.db.profile.overview.selectedEncounterId
     local encounter = self.db.profile.data.encounters[selectedEncounterId]
 
+    for _, group in pairs(self.notificationRaidAssignmentGroups) do
+        group:Hide()
+    end
+
     if encounter then    
         self:RaidNotificationsToggleFrameLock(true)
     
@@ -213,19 +220,33 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid)
 
                 self:RaidNotificationsUpdateHeader(headerText)
             
-                local duration = 0
+                local countdown = 0
             
                 if part.trigger.duration then
-                    duration = part.trigger.duration
+                    countdown = part.trigger.duration
                 end
 
-                if duration > 0 then
-                    self.notificationsCountdown = duration
+                if part.trigger.spell_id then
+                    local _, _, _, castTime = GetSpellInfo(part.trigger.spell_id)
+            
+                    if castTime then
+                        countdown = castTime / 1000
+                    end
+                end
+
+                if countdown > 0 then
+                    self.notificationsCountdown = countdown
                     self.notificationContentFrame.header.countdown:Show()
                     self.notificationContentFrame:SetScript("OnUpdate", updateCountdown)
                 end
-            
-                C_Timer.After(5 + duration, function()
+
+                local duration = 5
+
+                if part.strategy.duration then
+                    duration = part.strategy.duration
+                end
+
+                C_Timer.After(duration + countdown, function()
                     local onFinished = function()
                         AntiRaidTools.notificationFrameFadeOut = nil
                         AntiRaidTools.notificationContentFrame:Hide()

@@ -115,6 +115,10 @@ local function validateRaidAssignments(import, spells)
             return false, "Import has an unknown strategy: " .. stringSafe(import.strategy.type) .. ". Supported values are `BEST_MATCH`, `CHAIN`."
         end
 
+        if import.strategy.type == "CHAIN" and not import.strategy.duration then
+            return false, "Import strategy of type `CHAIN` is missing a duration field: " .. stringSafe(import.strategy)
+        end
+
         if import.strategy.duration and (type(import.strategy.duration) ~= "number" or import.strategy.duration ~= math.floor(import.strategy.duration)) then
             return false, "Import has an invalid duration field: " .. stringSafe(import.strategy.duration) .. "."
         end

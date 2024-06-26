@@ -85,3 +85,7 @@ function AntiRaidTools:StringEllipsis(str, len)
 
     return str
 end
+
+function AntiRaidTools:IsPlayerRaidLeader()
+    return IsInRaid() and UnitIsGroupLeader("player")
+end
