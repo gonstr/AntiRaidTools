@@ -178,16 +178,6 @@ local function validateTrigger(import)
             return false, "Import trigger is missing a type field."
         end
 
-        if import.trigger.type ~= "FOJJI_NUMEN_TIMER" and import.trigger.type ~= "UNIT_HEALTH" and import.trigger.type ~= "SPELL_CAST" and import.trigger.type ~= "RAID_BOSS_EMOTE" then
-            return false, "Import trigger has an unknown type. Supported values are `FOJJI_NUMEN_TIMER`, `UNIT_HEALTH`, `SPELL_CAST`, `RAID_BOSS_EMOTE`"
-        end
-
-        if import.trigger.type == "FOJJI_NUMEN_TIMER" then
-            if not import.trigger.key then
-                return false, "Import with trigger type FOJJI_NUMEN_TIMER is missing a key field."
-            end
-        end
-
         if import.trigger.type == "UNIT_HEALTH" then
             if not import.trigger.unit then
                 return false, "Import with trigger type UNIT_HEALTH is missing a unit field."
@@ -213,12 +203,12 @@ local function validateTrigger(import)
                 return false, "Import with trigger type UNIT_HEALTH is missing a text field."
             end
 
-            if not import.trigger.duration then
+            if not import.trigger.countdown then
                 return false, "Import with trigger type UNIT_HEALTH is missing a duration field."
             end
 
-            if type(import.trigger.duration) ~= "number" or import.trigger.duration ~= math.floor(import.trigger.duration) then
-                return false, "Import has an invalid duration value: " .. stringSafe(import.trigger.duration) .. "."
+            if type(import.trigger.countdown) ~= "number" or import.trigger.countdown ~= math.floor(import.trigger.countdown) then
+                return false, "Import has an invalid countdown value: " .. stringSafe(import.trigger.countdown) .. "."
             end
         end
     end

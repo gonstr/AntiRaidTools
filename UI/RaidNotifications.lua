@@ -226,16 +226,16 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid)
             
                 local countdown = 0
             
-                if part.trigger.duration then
-                    countdown = part.trigger.duration
-                end
-
                 if part.trigger.spell_id then
                     local _, _, _, castTime = GetSpellInfo(part.trigger.spell_id)
             
                     if castTime then
                         countdown = castTime / 1000
                     end
+                end
+
+                if part.trigger.countdown then
+                    countdown = part.trigger.countdown
                 end
 
                 if countdown > 0 then
