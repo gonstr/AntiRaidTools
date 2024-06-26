@@ -71,7 +71,6 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
     end
 
     self:SendRaidMessage("ACTIVE_GROUPS", self:GetAllActiveGroups())
-    --self:UpdateOverviewActiveGroups()
 end
 
 function AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignments)
@@ -140,6 +139,14 @@ function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
     return groups
 end
 
+local function sendNotification(uuid)
+    local activeGroups = AntiRaidTools:GetActiveGroups(uuid)
+
+    if activeGroups and #activeGroups > 0 then
+        AntiRaidTools:SendRaidMessage("SHOW_NOTIFICATION", uuid)
+    end
+end
+
 function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
     if activeEncounter then
         local part = unitHealthRaidAssignmentCache[unit]
@@ -154,8 +161,7 @@ function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
             if percentage < trigger.percentage then
                 part.triggered = true
 
-                self:SendRaidMessage("SHOW_NOTIFICATION", part.uuid)
-                --self:RaidNotificationsShowRaidAssignment(part.uuid)
+                sendNotification(part.uuid)
             end
         end
     end
@@ -169,8 +175,7 @@ function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
         if event == "SPELL_CAST_START" or (event == "SPELL_CAST_SUCCESS" and castTime == 0) then
             local part = spellCastAssignmentCache[spellId]
             if part then
-                self:SendRaidMessage("SHOW_NOTIFICATION", part.uuid)
-                --self:RaidNotificationsShowRaidAssignment(part.uuid)
+                sendNotification(part.uuid)
             end
         end
     end
@@ -180,8 +185,7 @@ function AntiRaidTools:RaidAssignmentsHandleRaidBossEmote(text)
     if activeEncounter then
         for _, part in ipairs(activeEncounter) do
             if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) then
-                self:SendRaidMessage("SHOW_NOTIFICATION", part.uuid)
-                --self:RaidNotificationsShowRaidAssignment(part.uuid)
+                sendNotification(part.uuid)
             end
         end
     end
