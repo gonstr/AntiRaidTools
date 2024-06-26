@@ -20,3 +20,4 @@ ignore:
   - .gitignore
   - .pkgmeta
   - README.md
+  - Docs

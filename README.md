@@ -1,3 +1,7 @@
 # Anti Raid Tools
 
-A raiding tool focused on automation and raid coordination.
+A WoW Raiding Addon focused on Automation and Raid Coordination.
+
+## Documentation
+
+- [Import API Spec](/Docs)
