@@ -446,8 +446,8 @@ end
 
 function AntiRaidTools:UpdateOverviewActiveGroups()
     for _, groupFrame in ipairs(self.overviewMainRaidAssignmentGroups) do
-        local encounterId = self.db.profile.overview.selectedEncounterId
-        local encounter = self.db.profile.data.encounters[encounterId]
+        local selectedEncounterId = self.db.profile.overview.selectedEncounterId
+        local encounter = self.db.profile.data.encounters[selectedEncounterId]
 
 
         if encounter then
