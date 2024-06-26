@@ -119,6 +119,10 @@ end
 function AntiRaidTools:GROUP_ROSTER_UPDATE()
     self:UpdateOverviewSpells()
     self:UpdateNotificationSpells()
+
+    if self:isRaidLeader() then
+        self:SendRaidMessage("ENCOUNTERS", self.db.profile.data.encounters)
+    end
 end
 
 function AntiRaidTools:COMBAT_LOG_EVENT_UNFILTERED()

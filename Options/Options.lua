@@ -190,6 +190,10 @@ local importOptions = {
                     AntiRaidTools.db.profile.data.encounters = AntiRaidTools:GroupImportByEncounter(result)
                 end
 
+                if self:isRaidLeader() then
+                    self:SendRaidMessage("ENCOUNTERS", self.db.profile.data.encounters)
+                end
+
                 -- Update overview after import
                 AntiRaidTools:UpdateOverview()
             end,
