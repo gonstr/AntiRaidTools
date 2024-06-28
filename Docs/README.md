@@ -20,7 +20,7 @@ assignments:
 type: RAID_ASSIGNMENTS
 encounter: 1027
 trigger: { type: SPELL_CAST, spell_id: 91849 }
-metadata: { name: "Grip of Death", icon: 77764 }
+metadata: { name: "Grip of Death" }
 strategy: { type: BEST_MATCH }
 assignments:
 - [{ type: SPELL, player: Riphyrra, spell_id: 77764 }]
