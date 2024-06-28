@@ -10,7 +10,7 @@ Example import:
 type: RAID_ASSIGNMENTS
 encounter: 1024
 trigger: { type: UNIT_HEALTH, unit: boss1, percentage: 35 }
-metadata: { name: "Boss 25%", icon: 134153 }
+metadata: { name: "Boss 25%" }
 strategy: { type: CHAIN }
 assignments:
 - [{ type: SPELL, player: Anticipâte, spell_id: 31821 }]
@@ -30,8 +30,8 @@ assignments:
 ---
 type: RAID_ASSIGNMENTS
 encounter: 1026
-trigger: { type: RAID_BOSS_EMOTE, text: "The air crackles with electricity!", duration: 5 }
-metadata: { name: "Crackle", icon: 136050 }
+trigger: { type: RAID_BOSS_EMOTE, text: "The air crackles with electricity!", countdown: 5, duration: 10 }
+metadata: { name: "Crackle" }
 strategy: { type: BEST_MATCH }
 assignments:
 - [{ type: SPELL, player: Anticipâte, spell_id: 31821 }, { type: SPELL, player: Kondec, spell_id: 62618 }]
