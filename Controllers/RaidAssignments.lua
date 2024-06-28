@@ -170,10 +170,11 @@ end
 function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
     if activeEncounter then
         local _, _, _, castTime = GetSpellInfo(spellid)
-        
+
         -- We don't want to handle a spellcast twice so we only look for start events or success events for instant cast spells
-        if event == "SPELL_CAST_START" or (event == "SPELL_CAST_SUCCESS" and castTime == 0) then
+        if event == "SPELL_CAST_START" or (event == "SPELL_CAST_SUCCESS" and (not castTime or castTime == 0)) then
             local part = spellCastAssignmentCache[spellId]
+
             if part then
                 sendNotification(part.uuid)
             end
