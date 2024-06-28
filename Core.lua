@@ -30,7 +30,7 @@ function AntiRaidTools:OnInitialize()
 end
 
 function AntiRaidTools:OnEnable()
-    self:RegisterEvent("PLAYER_LOGIN")
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterEvent("ENCOUNTER_START")
     self:RegisterEvent("ENCOUNTER_END")
     self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
@@ -42,7 +42,7 @@ function AntiRaidTools:OnEnable()
 end
 
 function AntiRaidTools:OnDisable()
-    self:UnregisterEvent("PLAYER_LOGIN")
+    self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     self:UnregisterEvent("ENCOUNTER_START")
     self:UnregisterEvent("ENCOUNTER_END")
     self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
@@ -57,7 +57,7 @@ function AntiRaidTools:InitDB()
     self.db = LibStub("AceDB-3.0"):New("AntiRaidTools", self.defaults)
 end
 
-function AntiRaidTools:PLAYER_LOGIN(event, isInitialLogin, isReloadingUi)
+function AntiRaidTools:PLAYER_ENTERING_WORLD()
     self:InitEncounters()
     self:UpdateOverview()
 end
@@ -80,6 +80,7 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
             if payload.event == "ENCOUNTERS" then
                 if sender ~= UnitName("player") then
                     -- For encounter events we don't need to handle messages sent by ourselves
+                    self:InitEncounters()
                     self.db.profile.data.encounters = payload.data
                     self:UpdateOverview()
                 end
