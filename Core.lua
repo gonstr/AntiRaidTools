@@ -6,7 +6,10 @@ local ADDON_PREFIX = "AntiRaidTools"
 AntiRaidTools.defaults = {
     profile = {
         options = {
-            import = ""
+            import = "",
+            notifications = {
+                showOnlyOwnNotifications = false
+            }
         },
         data = {
             encounters = {}

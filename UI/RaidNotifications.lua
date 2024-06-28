@@ -196,6 +196,29 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid)
     local selectedEncounterId = self.db.profile.overview.selectedEncounterId
     local encounter = self.db.profile.data.encounters[selectedEncounterId]
 
+    if self.db.profile.options.notifications.showOnlyOwnNotifications then
+        local playerInNotifications = false
+
+        if encounter then            
+            for _, part in pairs(encounter) do
+                if part.uuid == uuid then
+                    for _, group in ipairs(part.assignments) do
+                        for _, assignment in ipairs(group) do
+                            if assignment.player == UnitName("player") then
+                                playerInNotifications = true
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        if not playerInNotifications then
+            return
+        end
+    end
+
     for _, group in pairs(self.notificationRaidAssignmentGroups) do
         group:Hide()
     end

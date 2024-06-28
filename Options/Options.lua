@@ -25,6 +25,16 @@ do
         errorLabel:SetText("")
         widget.errorLabel = errorLabel
 
+        DevTool:AddData(widget, "widget")
+
+        --widget.frame.height = 300
+        --widget:SetNumLines(50)
+        --widget:SetHeight(400)
+        --widget.scrollFrame:SetHeight(400)
+        --widget.scrollFrame:SetNumLines(50)
+        --widget.editBox:SetNumLines(30)
+        --widget.scrollFrame:SetNumLines(30)
+
         function widget:Validate()
             local text = self:GetText()
 
@@ -67,7 +77,49 @@ end
 local mainOptions = {
     name = "Anti Raid Tools v1-beta",
     type = "group",
-    args = {},
+    args =  {
+        buttonGroup = {
+            type = "group",
+            inline = true,
+            name = "",
+            order = 1,
+            args = {
+                button1 = {
+                    type = "execute",
+                    name = "Toggle Overview",
+                    desc = "Toggle the Overview visiblity.",
+                    func = function()
+                        AntiRaidTools.db.profile.overview.show = not AntiRaidTools.db.profile.overview.show
+                        AntiRaidTools:UpdateOverview()
+                    end,
+                    order = 1,
+                },
+                button2 = {
+                    type = "execute",
+                    name = "Toggle Framelock",
+                    desc = "Toggle framelock of the Notifications Anchor.",
+                    func = function()
+                        AntiRaidTools:RaidNotificationsToggleFrameLock()
+                    end,
+                    order = 2,
+                },
+            },
+        },
+        enableFeatureCheckbox = {
+            type = "toggle",
+            name = "Limit Raid Assignment Notificaions",
+            desc = "Show only raid notifications that apply to you.",
+            width = "full",
+            order = 2,
+            get = function() return AntiRaidTools.db.profile.options.notifications.showOnlyOwnNotifications end,
+            set = function(_, value) AntiRaidTools.db.profile.options.notifications.showOnlyOwnNotifications = value end,
+        },
+        enableFeatureDescription = {
+            type = "description",
+            name = "Show only Raid Assignment Notifications that apply to you.",
+            order = 3,
+        },
+    },
     -- args = {
     --     weakAuraHeader = {
     --         type = "header",
@@ -131,7 +183,7 @@ local importOptions = {
             type = "input",
             name = "Import",
             desc = "Paste your import data here.",
-            multiline = true,
+            multiline = 25,
             width = "full",
             dialogControl = "ImportMultiLineEditBox",
             order = 2,
