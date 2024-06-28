@@ -26,7 +26,7 @@ Core.lua
 Test.lua
 Utils.lua
 Options\Chat.lua
-# Options\WeakAuras.lua
+Options\WeakAuras.lua
 Options\Options.lua
 Import\YAML.lua
 Import\Import.lua

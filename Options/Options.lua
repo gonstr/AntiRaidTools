@@ -25,16 +25,6 @@ do
         errorLabel:SetText("")
         widget.errorLabel = errorLabel
 
-        DevTool:AddData(widget, "widget")
-
-        --widget.frame.height = 300
-        --widget:SetNumLines(50)
-        --widget:SetHeight(400)
-        --widget.scrollFrame:SetHeight(400)
-        --widget.scrollFrame:SetNumLines(50)
-        --widget.editBox:SetNumLines(30)
-        --widget.scrollFrame:SetNumLines(30)
-
         function widget:Validate()
             local text = self:GetText()
 
@@ -105,62 +95,69 @@ local mainOptions = {
                 },
             },
         },
+    },
+}
+
+local notificationOptions = {
+    name = "Raid Notifications",
+    type = "group",
+    args =  {
         enableFeatureCheckbox = {
             type = "toggle",
             name = "Limit Raid Assignment Notifications",
             desc = "Show only Raid Notifications that apply to You.",
             width = "full",
-            order = 2,
+            order = 1,
             get = function() return AntiRaidTools.db.profile.options.notifications.showOnlyOwnNotifications end,
             set = function(_, value) AntiRaidTools.db.profile.options.notifications.showOnlyOwnNotifications = value end,
         },
         enableFeatureDescription = {
             type = "description",
             name = "Show only Raid Assignment Notifications that apply to you.",
-            order = 3,
+            order = 2,
         },
     },
-    -- args = {
-    --     weakAuraHeader = {
-    --         type = "header",
-    --         name = "Anti Raid Tools Helper WeakAura",
-    --         order = 1,
-    --     },
-    --     weakAuraText = {
-    --         type = "description",
-    --         name = "Certain features of Anti Raid Tools require the use of a Helper WeakAura. This WeakAura is required if you are the Raid Leader and set up assignments that are activated by other WeakAuras, such as Fojji timers.",
-    --         order = 2,
-    --     },
-    --     separator = {
-    --         type = "description",
-    --         name = " ",
-    --         order = 3,
-    --     },
-    --     weakAurasNotInstalledError = {
-    --         type = "description",
-    --         fontSize = "medium",
-    --         name = "|cffff0000WeakAuras is not installed.|r",
-    --         order = 4,
-    --         hidden = function() return AntiRaidTools:IsWeakAurasInstalled() end
-    --     },
-    --     helperWeakAuraInstalledMessage = {
-    --         type = "description",
-    --         fontSize = "medium",
-    --         name = "|cff00ff00Anti Raid Tools Helper WeakAura Installed.|r",
-    --         order = 5,
-    --         hidden = function() return not AntiRaidTools:IsHelperWeakauraInstalled() end
-    --     },
-    --     installWeakAuraButton = {
-    --         type = "execute",
-    --         name = "Install WeakAura",
-    --         desc = "Install the Anti Raid Tools Helper WeakAura.",
-    --         func = function() AntiRaidTools:InstallHelperWeakAura(function()
-    --             LibStub("AceConfigRegistry-3.0"):NotifyChange("AntiRaidTools")
-    --         end) end,
-    --         order = 6,
-    --         hidden = function() return not AntiRaidTools:IsWeakAurasInstalled() or AntiRaidTools:IsHelperWeakauraInstalled() end
-    --     },
-    -- },
+}
+
+local fojjiIntegrationOptions = {
+    name = "Fojji Integration (Experimental) Prayge",
+    type = "group",
+    args = {
+        weakAuraText = {
+            type = "description",
+            name = "Fojji Integration require the use of a Helper WeakAura. This WeakAura is only required if you are the Raid Leader and set up assignments that are activated by Fojji timers.",
+            order = 1,
+        },
+        separator = {
+            type = "description",
+            name = " ",
+            order = 2,
+        },
+        weakAurasNotInstalledError = {
+            type = "description",
+            fontSize = "medium",
+            name = "|cffff0000WeakAuras is not installed.|r",
+            order = 3,
+            hidden = function() return AntiRaidTools:IsWeakAurasInstalled() end
+        },
+        helperWeakAuraInstalledMessage = {
+            type = "description",
+            fontSize = "medium",
+            name = "|cff00ff00Anti Raid Tools Helper WeakAura Installed.|r",
+            order = 4,
+            hidden = function() return not AntiRaidTools:IsHelperWeakauraInstalled() end
+        },
+        installWeakAuraButton = {
+            type = "execute",
+            name = "Install WeakAura",
+            desc = "Install the Anti Raid Tools Helper WeakAura.",
+            func = function() AntiRaidTools:InstallHelperWeakAura(function()
+                LibStub("AceConfigRegistry-3.0"):NotifyChange("AntiRaidTools")
+            end) end,
+            order = 5,
+            hidden = function() return not AntiRaidTools:IsWeakAurasInstalled() or AntiRaidTools:IsHelperWeakauraInstalled() end
+        },
+    },
 }
 
 local importDescription = [[
@@ -217,6 +214,12 @@ function AntiRaidTools:InitOptions()
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools", mainOptions)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools", "Anti Raid Tools")
 
+    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools Raid Notifications", notificationOptions)
+    LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools Raid Notifications", "Raid Notifications", "Anti Raid Tools")
+
+    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools Fojji Integration", fojjiIntegrationOptions)
+    LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools Fojji Integration", "Fojji Integration", "Anti Raid Tools")
+    
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools Import", importOptions)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools Import", "Import", "Anti Raid Tools")
 

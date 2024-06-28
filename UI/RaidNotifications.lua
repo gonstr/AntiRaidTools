@@ -192,7 +192,7 @@ local function updateNotificationGroup(frame, prevFrame, group, uuid, index)
     end
 end
 
-function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid)
+function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
     local selectedEncounterId = self.db.profile.overview.selectedEncounterId
     local encounter = self.db.profile.data.encounters[selectedEncounterId]
 
@@ -246,9 +246,7 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid)
                 end
 
                 self:RaidNotificationsUpdateHeader(headerText)
-            
-                local countdown = 0
-            
+                        
                 if part.trigger.spell_id then
                     local _, _, _, castTime = GetSpellInfo(part.trigger.spell_id)
             

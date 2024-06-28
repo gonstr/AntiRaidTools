@@ -196,6 +196,16 @@ local function validateTrigger(import)
             end
         end
 
+        if import.trigger.type == "FOJJI_NUMEN_TIMER" then
+            if not import.trigger.key then
+                return false, "Import with trigger type FOJJI_NUMEN_TIMER is missing a key field."
+            end
+
+            if import.trigger.countdown then
+                return false, "Import with trigger type FOJJI_NUMEN_TIMER has a countdown field."
+            end
+        end
+
         if import.trigger.countdown and (type(import.trigger.countdown) ~= "number" or import.trigger.countdown ~= math.floor(import.trigger.countdown)) then
             return false, "Import has an invalid countdown value: " .. stringSafe(import.trigger.countdown) .. "."
         end

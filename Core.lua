@@ -41,6 +41,8 @@ function AntiRaidTools:OnEnable()
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     self:RegisterEvent("RAID_BOSS_EMOTE")
 
+    self:RegisterMessage("ART_WA_EVENT")
+
     self:RegisterChatCommand("art", "HandleChatCommand")
 end
 
@@ -52,6 +54,8 @@ function AntiRaidTools:OnDisable()
     self:UnregisterEvent("UNIT_HEALTH")
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     self:UnregisterEvent("RAID_BOSS_EMOTE")
+
+    self:UnregisterMessage("ART_WA_EVENT")
 
     self:UnregisterChatCommand("art")
 end
@@ -91,9 +95,16 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
                 self:SetAllActiveGroups(payload.data)
                 self:UpdateOverviewActiveGroups()
             elseif payload.event == "SHOW_NOTIFICATION" then
-                self:RaidNotificationsShowRaidAssignment(payload.data)
+                self:RaidNotificationsShowRaidAssignment(payload.data.uuid, payload.data.countdown)
+                self:UpdateNotificationSpells()
             end
         end
+    end
+end
+
+function AntiRaidTools:ART_WA_EVENT(event, waEvent, ...)
+    if waEvent == "WA_NUMEN_TIMER" then
+        self:RaidAssignmentsHandleFojjiNumenTimer(...)
     end
 end
 

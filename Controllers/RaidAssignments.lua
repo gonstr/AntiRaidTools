@@ -11,14 +11,22 @@ local activeEncounter = nil
 -- key: unitId, value = { raidAssignment, triggered }
 local unitHealthRaidAssignmentCache = {}
 
--- ley: spellId, value = raidAssignment
+-- key: spellId, value = raidAssignment
 local spellCastAssignmentCache = {}
+
+-- key: timer key, value = C_Timer.NewTimer
+local fojjiNumenTimers = {}
 
 local function resetState()
     enabled = false
     activeEncounter = nil
     unitHealthTriggersCache = {}
     spellCastAssignmentCache = {}
+
+    for key, timer in pairs(fojjiNumenTimers) do
+        timer:Cancel()
+        fojjiNumenTimers[key] = nil
+    end
 end
 
 function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
@@ -139,11 +147,18 @@ function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
     return groups
 end
 
-local function sendNotification(uuid)
+local function sendNotification(uuid, countdown)
     local activeGroups = AntiRaidTools:GetActiveGroups(uuid)
 
+    countdown = countdown or 0
+
     if activeGroups and #activeGroups > 0 then
-        AntiRaidTools:SendRaidMessage("SHOW_NOTIFICATION", uuid)
+        local data = {
+            uuid = uuid,
+            countdown = countdown
+        }
+
+        AntiRaidTools:SendRaidMessage("SHOW_NOTIFICATION", data)
     end
 end
 
@@ -187,6 +202,31 @@ function AntiRaidTools:RaidAssignmentsHandleRaidBossEmote(text)
         for _, part in ipairs(activeEncounter) do
             if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) then
                 sendNotification(part.uuid)
+            end
+        end
+    end
+end
+
+local function cancelFojjiNumenTimer(key)
+    local timer = fojjiNumenTimers[key]
+
+    if timer then
+        timer:Cancel()
+        fojjiNumenTimers[key] = nil
+    end
+end
+
+function AntiRaidTools:RaidAssignmentsHandleFojjiNumenTimer(key, countdown)
+    if activeEncounter then
+        for _, part in ipairs(activeEncounter) do
+            if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "FOJJI_NUMEN_TIMER" and part.trigger.key == key then
+                local internalCountdown = math.max(0, countdown - 5)
+
+                cancelFojjiNumenTimer(key)
+
+                fojjiNumenTimers[key] = C_Timer.NewTimer(internalCountdown, function()
+                    sendNotification(part.uuid, 5)
+                end)
             end
         end
     end
