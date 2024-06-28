@@ -97,7 +97,7 @@ local mainOptions = {
                 button2 = {
                     type = "execute",
                     name = "Toggle Framelock",
-                    desc = "Toggle framelock of the Notifications Anchor.",
+                    desc = "Toggle framelock of the Notifications View Anchor.",
                     func = function()
                         AntiRaidTools:RaidNotificationsToggleFrameLock()
                     end,
@@ -107,8 +107,8 @@ local mainOptions = {
         },
         enableFeatureCheckbox = {
             type = "toggle",
-            name = "Limit Raid Assignment Notificaions",
-            desc = "Show only raid notifications that apply to you.",
+            name = "Limit Raid Assignment Notifications",
+            desc = "Show only Raid Notifications that apply to You.",
             width = "full",
             order = 2,
             get = function() return AntiRaidTools.db.profile.options.notifications.showOnlyOwnNotifications end,
