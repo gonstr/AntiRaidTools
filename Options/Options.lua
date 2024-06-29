@@ -120,7 +120,7 @@ local notificationOptions = {
 }
 
 local fojjiIntegrationOptions = {
-    name = "Fojji Integration (Experimental) Prayge",
+    name = "Fojji Integration (Experimental)",
     type = "group",
     args = {
         weakAuraText = {
@@ -152,7 +152,7 @@ local fojjiIntegrationOptions = {
             name = "Install WeakAura",
             desc = "Install the Anti Raid Tools Helper WeakAura.",
             func = function() AntiRaidTools:InstallHelperWeakAura(function()
-                LibStub("AceConfigRegistry-3.0"):NotifyChange("AntiRaidTools")
+                LibStub("AceConfigRegistry-3.0"):NotifyChange("AntiRaidTools Fojji Integration")
             end) end,
             order = 5,
             hidden = function() return not AntiRaidTools:IsWeakAurasInstalled() or AntiRaidTools:IsHelperWeakauraInstalled() end

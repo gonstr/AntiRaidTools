@@ -10,16 +10,21 @@ function AntiRaidTools:InitMinimap()
         icon = "Interface\\Icons\\Spell_Shadow_GatherShadows",
         OnClick = function(self, button)
             if button == "LeftButton" then
-                AntiRaidTools.db.profile.overview.show = not AntiRaidTools.db.profile.overview.show
-                AntiRaidTools:UpdateOverview()
-            else
                 InterfaceOptionsFrame_OpenToCategory("Anti Raid Tools")
+            else
+                if IsShiftKeyDown() then
+                    AntiRaidTools:RaidNotificationsToggleFrameLock()
+                else
+                    AntiRaidTools.db.profile.overview.show = not AntiRaidTools.db.profile.overview.show
+                    AntiRaidTools:UpdateOverview()
+                end
             end
         end,
         OnTooltipShow = function(tooltip)
             tooltip:AddLine("Anti Raid Tools")
-            tooltip:AddLine("Left click to toggle Overview visibility")
-            tooltip:AddLine("Right click to open Addon Options")
+            tooltip:AddLine("Left click to open configuration")
+            tooltip:AddLine("Right click to toggle visibility")
+            tooltip:AddLine("Shift + Right click to toggle frame lock")
         end,
     })
     

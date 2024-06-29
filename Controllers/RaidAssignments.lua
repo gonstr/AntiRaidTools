@@ -32,7 +32,7 @@ end
 function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
     resetState()
 
-    if self.TEST or self:IsPlayerRaidLeader() then
+    if self:IsPlayerRaidLeader() then
         isRaidLeader = true
     end
 

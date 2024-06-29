@@ -1,27 +1,33 @@
 local AntiRaidTools = AntiRaidTools
 
 function AntiRaidTools:InternalTestStart()
-    self.TEST = true
-
     self:UpdateOverviewSpells()
 
-    self:ENCOUNTER_START(1027)
+    self:ENCOUNTER_START(1032)
 
-    -- C_Timer.After(3, function()
-    --     AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Anticipâte", nil, nil, 31821)
-    -- end)
+    C_Timer.After(3, function()
+        AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Anticipâte", nil, nil, 31821)
+    end)
 
-    -- C_Timer.After(3, function()
-    --     AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Magnetron", nil, nil, 79023)
-    -- end)
+    C_Timer.After(10, function()
+        AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Valiona", nil, nil, 86788)
+    end)
 
-    -- C_Timer.After(3, function()
-    --     AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Magnetron", nil, nil, 91849)
-    -- end)
+    C_Timer.After(12, function()
+        AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Dableach", nil, nil, 51052)
+    end)
 
-    -- C_Timer.After(3, function()
-    --     AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Anticipâte", nil, nil, 31821)
-    -- end)
+    C_Timer.After(12, function()
+        AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Kondec", nil, nil, 62618)
+    end)
+
+    C_Timer.After(12, function()
+        AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Solfernus", nil, nil, 51052)
+    end)
+
+    C_Timer.After(20, function()
+        AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Valiona", nil, nil, 86788)
+    end)
     
     -- C_Timer.After(6, function()
     --     AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Kondec", nil, nil, 62618)
@@ -41,7 +47,5 @@ function AntiRaidTools:InternalTestStart()
 end
 
 function AntiRaidTools:InternalTestEnd()
-    self.TEST = false
-
-    self:ENCOUNTER_END(1027)
+    self:ENCOUNTER_END(1032)
 end

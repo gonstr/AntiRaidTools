@@ -130,7 +130,6 @@ function AntiRaidTools:ENCOUNTER_START(encounterId)
     self:OverviewSelectEncounter(encounterId)
     self:OverviewSetLocked(true)
     self:RaidAssignmentsStartEncounter(encounterId)
-    self:SyncEncountersScheduleSend()
 end
 
 function AntiRaidTools:ENCOUNTER_END()
