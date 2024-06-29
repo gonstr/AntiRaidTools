@@ -1,6 +1,8 @@
 local AntiRaidTools = AntiRaidTools
 
 function AntiRaidTools:InternalTestStart()
+    self.TEST = true
+
     self:UpdateOverviewSpells()
 
     self:ENCOUNTER_START(1032)
@@ -28,7 +30,15 @@ function AntiRaidTools:InternalTestStart()
     C_Timer.After(20, function()
         AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Valiona", nil, nil, 86788)
     end)
+
+    C_Timer.After(22, function()
+        AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Sîf", nil, nil, 97462)
+    end)
     
+    C_Timer.After(30, function()
+        AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Valiona", nil, nil, 86788)
+    end)
+
     -- C_Timer.After(6, function()
     --     AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Kondec", nil, nil, 62618)
     -- end)
@@ -47,5 +57,7 @@ function AntiRaidTools:InternalTestStart()
 end
 
 function AntiRaidTools:InternalTestEnd()
+    self.TEST = false
+
     self:ENCOUNTER_END(1032)
 end
