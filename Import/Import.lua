@@ -33,7 +33,7 @@ function AntiRaidTools:ImportYAML(str)
     return true, result
 end
 
-function AntiRaidTools:GroupImportByEncounter(import)
+function AntiRaidTools:CreateEncountersData(import)
     local result = {}
 
     for _, part in ipairs(import) do
@@ -44,5 +44,7 @@ function AntiRaidTools:GroupImportByEncounter(import)
         insert(result[part.encounter], part)
     end
 
-    return result
+    local uuid = self:GenerateUUID()
+
+    return result, uuid
 end

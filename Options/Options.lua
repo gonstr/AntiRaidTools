@@ -196,14 +196,13 @@ local importOptions = {
 
                 if val ~= nil and val ~= "" then
                     local _, result = AntiRaidTools:ImportYAML(val)
-                    AntiRaidTools.db.profile.data.encounters = AntiRaidTools:GroupImportByEncounter(result)
+                    local encounters, encountersId = AntiRaidTools:CreateEncountersData(result)
+                    print("Generated encounters id: " .. encountersId)
+                    AntiRaidTools.db.profile.data.encountersId = encountersId
+                    AntiRaidTools.db.profile.data.encounters = encounters
                 end
 
-                if AntiRaidTools:IsPlayerRaidLeader() then
-                    AntiRaidTools:SendRaidMessage("ENCOUNTERS", AntiRaidTools.db.profile.data.encounters)
-                end
-
-                -- Update overview after import
+                AntiRaidTools:SyncEncountersScheduleSend()
                 AntiRaidTools:UpdateOverview()
             end,
         },

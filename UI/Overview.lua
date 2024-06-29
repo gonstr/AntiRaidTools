@@ -57,12 +57,22 @@ function AntiRaidTools:InitOverview()
     popup:Hide() -- Start hidden
 
     local function showPopup()
-        local scale = UIParent:GetEffectiveScale()
-        local x, y = GetCursorPosition()
-        x, y = x / scale, y / scale
-        
-        popup:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT", x, y)
-        popup:Show()
+        if AntiRaidTools.overviewLocked then
+            return
+        end
+
+        local encounters = AntiRaidTools.db.profile.data.encounters
+
+        for _, encounters in pairs(encounters) do
+            local scale = UIParent:GetEffectiveScale()
+            local x, y = GetCursorPosition()
+            x, y = x / scale, y / scale
+
+            popup:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT", x, y)
+            popup:Show()
+
+            break
+        end
     end
 
     local header = CreateFrame("Frame", "AntiRaidToolsOverviewHeader", container, "BackdropTemplate")
@@ -107,6 +117,7 @@ function AntiRaidTools:InitOverview()
         showPopup()
     end)
     headerButton:RegisterForClicks("AnyDown", "AnyUp")
+    headerButton:Hide()
 
     local main = CreateFrame("Frame", "AntiRaidToolsOvervieMain", container, "BackdropTemplate")
     main:SetPoint("TOPLEFT", 0, -20)
@@ -118,10 +129,15 @@ function AntiRaidTools:InitOverview()
     self.overviewPopup = popup
     self.overviewPopupListItems = {}
     self.overviewHeader = header
+    self.overviewHeaderButton = headerButton
     self.overvieweHeaderText = encounterName
     self.overviewMain = main
     self.overviewMainHeaders = {}
     self.overviewMainRaidAssignmentGroups = {}
+end
+
+function AntiRaidTools:OverviewSetLocked(locked)
+    self.overviewLocked = locked
 end
 
 function AntiRaidTools:UpdateOverview()
@@ -150,6 +166,7 @@ function AntiRaidTools:UpdateOverview()
     end
 
     self:UpdateOverviewHeaderText()
+    self:UpdateOverviewHeaderButton()
     self:UpdateOverviewPopup()
     self:UpdateOverviewMain()
     self:UpdateOverviewSpells()
@@ -223,6 +240,21 @@ function AntiRaidTools:OverviewSelectEncounter(encounterId)
     if AntiRaidTools:EncounterExists(encounterId) then
         self.db.profile.overview.selectedEncounterId = encounterId
         self:UpdateOverview()
+    end
+end
+
+function AntiRaidTools:UpdateOverviewHeaderButton()
+    local hasEncounterData = false
+
+    for _, _ in pairs(self.db.profile.data.encounters) do
+        hasEncounterData = true
+        break
+    end
+
+    if hasEncounterData then
+        self.overviewHeaderButton:Show()
+    else
+        self.overviewHeaderButton:Hide()
     end
 end
 

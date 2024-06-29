@@ -7,9 +7,13 @@ function AntiRaidTools:InternalTestStart()
 
     self:ENCOUNTER_START(1027)
 
-    C_Timer.After(3, function()
-        AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Magnetron", nil, nil, 79023)
-    end)
+    -- C_Timer.After(3, function()
+    --     AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Anticipâte", nil, nil, 31821)
+    -- end)
+
+    -- C_Timer.After(3, function()
+    --     AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Magnetron", nil, nil, 79023)
+    -- end)
 
     -- C_Timer.After(3, function()
     --     AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Magnetron", nil, nil, 91849)

@@ -197,24 +197,7 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
     local encounter = self.db.profile.data.encounters[selectedEncounterId]
 
     if self.db.profile.options.notifications.showOnlyOwnNotifications then
-        local playerInNotifications = false
-
-        if encounter then            
-            for _, part in pairs(encounter) do
-                if part.uuid == uuid then
-                    for _, group in ipairs(part.assignments) do
-                        for _, assignment in ipairs(group) do
-                            if assignment.player == UnitName("player") then
-                                playerInNotifications = true
-                                break
-                            end
-                        end
-                    end
-                end
-            end
-        end
-
-        if not playerInNotifications then
+        if not self:IsPlayerInActiveGroup(uuid) then
             return
         end
     end
@@ -228,6 +211,12 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
         local prevFrame = self.notificationContentFrame.header
         for _, part in pairs(encounter) do
             if part.type == "RAID_ASSIGNMENTS" and part.uuid == uuid then
+                local activeGroups = self:GetActiveGroups(uuid)
+
+                if not activeGroups then
+                    return
+                end
+                
                 self:RaidNotificationsToggleFrameLock(true)
     
                 self.notificationFrameFadeOut:Stop()

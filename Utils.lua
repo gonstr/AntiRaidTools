@@ -89,3 +89,71 @@ end
 function AntiRaidTools:IsPlayerRaidLeader()
     return IsInRaid() and UnitIsGroupLeader("player")
 end
+
+function AntiRaidTools:IsPlayerInActiveGroup(uuid)
+    local isInAssignments = false
+    
+    local encounters = self.db.profile.data.encounters
+
+    if encounters then
+        local activeGroups = self:GetActiveGroups(uuid)
+
+        for _, encounter in pairs(encounters) do
+            for _, part in pairs(encounter) do
+                if part.uuid == uuid then
+                    if activeGroups then
+                        for _, groupIndex in ipairs(activeGroups) do
+                            local group = part.assignments[groupIndex]
+                            if group then
+                                for _, assignment in ipairs(group) do
+                                    if assignment.player == UnitName("player") then
+                                        isInAssignments = true
+                                        break
+                                    end
+                                end
+                            end
+    
+                            if isInAssignments then break end
+                        end
+                    end
+                end
+    
+                if isInAssignments then break end
+            end
+
+            if isInAssignments then break end
+        end
+    end
+
+    return isInAssignments
+end
+
+function isPlayerInAssignments(encounter, activeGroups, uuid)
+    local result = false
+
+    if encounter then            
+        for _, part in pairs(encounter) do
+            if part.uuid == uuid then
+                if activeGroups then
+                    for _, groupIndex in ipairs(activeGroups) do
+                        local group = part.assignments[groupIndex]
+                        if group then
+                            for _, assignment in ipairs(group) do
+                                if assignment.player == UnitName("player") then
+                                    result = true
+                                    break
+                                end
+                            end
+                        end
+
+                        if result then break end
+                    end
+                end
+            end
+
+            if result then break end
+        end
+    end
+
+    return result
+end

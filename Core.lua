@@ -1,6 +1,7 @@
 AntiRaidTools = LibStub("AceAddon-3.0"):NewAddon("AntiRaidTools", "AceConsole-3.0", "AceEvent-3.0", "AceComm-3.0", "AceSerializer-3.0")
 
-local ADDON_PREFIX = "AntiRaidTools"
+local ADDON_PREFIX_SYNC = "ART-S"
+local ADDON_PREFIX_MAIN = "ART-M"
 
 -- AceDB defaults
 AntiRaidTools.defaults = {
@@ -12,6 +13,7 @@ AntiRaidTools.defaults = {
             }
         },
         data = {
+            encountersId = nil,
             encounters = {}
         },
         minimap = {},
@@ -29,7 +31,8 @@ function AntiRaidTools:OnInitialize()
     self:InitOverview()
     self:InitRaidNotification()
 
-    self:RegisterComm(ADDON_PREFIX)
+    self:RegisterComm(ADDON_PREFIX_SYNC)
+    self:RegisterComm(ADDON_PREFIX_MAIN)
 end
 
 function AntiRaidTools:OnEnable()
@@ -67,28 +70,42 @@ end
 function AntiRaidTools:PLAYER_ENTERING_WORLD()
     self:InitEncounters()
     self:UpdateOverview()
+    self:SyncEncountersSendCurrentId()
+    self:SyncEncountersScheduleSend()
 end
 
-function AntiRaidTools:SendRaidMessage(event, data)
+function AntiRaidTools:SendRaidMessage(event, data, sync)
     if IsInRaid() then
         local payload = {
             event = event,
             data = data,
         }
 
-        self:SendCommMessage(ADDON_PREFIX, self:Serialize(payload), "RAID")
+        local prefix = ADDON_PREFIX_MAIN
+        local prio = "NORMAL"
+
+        if sync then
+            prefix = ADDON_PREFIX_SYNC
+            prio = "BULK"
+        end
+
+        self:SendCommMessage(prefix, self:Serialize(payload), "RAID", nil, prio)
     end
 end
 
 function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
-    if prefix == ADDON_PREFIX then
+    if prefix == ADDON_PREFIX_MAIN or prefix == ADDON_PREFIX_SYNC then
         local ok, payload = self:Deserialize(message)
         if ok then
-            if payload.event == "ENCOUNTERS" then
+            if payload.event == "ENCOUNTERS_ID" then
                 if sender ~= UnitName("player") then
-                    -- For encounter events we don't need to handle messages sent by ourselves
+                    self:SyncEncountersHandleEncountersId(payload.data)
+                end
+            elseif payload.event == "ENCOUNTERS" then
+                if sender ~= UnitName("player") then
                     self:InitEncounters()
-                    self.db.profile.data.encounters = payload.data
+                    self.db.profile.data.encounterId = payload.data.id
+                    self.db.profile.data.encounters = payload.data.encounters
                     self:UpdateOverview()
                 end
             elseif payload.event == "ACTIVE_GROUPS" then
@@ -105,15 +122,19 @@ end
 function AntiRaidTools:ART_WA_EVENT(event, waEvent, ...)
     if waEvent == "WA_NUMEN_TIMER" then
         self:RaidAssignmentsHandleFojjiNumenTimer(...)
+        self:RaidAssignmentsUpdateGroups()
     end
 end
 
 function AntiRaidTools:ENCOUNTER_START(encounterId)
     self:OverviewSelectEncounter(encounterId)
+    self:OverviewSetLocked(true)
     self:RaidAssignmentsStartEncounter(encounterId)
+    self:SyncEncountersScheduleSend()
 end
 
 function AntiRaidTools:ENCOUNTER_END()
+    self:OverviewSetLocked(false)
     self:RaidAssignmentsEndEncounter()
     self:ResetSpellsCache()
     self:ResetDeadCache()
@@ -137,10 +158,7 @@ end
 function AntiRaidTools:GROUP_ROSTER_UPDATE()
     self:UpdateOverviewSpells()
     self:UpdateNotificationSpells()
-
-    if self:IsPlayerRaidLeader() then
-        self:SendRaidMessage("ENCOUNTERS", self.db.profile.data.encounters)
-    end
+    self:SyncEncountersSendCurrentId()
 end
 
 function AntiRaidTools:COMBAT_LOG_EVENT_UNFILTERED()
