@@ -174,7 +174,20 @@ function AntiRaidTools:UpdateOverview()
 end
 
 function AntiRaidTools:UpdateOverviewHeaderText()
-    self.overvieweHeaderText:SetText(self:GetEncounters()[self.db.profile.overview.selectedEncounterId])
+    local encounters = self.db.profile.data.encounters
+
+    local encountersExists = false
+
+    for _, encounters in pairs(encounters) do
+        encountersExists = true
+        break
+    end
+
+    if encountersExists then
+        self.overvieweHeaderText:SetText(self:GetEncounters()[self.db.profile.overview.selectedEncounterId])
+    else
+        self.overvieweHeaderText:SetText()
+    end
 end
 
 local function createPopupListItem(popupFrame, text, onClick)

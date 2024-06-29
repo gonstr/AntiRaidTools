@@ -197,7 +197,7 @@ local importOptions = {
                 if val ~= nil and val ~= "" then
                     local _, result = AntiRaidTools:ImportYAML(val)
                     local encounters, encountersId = AntiRaidTools:CreateEncountersData(result)
-                    print("Generated encounters id: " .. encountersId)
+
                     AntiRaidTools.db.profile.data.encountersId = encountersId
                     AntiRaidTools.db.profile.data.encounters = encounters
                 end
