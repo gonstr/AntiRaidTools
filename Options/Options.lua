@@ -65,7 +65,7 @@ do
 end
 
 local mainOptions = {
-    name = "Anti Raid Tools v1-beta",
+    name = "Anti Raid Tools " .. GetAddOnMetadata("AntiRaidTools", "Version"),
     type = "group",
     args =  {
         buttonGroup = {
