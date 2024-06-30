@@ -265,7 +265,7 @@ function AntiRaidTools:UpdateOverviewHeaderButton()
     end
 
     if hasEncounterData then
-        self.overviewHeaderButton:Show()
+        if not InCombatLockdown() then self.overviewHeaderButton:Show() end
     else
         self.overviewHeaderButton:Hide()
     end

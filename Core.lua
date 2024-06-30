@@ -126,7 +126,7 @@ function AntiRaidTools:ART_WA_EVENT(event, waEvent, ...)
     end
 end
 
-function AntiRaidTools:ENCOUNTER_START(encounterId)
+function AntiRaidTools:ENCOUNTER_START(_, encounterId)
     self:OverviewSelectEncounter(encounterId)
     self:OverviewSetLocked(true)
     self:RaidAssignmentsStartEncounter(encounterId)
