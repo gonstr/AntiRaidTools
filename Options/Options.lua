@@ -193,6 +193,7 @@ local importOptions = {
                 AntiRaidTools.db.profile.options.import = val
 
                 AntiRaidTools.db.profile.data.encounters = {}
+                AntiRaidTools.db.profile.data.encountersId = nil
 
                 if val ~= nil and val ~= "" then
                     local _, result = AntiRaidTools:ImportYAML(val)

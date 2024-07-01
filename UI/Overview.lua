@@ -1,40 +1,24 @@
 local AntiRaidTools = AntiRaidTools
 
+local MIN_HEIGHT = 200
+
 function AntiRaidTools:InitOverview()
     local container = CreateFrame("Frame", "AntiRaidToolsOverview", UIParent, "BackdropTemplate")
     container:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    container:SetSize(200, 300)
+    container:SetSize(200, MIN_HEIGHT)
     container:SetBackdrop({
         bgFile = "Interface\\Addons\\AntiRaidTools\\Media\\gradient32x32.tga",
         tile = true,
         tileSize = 32,
     })
-    container:SetBackdropColor(0, 0, 0, 0.8)
+    container:SetBackdropColor(0, 0, 0, 0.4)
     container:SetMovable(true)
     container:EnableMouse(true)
     container:SetUserPlaced(true)
     container:SetClampedToScreen(true)
     container:RegisterForDrag("LeftButton")
-    container:SetResizable(true)
-    container:SetClipsChildren(true)
-    container:SetResizeBounds(200, 200, 400, 600)
     container:SetScript("OnDragStart", function(self) self:StartMoving() end)
     container:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
-
-    local resizeButton = CreateFrame("Button", nil, container)
-    resizeButton:SetSize(16, 16)
-    resizeButton:SetPoint("BOTTOMRIGHT")
-    resizeButton:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
-    resizeButton:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
-    resizeButton:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
-    
-    resizeButton:SetScript("OnMouseDown", function(self, button)
-        self:GetParent():StartSizing("BOTTOMRIGHT")
-    end)
-    
-    resizeButton:SetScript("OnMouseUp", function(self, button)
-        self:GetParent():StopMovingOrSizing("BOTTOMRIGHT")
-    end)
 
     local popup = CreateFrame("Frame", "AntiRaidToolsOverviewPopup", UIParent, "BackdropTemplate")
     popup:SetSize(200, 50)
@@ -136,6 +120,27 @@ function AntiRaidTools:InitOverview()
     self.overviewMainRaidAssignmentGroups = {}
 end
 
+function AntiRaidTools:OverviewResize()
+    local selectedEncounterId = self.db.profile.overview.selectedEncounterId
+    local encounter = self.db.profile.data.encounters[selectedEncounterId]
+
+    -- Header + 10 extra
+    local height = 20
+
+    if encounter then
+        for _, part in ipairs(encounter) do
+            if part.type == "RAID_ASSIGNMENTS" then
+                height = height + 30
+                for _ in ipairs(part.assignments) do
+                    height = height + 20
+                end
+            end
+        end
+    end
+
+    self.overviewFrame:SetHeight(math.max(MIN_HEIGHT, height))
+end
+
 function AntiRaidTools:OverviewSetLocked(locked)
     self.overviewLocked = locked
 end
@@ -159,10 +164,13 @@ function AntiRaidTools:UpdateOverview()
     end
 
     if not selectedEncounterIdFound then
-        for encounterId, _ in pairs(encounters) do
-            self.db.profile.overview.selectedEncounterId = encounterId
-            break
+        local encounterIndexes = {}
+        for encounterId in pairs(self.db.profile.data.encounters) do
+            table.insert(encounterIndexes, encounterId)
         end
+        table.sort(encounterIndexes)
+
+        self.db.profile.overview.selectedEncounterId = encounterIndexes[1]
     end
 
     self:UpdateOverviewHeaderText()
@@ -178,15 +186,22 @@ function AntiRaidTools:UpdateOverviewHeaderText()
 
     local encountersExists = false
 
-    for _, encounters in pairs(encounters) do
+    for _ in pairs(encounters) do
         encountersExists = true
         break
     end
 
+    self.overvieweHeaderText:SetAlpha(1)
+
     if encountersExists then
         self.overvieweHeaderText:SetText(self:GetEncounters()[self.db.profile.overview.selectedEncounterId])
     else
-        self.overvieweHeaderText:SetText()
+        if self.db.profile.data.encountersProgress then
+            self.overvieweHeaderText:SetText("Loading Assignments... |cFFFFFFFF" .. string.format("%.1f", self.db.profile.data.encountersProgress) .. "%|r")
+        else
+            self.overvieweHeaderText:SetText("ART |cFFFFFFFF" .. GetAddOnMetadata("AntiRaidTools", "Version") .. "|r")
+            self.overvieweHeaderText:SetAlpha(0.8)
+        end
     end
 end
 
@@ -277,8 +292,14 @@ function AntiRaidTools:UpdateOverviewPopup()
         item:Hide()
     end
 
+    local encounterIndexes = {}
+    for encounterId in pairs(self.db.profile.data.encounters) do
+        table.insert(encounterIndexes, encounterId)
+    end
+    table.sort(encounterIndexes)
+
     local index = 1
-    for encounterId, encounter in pairs(self.db.profile.data.encounters) do
+    for _, encounterId in ipairs(encounterIndexes) do
         local selectFunc = function() self:OverviewSelectEncounter(encounterId) end
         self:ShowOverviewPopupListItem(index, self:GetEncounters()[encounterId], selectFunc)
         index = index + 1
@@ -487,6 +508,8 @@ function AntiRaidTools:UpdateOverviewMain()
             end
         end
     end
+
+    self:OverviewResize()
 end
 
 function AntiRaidTools:UpdateOverviewActiveGroups()
@@ -503,7 +526,7 @@ function AntiRaidTools:UpdateOverviewActiveGroups()
                     if activeGroups then
                         for _, index in ipairs(activeGroups) do
                             if index == groupFrame.index then
-                                groupFrame:SetBackdropColor(1, 1, 1, 0.4)
+                                groupFrame:SetBackdropColor(1, 1, 1, 0.6)
                             else
                                 groupFrame:SetBackdropColor(0, 0, 0, 0)
                             end

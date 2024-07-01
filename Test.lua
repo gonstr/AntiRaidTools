@@ -5,7 +5,7 @@ function AntiRaidTools:InternalTestStart()
 
     self:UpdateOverviewSpells()
 
-    self:ENCOUNTER_START(1032)
+    self:ENCOUNTER_START(nil, 1032)
 
     C_Timer.After(3, function()
         AntiRaidTools:HandleCombatLog("SPELL_CAST_SUCCESS", "Anticipâte", nil, nil, 31821)
@@ -59,5 +59,5 @@ end
 function AntiRaidTools:InternalTestEnd()
     self.TEST = false
 
-    self:ENCOUNTER_END(1032)
+    self:ENCOUNTER_END(nil, 1032)
 end

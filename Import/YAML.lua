@@ -612,7 +612,11 @@ exports.evalm = function(inputStr)
   local parts = split(inputStr, "\r?\n%-%-%-\r?\n")
 
   for _, part in ipairs(parts) do
-    table.insert(result, Parser:new(exports.tokenize(part)):parse())
+    local ignorePattern = "^%s*$"
+
+    if not string.match(part, ignorePattern) then
+      table.insert(result, Parser:new(exports.tokenize(part)):parse())
+    end
   end
 
   return result

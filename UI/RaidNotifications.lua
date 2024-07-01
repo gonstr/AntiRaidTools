@@ -73,7 +73,7 @@ function AntiRaidTools:RaidNotificationsToggleFrameLock(lock)
         self.notificationFrame.frameLockText:Hide()
     else
         self.notificationFrame:EnableMouse(true)
-        self.notificationFrame:SetBackdropColor(0, 0, 0, 0.8)
+        self.notificationFrame:SetBackdropColor(0, 0, 0, 0.6)
         self.notificationFrame.frameLockText:Show()
         self.notificationContentFrame:Hide()
     end
@@ -103,7 +103,7 @@ local function createNotificationGroup(mainFrame, prevFrame)
         tile = true,
         tileSize = 32,
     })
-    frame:SetBackdropColor(0, 0, 0, 0.8)
+    frame:SetBackdropColor(0, 0, 0, 0.6)
 
     frame.assignments = {}
 

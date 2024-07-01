@@ -1,8 +1,5 @@
 AntiRaidTools = LibStub("AceAddon-3.0"):NewAddon("AntiRaidTools", "AceConsole-3.0", "AceEvent-3.0", "AceComm-3.0", "AceSerializer-3.0")
 
-local ADDON_PREFIX_SYNC = "ART-S"
-local ADDON_PREFIX_MAIN = "ART-M"
-
 -- AceDB defaults
 AntiRaidTools.defaults = {
     profile = {
@@ -13,6 +10,7 @@ AntiRaidTools.defaults = {
             }
         },
         data = {
+            encountersProgress = nil,
             encountersId = nil,
             encounters = {}
         },
@@ -25,14 +23,19 @@ AntiRaidTools.defaults = {
 }
 
 function AntiRaidTools:OnInitialize()
+    self.PREFIX_SYNC = "ART-S"
+    self.PREFIX_SYNC_PROGRESS = "ART-SP"
+    self.PREFIX_MAIN = "ART-M"
+
     self:InitDB() 
     self:InitOptions()
     self:InitMinimap()
     self:InitOverview()
     self:InitRaidNotification()
 
-    self:RegisterComm(ADDON_PREFIX_SYNC)
-    self:RegisterComm(ADDON_PREFIX_MAIN)
+    self:RegisterComm(self.PREFIX_SYNC)
+    self:RegisterComm(self.PREFIX_SYNC_PROGRESS)
+    self:RegisterComm(self.PREFIX_MAIN)
 end
 
 function AntiRaidTools:OnEnable()
@@ -74,37 +77,45 @@ function AntiRaidTools:PLAYER_ENTERING_WORLD()
     self:SyncEncountersScheduleSend()
 end
 
-function AntiRaidTools:SendRaidMessage(event, data, sync)
+function AntiRaidTools:SendRaidMessage(event, data, prefix, prio, callbackFn)
     if IsInRaid() then
         local payload = {
             event = event,
             data = data,
         }
 
-        local prefix = ADDON_PREFIX_MAIN
-        local prio = "NORMAL"
-
-        if sync then
-            prefix = ADDON_PREFIX_SYNC
-            prio = "BULK"
+        if not prefix then
+            prefix = self.PREFIX_MAIN
         end
 
-        self:SendCommMessage(prefix, self:Serialize(payload), "RAID", nil, prio)
+        if not prio then
+            prio = "NORMAL"
+        end
+
+        self:SendCommMessage(prefix, self:Serialize(payload), "RAID", nil, prio, callbackFn)
     end
 end
 
 function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
-    if prefix == ADDON_PREFIX_MAIN or prefix == ADDON_PREFIX_SYNC then
+    if prefix == self.PREFIX_MAIN or prefix == self.PREFIX_SYNC or prefix == self.PREFIX_SYNC_PROGRESS then
         local ok, payload = self:Deserialize(message)
         if ok then
             if payload.event == "ENCOUNTERS_ID" then
                 if sender ~= UnitName("player") then
                     self:SyncEncountersHandleEncountersId(payload.data)
                 end
+            elseif payload.event == "ENCOUNTERS_SYNC_PROGRESS" then
+                if sender ~= UnitName("player") and payload.data.encountersId ~= self.db.profile.data.encountersId then
+                    self.db.profile.data.encountersProgress = payload.data.progress
+                    self.db.profile.data.encountersId = nil
+                    self.db.profile.data.encounters = {}
+                    self:UpdateOverview()
+                end
             elseif payload.event == "ENCOUNTERS" then
                 if sender ~= UnitName("player") then
                     self:InitEncounters()
-                    self.db.profile.data.encounterId = payload.data.id
+                    self.db.profile.data.encountersProgress = nil
+                    self.db.profile.data.encountersId = payload.data.encountersId
                     self.db.profile.data.encounters = payload.data.encounters
                     self:UpdateOverview()
                 end
@@ -119,7 +130,7 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
     end
 end
 
-function AntiRaidTools:ART_WA_EVENT(event, waEvent, ...)
+function AntiRaidTools:ART_WA_EVENT(_, waEvent, ...)
     if waEvent == "WA_NUMEN_TIMER" then
         self:RaidAssignmentsHandleFojjiNumenTimer(...)
         self:RaidAssignmentsUpdateGroups()
