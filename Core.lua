@@ -39,6 +39,7 @@ function AntiRaidTools:OnInitialize()
 end
 
 function AntiRaidTools:OnEnable()
+    self:RegisterEvent("PLAYER_LOGIN")
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterEvent("ENCOUNTER_START")
     self:RegisterEvent("ENCOUNTER_END")
@@ -53,6 +54,7 @@ function AntiRaidTools:OnEnable()
 end
 
 function AntiRaidTools:OnDisable()
+    self:UnregisterEvent("PLAYER_LOGIN")
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     self:UnregisterEvent("ENCOUNTER_START")
     self:UnregisterEvent("ENCOUNTER_END")
@@ -70,11 +72,14 @@ function AntiRaidTools:InitDB()
     self.db = LibStub("AceDB-3.0"):New("AntiRaidTools", self.defaults)
 end
 
+function AntiRaidTools:PLAYER_LOGIN()
+    self:SyncEncountersSendCurrentId()
+    self:SyncEncountersScheduleSend()
+end
+
 function AntiRaidTools:PLAYER_ENTERING_WORLD()
     self:InitEncounters()
     self:UpdateOverview()
-    self:SyncEncountersSendCurrentId()
-    self:SyncEncountersScheduleSend()
 end
 
 function AntiRaidTools:SendRaidMessage(event, data, prefix, prio, callbackFn)

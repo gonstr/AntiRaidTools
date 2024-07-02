@@ -84,11 +84,11 @@ function AntiRaidTools:InitOverview()
         end
     end)
 
-    local encounterName = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    encounterName:SetFont("Fonts\\FRIZQT__.TTF", 10)
-    encounterName:SetPoint("TOPLEFT", 10, -5)
-    encounterName:SetShadowOffset(1, -1)
-    encounterName:SetShadowColor(0, 0, 0, 1)
+    local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    headerText:SetFont("Fonts\\FRIZQT__.TTF", 10)
+    headerText:SetPoint("TOPLEFT", 10, -5)
+    headerText:SetShadowOffset(1, -1)
+    headerText:SetShadowColor(0, 0, 0, 1)
 
     local headerButton = CreateFrame("Button", nil, header)
     headerButton:SetSize(14, 14)
@@ -114,7 +114,7 @@ function AntiRaidTools:InitOverview()
     self.overviewPopupListItems = {}
     self.overviewHeader = header
     self.overviewHeaderButton = headerButton
-    self.overvieweHeaderText = encounterName
+    self.overviewHeaderText = headerText
     self.overviewMain = main
     self.overviewMainHeaders = {}
     self.overviewMainRaidAssignmentGroups = {}
@@ -191,16 +191,16 @@ function AntiRaidTools:UpdateOverviewHeaderText()
         break
     end
 
-    self.overvieweHeaderText:SetAlpha(1)
+    self.overviewHeaderText:SetAlpha(1)
 
     if encountersExists then
-        self.overvieweHeaderText:SetText(self:GetEncounters()[self.db.profile.overview.selectedEncounterId])
+        self.overviewHeaderText:SetText(self:GetEncounters()[self.db.profile.overview.selectedEncounterId])
     else
         if self.db.profile.data.encountersProgress then
-            self.overvieweHeaderText:SetText("Loading Assignments... |cFFFFFFFF" .. string.format("%.1f", self.db.profile.data.encountersProgress) .. "%|r")
+            self.overviewHeaderText:SetText("Loading Assignments... |cFFFFFFFF" .. string.format("%.1f", self.db.profile.data.encountersProgress) .. "%|r")
         else
-            self.overvieweHeaderText:SetText("ART |cFFFFFFFF" .. GetAddOnMetadata("AntiRaidTools", "Version") .. "|r")
-            self.overvieweHeaderText:SetAlpha(0.8)
+            self.overviewHeaderText:SetText("ART |cFFFFFFFF" .. GetAddOnMetadata("AntiRaidTools", "Version") .. "|r")
+            self.overviewHeaderText:SetAlpha(0.8)
         end
     end
 end

@@ -1,7 +1,7 @@
 local AntiRaidTools = AntiRaidTools
 
 -- seconds
-local ENCOUNTERS_SEND_WAIT_TIME = 45
+local ENCOUNTERS_SEND_WAIT_TIME = 60
 
 local lastEncountersSendTime = 0
 local encountersSendTimer = nil
@@ -26,11 +26,13 @@ function AntiRaidTools:SyncEncountersScheduleSend()
                 }
 
                 AntiRaidTools:SendRaidMessage("ENCOUNTERS", data, self.PREFIX_SYNC, "BULK", function(_, sent, total)
-                    local progress = sent / 100
+                    if sent == total then
+                        encountersSendTimer = nil
+                    end
 
                     local progressData = {
                         encountersId = data.encountersId,
-                        progress = progress,
+                        progress = sent / total * 100,
                     }
 
                     AntiRaidTools:SendRaidMessage("ENCOUNTERS_SYNC_PROGRESS", progressData, self.PREFIX_SYNC_PROGRESS)
@@ -55,9 +57,7 @@ function AntiRaidTools:SyncEncountersHandleEncountersId(id)
         return
     end
 
-    if self:IsPlayerRaidLeader() then
-        if self.db.profile.data.encountersId ~= id then
-            self:SyncEncountersScheduleSend()
-        end
+    if self:IsPlayerRaidLeader() and self.db.profile.data.encountersId ~= id then
+        self:SyncEncountersScheduleSend()
     end
 end
