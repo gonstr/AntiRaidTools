@@ -43,7 +43,7 @@ function AntiRaidTools:SyncEncountersScheduleSend()
 end
 
 function AntiRaidTools:SyncEncountersSendCurrentId()
-    if IsEncounterInProgress() then
+    if IsEncounterInProgress() or not IsInRaid() then
         return
     end
 
