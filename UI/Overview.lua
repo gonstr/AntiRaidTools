@@ -121,24 +121,31 @@ function AntiRaidTools:InitOverview()
 end
 
 function AntiRaidTools:OverviewResize()
-    local selectedEncounterId = self.db.profile.overview.selectedEncounterId
-    local encounter = self.db.profile.data.encounters[selectedEncounterId]
+    local encounters = self.db.profile.data.encounters
 
-    -- Header + 10 extra
-    local height = 20
+    local maxHeight = 0
 
-    if encounter then
-        for _, part in ipairs(encounter) do
-            if part.type == "RAID_ASSIGNMENTS" then
-                height = height + 30
-                for _ in ipairs(part.assignments) do
-                    height = height + 20
+    for _, encounter in pairs(encounters) do
+        -- Overview Header
+        local height = 20
+
+        if encounter then
+            for _, part in ipairs(encounter) do
+                if part.type == "RAID_ASSIGNMENTS" then
+                    height = height + 30
+                    for _ in ipairs(part.assignments) do
+                        height = height + 20
+                    end
                 end
             end
         end
+
+        if height > maxHeight then
+            maxHeight = height
+        end
     end
 
-    self.overviewFrame:SetHeight(math.max(MIN_HEIGHT, height))
+    self.overviewFrame:SetHeight(math.max(MIN_HEIGHT, maxHeight))
 end
 
 function AntiRaidTools:OverviewSetLocked(locked)
