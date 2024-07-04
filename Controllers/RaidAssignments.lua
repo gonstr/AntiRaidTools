@@ -106,7 +106,7 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
         return
     end
 
-    if self.DEBUG then print("[ART] Running update groups") end
+    if self.DEBUG then print("[ART] Update groups start") end
 
     local groupsUpdated = false
 
@@ -116,6 +116,8 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
             local selectedGroups = self:RaidAssignmentsSelectGroup(part.assignments, part.strategy.type)
 
             if not self:RaidAssignmentsIsGroupsEqual(activeGroups, selectedGroups) then
+                if self.DEBUG then print("[ART] Updated groups for", part.uuid) end
+
                 groupsUpdated = true
                 self:SetActiveGroup(part.uuid, selectedGroups)
             end
@@ -196,9 +198,16 @@ function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
 end
 
 local function sendNotification(uuid, countdown)
+    if self.DEBUG then print("[ART] Sending notification start") end
+
     local activeGroups = AntiRaidTools:GetActiveGroups(uuid)
 
     countdown = countdown or 0
+
+    if self.DEBUG then
+        print("[ART] Notification active groups", activeGroups)
+        print("[ART] Notification countdown", countdown)
+    end
 
     if activeGroups and #activeGroups > 0 then
         local data = {
@@ -206,6 +215,7 @@ local function sendNotification(uuid, countdown)
             countdown = countdown
         }
 
+        if self.DEBUG then print("[ART] Sending notification done") end
         AntiRaidTools:SendRaidMessage("SHOW_NOTIFICATION", data)
     end
 end

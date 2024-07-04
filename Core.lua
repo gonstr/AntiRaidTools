@@ -31,6 +31,8 @@ function AntiRaidTools:OnInitialize()
     self.PREFIX_SYNC_PROGRESS = "ART-SP"
     self.PREFIX_MAIN = "ART-M"
 
+    self.isInRaid = IsInRaid()
+
     self:InitDB() 
     self:InitOptions()
     self:InitMinimap()
@@ -179,6 +181,7 @@ function AntiRaidTools:UNIT_HEALTH(_, unitId)
     local guid = UnitGUID(unitId)
 
     if self:IsCachedUnitDead(guid) and UnitHealth(unitId) > 0 and not UnitIsGhost(unitId) then
+        if self.DEBUG then print("[ART] Handling cached unit coming back to life") end
         self:ClearCachedUnitDead(guid)
         self:RaidAssignmentsUpdateGroups()
         self:UpdateOverviewSpells()
@@ -191,7 +194,11 @@ end
 function AntiRaidTools:GROUP_ROSTER_UPDATE()
     self:UpdateOverviewSpells()
     self:UpdateNotificationSpells()
-    self:SyncEncountersSendCurrentId()
+
+    if IsInRaid() and not self.IsInRaid then
+        self.IsInRaid = IsInRaid()
+        self:SyncEncountersSendCurrentId()
+    end
 end
 
 function AntiRaidTools:COMBAT_LOG_EVENT_UNFILTERED()
