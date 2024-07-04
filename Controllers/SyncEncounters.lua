@@ -25,7 +25,7 @@ function AntiRaidTools:SyncEncountersScheduleSend()
                 encounters = AntiRaidTools.db.profile.data.encounters
             }
 
-            if self.DEBUG then print("[ART] Sending Raid Encounters to Raid...") end
+            if self.DEBUG then print("[ART] Sending Raid Encounters to raid") end
 
             AntiRaidTools:SendRaidMessage("ENCOUNTERS", data, self.PREFIX_SYNC, "BULK", function(_, sent, total)
                 if sent == total then
