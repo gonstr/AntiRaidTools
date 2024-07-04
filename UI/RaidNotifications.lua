@@ -83,18 +83,6 @@ function AntiRaidTools:RaidNotificationsUpdateHeader(text)
     self.notificationContentFrame.header.text:SetText(self:StringEllipsis(text, 32))
 end
 
-local function updateCountdown(self, elapsed)
-    AntiRaidTools.notificationsCountdown = AntiRaidTools.notificationsCountdown - elapsed
-
-    if AntiRaidTools.notificationsCountdown > 0 then
-        AntiRaidTools.notificationContentFrame.header.countdown:SetText(string.format("%.1fs", AntiRaidTools.notificationsCountdown))
-    else
-        AntiRaidTools.notificationContentFrame.header.countdown:SetText("0")
-        AntiRaidTools.notificationContentFrame:SetScript("OnUpdate", nil)
-        AntiRaidTools.notificationContentFrame.header.countdown:Hide()
-    end
-end
-
 local function createNotificationGroup(mainFrame, prevFrame)
     local frame = CreateFrame("Frame", nil, mainFrame, "BackdropTemplate")
     frame:SetHeight(30)
@@ -119,7 +107,7 @@ local function createNotificationGroupAssignment(parentFrame)
 
     frame.cooldownFrame = CreateFrame("Cooldown", nil, frame.iconFrame, "CooldownFrameTemplate")
     frame.cooldownFrame:SetAllPoints()
-    
+
     frame.iconFrame.cooldown = frame.cooldownFrame
 
     frame.icon = frame.iconFrame:CreateTexture(nil, "ARTWORK")
@@ -149,7 +137,7 @@ local function updateNotificationGroupAssignment(frame, assignment, index, total
 
     frame.text:SetTextColor(color.r, color.g, color.b)
 
-    ActionButton_HideOverlayGlow(frame.iconFrame)
+    --ActionButton_HideOverlayGlow(frame.iconFrame)
     frame.cooldownFrame:Clear()
 
     frame:ClearAllPoints()
@@ -189,6 +177,18 @@ local function updateNotificationGroup(frame, prevFrame, group, uuid, index)
         end
 
         updateNotificationGroupAssignment(frame.assignments[i], assignment, i, #group)
+    end
+end
+
+local function updateCountdown(_, elapsed)
+    AntiRaidTools.notificationsCountdown = AntiRaidTools.notificationsCountdown - elapsed
+
+    if AntiRaidTools.notificationsCountdown > 0 then
+        AntiRaidTools.notificationContentFrame.header.countdown:SetText(string.format("%.1fs", AntiRaidTools.notificationsCountdown))
+    else
+        AntiRaidTools.notificationContentFrame.header.countdown:SetText("0")
+        AntiRaidTools.notificationContentFrame:SetScript("OnUpdate", nil)
+        AntiRaidTools.notificationContentFrame.header.countdown:Hide()
     end
 end
 
@@ -302,10 +302,10 @@ function AntiRaidTools:UpdateNotificationSpells()
                     assignmentFrame.cooldownFrame:SetCooldown(castTimestamp, spell.duration)
                 end
 
-                ActionButton_ShowOverlayGlow(assignmentFrame.iconFrame)
+                --ActionButton_ShowOverlayGlow(assignmentFrame.iconFrame)
                 assignmentFrame:SetAlpha(1)
             else
-                ActionButton_HideOverlayGlow(assignmentFrame.iconFrame)
+                --ActionButton_HideOverlayGlow(assignmentFrame.iconFrame)
 
                 if self:IsSpellReady(assignmentFrame.player, assignmentFrame.spellId) then
                     assignmentFrame:SetAlpha(1)

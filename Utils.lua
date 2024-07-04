@@ -66,7 +66,7 @@ function AntiRaidTools:CreateFadeOut(frame, onFinished)
     return fadeOutGroup
 end
 
-function AntiRaidTools:ShallowCopyTable(table)
+function AntiRaidTools:ShallowCopy(table)
     if not table then return nil end
 
     local copy = {}
@@ -157,4 +157,3 @@ function isPlayerInAssignments(encounter, activeGroups, uuid)
 
     return result
 end
-

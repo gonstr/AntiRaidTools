@@ -11,6 +11,9 @@ function AntiRaidTools:HandleChatCommand(input)
         elseif trimmed == "show" or trimmed == "hide" then
             self.db.profile.overview.show = trimmed == "show" and true or false
             self:UpdateOverview()
+        elseif trimmed == "debug" then
+            self.DEBUG = not self.DEBUG
+            print("[ART] debug", self.DEBUG)
         elseif trimmed == "teststart" then
             self:InternalTestStart()
         elseif trimmed == "testend" then
