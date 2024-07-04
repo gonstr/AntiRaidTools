@@ -92,9 +92,6 @@ function AntiRaidTools:RaidAssignmentsIsGroupsEqual(grp1, grp2)
     tableSort(grp1Copy)
     tableSort(grp2Copy)
 
-    DevTool:AddData(grp1Copy, "grp1Copy")
-    DevTool:AddData(grp2Copy, "grp2Copy")
-
     for i = 1, #grp1Copy do
         if grp1Copy[i] ~= grp2Copy[i] then
             return false
@@ -117,9 +114,6 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
         if part.type == "RAID_ASSIGNMENTS" then
             local activeGroups = self:GetActiveGroups(part.uuid)
             local selectedGroups = self:RaidAssignmentsSelectGroup(part.assignments, part.strategy.type)
-
-            DevTool:AddData(activeGroups, "activeGroups")
-            DevTool:AddData(selectedGroups, "selectedGroups")
 
             if not self:RaidAssignmentsIsGroupsEqual(activeGroups, selectedGroups) then
                 groupsUpdated = true
