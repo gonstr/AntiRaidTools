@@ -45,19 +45,13 @@ function AntiRaidTools:InitOverview()
             return
         end
 
-        local encounters = AntiRaidTools.db.profile.data.encounters
+        local scale = UIParent:GetEffectiveScale()
+        local x, y = GetCursorPosition()
+        x, y = x / scale, y / scale
 
-        for _, encounters in pairs(encounters) do
-            local scale = UIParent:GetEffectiveScale()
-            local x, y = GetCursorPosition()
-            x, y = x / scale, y / scale
+        popup:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT", x, y)
 
-            popup:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT", x, y)
-
-            popup:Show()
-
-            break
-        end
+        popup:Show()
     end
 
     local header = CreateFrame("Frame", "AntiRaidToolsOverviewHeader", container, "BackdropTemplate")
@@ -180,8 +174,13 @@ function AntiRaidTools:UpdateOverview()
     self:UpdateOverviewPopup()
     self:UpdateOverviewMain()
     self:UpdateOverviewSpells()
-
+    self:OverviewUpdateLocked()
     self.overviewFrame:Show()
+end
+
+function AntiRaidTools:OverviewUpdateLocked()
+    self.overviewFrame:EnableMouse(not self.db.profile.overview.locked)
+    self:UpdateOverviewPopup()
 end
 
 function AntiRaidTools:UpdateOverviewHeaderText()
@@ -243,7 +242,7 @@ local function createPopupListItem(popupFrame, text, onClick)
     return item
 end
 
-function AntiRaidTools:ShowOverviewPopupListItem(index, text, onClick, extraOffset)
+function AntiRaidTools:ShowOverviewPopupListItem(index, text, onClick, accExtraOffset, extraOffset)
     if not self.overviewPopupListItems[index] then
         self.overviewPopupListItems[index] = createPopupListItem(self.overviewPopup)
     end
@@ -251,6 +250,10 @@ function AntiRaidTools:ShowOverviewPopupListItem(index, text, onClick, extraOffs
     local item = self.overviewPopupListItems[index]
 
     local yOfs = -10 - (20 * (index -1))
+
+    if accExtraOffset then
+        yOfs = yOfs - accExtraOffset
+    end
 
     if extraOffset then
         yOfs = yOfs - 10
@@ -270,6 +273,11 @@ end
 function AntiRaidTools:OverviewSelectEncounter(encounterId)
     self.db.profile.overview.selectedEncounterId = encounterId
     self:UpdateOverview()
+end
+
+function AntiRaidTools:OverviewToggleLock()
+    self.db.profile.overview.locked = not self.db.profile.overview.locked
+    self:OverviewUpdateLocked()
 end
 
 function AntiRaidTools:UpdateOverviewPopup()
@@ -295,9 +303,14 @@ function AntiRaidTools:UpdateOverviewPopup()
         index = index + 1
     end
 
-    -- Add extra offset if we have list items above the close item
-    local extraOffset = index > 1
-    local yOfs = self:ShowOverviewPopupListItem(index, "Close", nil, extraOffset)
+    local lockFunc = function() self:OverviewToggleLock() end
+    local lockedText = "Lock Overview"
+    if self.db.profile.overview.locked then lockedText = "Unlock Overview" end
+    self:ShowOverviewPopupListItem(index, lockedText, lockFunc, 0, index > 1)
+
+    index = index + 1
+
+    local yOfs = self:ShowOverviewPopupListItem(index, "Close", nil, index > 2 and 10 or 0, true)
 
     local popupHeight = math.abs(yOfs) + 30
 

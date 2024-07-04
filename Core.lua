@@ -17,6 +17,7 @@ AntiRaidTools.defaults = {
         minimap = {},
         overview = {
             selectedEncounterId = nil,
+            locked = false,
             show = true
         }
     },
