@@ -303,14 +303,21 @@ function AntiRaidTools:UpdateOverviewPopup()
         index = index + 1
     end
 
+    local encounterListItems = index > 1
+
     local lockFunc = function() self:OverviewToggleLock() end
     local lockedText = "Lock Overview"
     if self.db.profile.overview.locked then lockedText = "Unlock Overview" end
-    self:ShowOverviewPopupListItem(index, lockedText, lockFunc, 0, index > 1)
+    self:ShowOverviewPopupListItem(index, lockedText, lockFunc, 0, encounterListItems)
 
     index = index + 1
 
-    local yOfs = self:ShowOverviewPopupListItem(index, "Close", nil, index > 2 and 10 or 0, true)
+    local configurationFunc = function() InterfaceOptionsFrame_OpenToCategory("Anti Raid Tools") end
+    self:ShowOverviewPopupListItem(index, "Configuration", configurationFunc, encounterListItems and 10 or 0, false)
+
+    index = index + 1
+
+    local yOfs = self:ShowOverviewPopupListItem(index, "Close", nil, encounterListItems and 10 or 0, true)
 
     local popupHeight = math.abs(yOfs) + 30
 

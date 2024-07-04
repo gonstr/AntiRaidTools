@@ -86,8 +86,8 @@ local mainOptions = {
                 },
                 button2 = {
                     type = "execute",
-                    name = "Toggle Framelock",
-                    desc = "Toggle framelock of the Notifications View Anchor.",
+                    name = "Toggle Anchors",
+                    desc = "Toggle visibility of View Anchors.",
                     func = function()
                         AntiRaidTools:RaidNotificationsToggleFrameLock()
                     end,
