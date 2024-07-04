@@ -38,6 +38,8 @@ function AntiRaidTools:InitEncounters()
             instance_id = EJ_GetInstanceByIndex(instance_index, true)
         end
     end
+
+    EJ_SelectTier(currTier)
 end
 
 function AntiRaidTools:GetEncounters()

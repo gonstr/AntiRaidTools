@@ -36,10 +36,6 @@ function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
     activeEncounter = self.db.profile.data.encounters[encounterId]
 
     if activeEncounter then
-        print("Starting encounter. Setting activeEncounter")
-    end
-
-    if activeEncounter then
         -- Populate caches
         for _, part in ipairs(activeEncounter) do
             if part.type == "RAID_ASSIGNMENTS" then
@@ -59,7 +55,6 @@ function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
 end
 
 function AntiRaidTools:RaidAssignmentsEndEncounter()
-    print("End encounter")
     resetState()
     self:ResetGroups()
     self:UpdateOverviewActiveGroups()
@@ -172,11 +167,11 @@ function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
     local part = unitHealthTriggersCache[unit]
 
     if part and not part.triggered then
-        local maxHealth = UnitHealthMax(unit)
         local health = UnitHealth(unit)
+        local maxHealth = UnitHealthMax(unit)
         local percentage = health / maxHealth * 100
 
-        local trigger = part.trigger
+        local trigger = part.trigger    
 
         if percentage < trigger.percentage then
             part.triggered = true
@@ -198,10 +193,6 @@ function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
         local part = spellCastAssignmentCache[spellId]
 
         if part then
-            print("SpellCast: ", event, spellId, castTime)
-        end
-
-        if part then
             sendNotification(part.uuid)
         end
     end
@@ -213,7 +204,7 @@ function AntiRaidTools:RaidAssignmentsHandleRaidBossEmote(text)
     end
 
     for _, part in ipairs(activeEncounter) do
-        if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) then
+        if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) ~= nil then
             sendNotification(part.uuid)
         end
     end

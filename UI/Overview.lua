@@ -102,7 +102,6 @@ function AntiRaidTools:InitOverview()
         showPopup()
     end)
     headerButton:RegisterForClicks("AnyDown", "AnyUp")
-    headerButton:Hide()
 
     local main = CreateFrame("Frame", "AntiRaidToolsOvervieMain", container, "BackdropTemplate")
     main:SetPoint("TOPLEFT", 0, -20)
@@ -178,7 +177,6 @@ function AntiRaidTools:UpdateOverview()
     end
 
     self:UpdateOverviewHeaderText()
-    self:UpdateOverviewHeaderButton()
     self:UpdateOverviewPopup()
     self:UpdateOverviewMain()
     self:UpdateOverviewSpells()
@@ -199,13 +197,7 @@ function AntiRaidTools:UpdateOverviewHeaderText()
     self.overviewHeaderText:SetAlpha(1)
 
     if encountersExists then
-        local encounterName = self:GetEncounters()[self.db.profile.overview.selectedEncounterId]
-
-        if not encounterName then
-            encounterName = self.db.profile.overview.selectedEncounterId
-        end
-
-        self.overviewHeaderText:SetText(encounterName)
+        self.overviewHeaderText:SetText(self:GetEncounters()[self.db.profile.overview.selectedEncounterId])
     else
         if self.db.profile.data.encountersProgress then
             self.overviewHeaderText:SetText("Loading Assignments... |cFFFFFFFF" .. string.format("%.1f", self.db.profile.data.encountersProgress) .. "%|r")
@@ -280,22 +272,11 @@ function AntiRaidTools:OverviewSelectEncounter(encounterId)
     self:UpdateOverview()
 end
 
-function AntiRaidTools:UpdateOverviewHeaderButton()
-    local hasEncounterData = false
-
-    for _, _ in pairs(self.db.profile.data.encounters) do
-        hasEncounterData = true
-        break
-    end
-
-    if hasEncounterData then
-        self.overviewHeaderButton:Show()
-    else
-        self.overviewHeaderButton:Hide()
-    end
-end
-
 function AntiRaidTools:UpdateOverviewPopup()
+    if InCombatLockdown() then
+        return
+    end
+
     -- Update list items
     for _, item in pairs(self.overviewPopupListItems) do
         item:Hide()
@@ -310,14 +291,7 @@ function AntiRaidTools:UpdateOverviewPopup()
     local index = 1
     for _, encounterId in ipairs(encounterIndexes) do
         local selectFunc = function() self:OverviewSelectEncounter(encounterId) end
-
-        local encounterName = self:GetEncounters()[encounterId]
-
-        if not encounterName then
-            encounterName = encounterId
-        end
-
-        self:ShowOverviewPopupListItem(index, encounterName, selectFunc)
+        self:ShowOverviewPopupListItem(index, self:GetEncounters()[encounterId], selectFunc)
         index = index + 1
     end
 

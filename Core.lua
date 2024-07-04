@@ -46,7 +46,8 @@ function AntiRaidTools:OnEnable()
     self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     self:RegisterEvent("UNIT_HEALTH")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
-    self:RegisterEvent("RAID_BOSS_EMOTE")
+    self:RegisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
+    self:RegisterEvent("CHAT_MSG_MONSTER_YELL")
 
     self:RegisterMessage("ART_WA_EVENT")
 
@@ -61,7 +62,8 @@ function AntiRaidTools:OnDisable()
     self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     self:UnregisterEvent("UNIT_HEALTH")
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-    self:UnregisterEvent("RAID_BOSS_EMOTE")
+    self:UnregisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
+    self:UnregisterEvent("CHAT_MSG_MONSTER_YELL")
 
     self:UnregisterMessage("ART_WA_EVENT")
 
@@ -74,11 +76,11 @@ end
 
 function AntiRaidTools:PLAYER_ENTERING_WORLD(_, isInitialLogin, isReloadingUi)
     if isInitialLogin or isReloadingUi then
+        self:InitEncounters()
         self:SyncEncountersSendCurrentId()
         self:SyncEncountersScheduleSend()
     end
 
-    self:InitEncounters()
     self:UpdateOverview()
 end
 
@@ -118,7 +120,6 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
                 end
             elseif payload.event == "ENCOUNTERS" then
                 if sender ~= UnitName("player") then
-                    self:InitEncounters()
                     self.db.profile.data.encountersProgress = nil
                     self.db.profile.data.encountersId = payload.data.encountersId
                     self.db.profile.data.encounters = payload.data.encounters
@@ -189,7 +190,11 @@ function AntiRaidTools:COMBAT_LOG_EVENT_UNFILTERED()
     self:HandleCombatLog(subEvent, sourceName, destGUID, destName, spellId)
 end
 
-function AntiRaidTools:RAID_BOSS_EMOTE(_, text)
+function AntiRaidTools:CHAT_MSG_RAID_BOSS_EMOTE(_, text)
+    self:RaidAssignmentsHandleRaidBossEmote(text)
+end
+
+function AntiRaidTools:CHAT_MSG_MONSTER_YELL(_, text)
     self:RaidAssignmentsHandleRaidBossEmote(text)
 end
 

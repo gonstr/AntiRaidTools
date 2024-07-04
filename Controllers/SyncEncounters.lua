@@ -1,7 +1,7 @@
 local AntiRaidTools = AntiRaidTools
 
 -- seconds
-local ENCOUNTERS_SEND_WAIT_TIME = 60
+local ENCOUNTERS_SEND_WAIT_TIME = 120
 
 local lastEncountersSendTime = 0
 local encountersSendTimer = nil
@@ -15,6 +15,8 @@ function AntiRaidTools:SyncEncountersScheduleSend()
         local timeSinceLastSend = GetTime() - lastEncountersSendTime
         local waitTime = math.max(0, ENCOUNTERS_SEND_WAIT_TIME - timeSinceLastSend)
 
+        print("[ART] Scheduling Raid Sync in", waitTime, "seconds")
+
         encountersSendTimer = C_Timer.NewTimer(waitTime, function()
             lastEncountersSendTime = GetTime()
 
@@ -22,6 +24,8 @@ function AntiRaidTools:SyncEncountersScheduleSend()
                 encountersId = AntiRaidTools.db.profile.data.encountersId,
                 encounters = AntiRaidTools.db.profile.data.encounters
             }
+
+            print("[ART] Sending Raid Encounters to Raid...")
 
             AntiRaidTools:SendRaidMessage("ENCOUNTERS", data, self.PREFIX_SYNC, "BULK", function(_, sent, total)
                 if sent == total then

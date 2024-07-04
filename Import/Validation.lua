@@ -55,9 +55,13 @@ local function validateType(import)
     return true
 end
 
-local function validateEncounter(import)
+local function validateEncounter(import, encounters)
     if type(import.encounter) ~= "number" or import.encounter ~= math.floor(import.encounter) then
         return false, "Import has an invalid encounter value: " .. stringSafe(import.encounter) .. ".."
+    end
+
+    if not encounters[import.encounter] then
+        return false, "Import has an unknown encounter value: " .. stringSafe(import.encounter) .. "."
     end
 
     return true
@@ -216,6 +220,7 @@ end
 
 function AntiRaidTools:ValidateImports(imports)
     local spells = self:GetSpells()
+    local encounters = self:GetEncounters()
 
     for _, import in pairs(imports) do
         local ok, err = validateRequiredFields(import)
@@ -224,7 +229,7 @@ function AntiRaidTools:ValidateImports(imports)
         ok, err = validateType(import)
         if not ok then return false, err end
         
-        ok, err = validateEncounter(import)
+        ok, err = validateEncounter(import, encounters)
         if not ok then return false, err end
 
         ok, err = validateTrigger(import)
