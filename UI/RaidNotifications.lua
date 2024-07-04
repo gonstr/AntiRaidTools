@@ -23,7 +23,7 @@ function AntiRaidTools:InitRaidNotification()
     container.frameLockText:SetFont("Fonts\\FRIZQT__.TTF", 14)
     container.frameLockText:SetTextColor(1, 1, 1, 0.4)
     container.frameLockText:SetPoint("CENTER", 0, 0)
-    container.frameLockText:SetText("Raid Notifications Anchor")
+    container.frameLockText:SetText("ART Notifications Anchor")
     container.frameLockText:Hide()
 
     local content = CreateFrame("Frame", nil, container)

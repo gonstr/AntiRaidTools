@@ -180,6 +180,7 @@ end
 
 function AntiRaidTools:OverviewUpdateLocked()
     self.overviewFrame:EnableMouse(not self.db.profile.overview.locked)
+    self.overviewHeader:EnableMouse(not self.db.profile.overview.locked)
     self:UpdateOverviewPopup()
 end
 
