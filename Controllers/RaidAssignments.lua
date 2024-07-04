@@ -220,19 +220,21 @@ local function cancelFojjiNumenTimer(key)
 end
 
 function AntiRaidTools:RaidAssignmentsHandleFojjiNumenTimer(key, countdown)
-    if not activeEncounter then
+    if not activeEncounter or not countdown then
         return
     end
 
     for _, part in ipairs(activeEncounter) do
         if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "FOJJI_NUMEN_TIMER" and part.trigger.key == key then
-            local internalCountdown = math.max(0, countdown - 5)
+            if countdown <= 5 then
+                sendNotification(part.uuid, countdown)
+            else
+                cancelFojjiNumenTimer(key)
 
-            cancelFojjiNumenTimer(key)
-
-            fojjiNumenTimers[key] = C_Timer.NewTimer(internalCountdown, function()
-                sendNotification(part.uuid, 5)
-            end)
+                fojjiNumenTimers[key] = C_Timer.NewTimer(countdown - 5, function()
+                    sendNotification(part.uuid, 5)
+                end)
+            end
         end
     end
 end
