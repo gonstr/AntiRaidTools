@@ -174,7 +174,7 @@ function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
 
     if strategy == "CHAIN" then
         -- CHAIN uses BEST_MATCH recursivly
-        local assignmentsCopy = AntiRaidTools:ShallowCopy(assignments)
+        local assignmentsCopy = self:ShallowCopy(assignments)
 
         local bestMatchIndex = self:RaidAssignmentsSelectBestMatchIndex(assignmentsCopy)
         if bestMatchIndex then assignmentsCopy[bestMatchIndex] = nil end
@@ -197,10 +197,10 @@ function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
     return groups
 end
 
-local function sendNotification(uuid, countdown)
+function AntiRaidTools:RaidAssignmentsSendNotification(uuid, countdown)
     if self.DEBUG then print("[ART] Sending notification start") end
 
-    local activeGroups = AntiRaidTools:GetActiveGroups(uuid)
+    local activeGroups = self:GetActiveGroups(uuid)
 
     countdown = countdown or 0
 
@@ -216,7 +216,8 @@ local function sendNotification(uuid, countdown)
         }
 
         if self.DEBUG then print("[ART] Sending notification done") end
-        AntiRaidTools:SendRaidMessage("SHOW_NOTIFICATION", data)
+
+        self:SendRaidMessage("SHOW_NOTIFICATION", data)
     end
 end
 
@@ -239,7 +240,7 @@ function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
         if percentage < trigger.percentage then
             part.triggered = true
 
-            sendNotification(part.uuid)
+            self:RaidAssignmentsSendNotification(part.uuid)
         end
     end
 end
@@ -258,7 +259,7 @@ function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
         if part then
             if self.DEBUG then print("[ART] Handling spell cast:", spellId) end
 
-            sendNotification(part.uuid)
+            self:RaidAssignmentsSendNotification(part.uuid)
         end
     end
 end
@@ -272,7 +273,7 @@ function AntiRaidTools:RaidAssignmentsHandleRaidBossEmote(text)
         if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) ~= nil then
             if self.DEBUG then print("[ART] Handling raid boss emote:", text) end
 
-            sendNotification(part.uuid)
+            self:RaidAssignmentsSendNotification(part.uuid)
         end
     end
 end
@@ -296,12 +297,12 @@ function AntiRaidTools:RaidAssignmentsHandleFojjiNumenTimer(key, countdown)
             if self.DEBUG then print("[ART] Handling fojji numen timer:", key) end
 
             if countdown <= 5 then
-                sendNotification(part.uuid, countdown)
+                self:RaidAssignmentsSendNotification(part.uuid, countdown)
             else
                 cancelFojjiNumenTimer(key)
 
                 fojjiNumenTimers[key] = C_Timer.NewTimer(countdown - 5, function()
-                    sendNotification(part.uuid, 5)
+                    self:RaidAssignmentsSendNotification(part.uuid, 5)
                 end)
             end
         end
