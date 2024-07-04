@@ -41,7 +41,7 @@ function AntiRaidTools:InitOverview()
     popup:Hide() -- Start hidden
 
     local function showPopup()
-        if AntiRaidTools.overviewLocked then
+        if InCombatLockdown() or AntiRaidTools:RaidAssignmentsInEncounter() then
             return
         end
 
@@ -53,6 +53,7 @@ function AntiRaidTools:InitOverview()
             x, y = x / scale, y / scale
 
             popup:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT", x, y)
+
             popup:Show()
 
             break
@@ -148,10 +149,6 @@ function AntiRaidTools:OverviewResize()
     self.overviewFrame:SetHeight(math.max(MIN_HEIGHT, maxHeight))
 end
 
-function AntiRaidTools:OverviewSetLocked(locked)
-    self.overviewLocked = locked
-end
-
 function AntiRaidTools:UpdateOverview()
     local encounters = self.db.profile.data.encounters
 
@@ -185,6 +182,7 @@ function AntiRaidTools:UpdateOverview()
     self:UpdateOverviewPopup()
     self:UpdateOverviewMain()
     self:UpdateOverviewSpells()
+
     self.overviewFrame:Show()
 end
 
@@ -201,7 +199,13 @@ function AntiRaidTools:UpdateOverviewHeaderText()
     self.overviewHeaderText:SetAlpha(1)
 
     if encountersExists then
-        self.overviewHeaderText:SetText(self:GetEncounters()[self.db.profile.overview.selectedEncounterId])
+        local encounterName = self:GetEncounters()[self.db.profile.overview.selectedEncounterId]
+
+        if not encounterName then
+            encounterName = self.db.profile.overview.selectedEncounterId
+        end
+
+        self.overviewHeaderText:SetText(encounterName)
     else
         if self.db.profile.data.encountersProgress then
             self.overviewHeaderText:SetText("Loading Assignments... |cFFFFFFFF" .. string.format("%.1f", self.db.profile.data.encountersProgress) .. "%|r")
@@ -272,10 +276,8 @@ function AntiRaidTools:ShowOverviewPopupListItem(index, text, onClick, extraOffs
 end
 
 function AntiRaidTools:OverviewSelectEncounter(encounterId)
-    if AntiRaidTools:EncounterExists(encounterId) then
-        self.db.profile.overview.selectedEncounterId = encounterId
-        self:UpdateOverview()
-    end
+    self.db.profile.overview.selectedEncounterId = encounterId
+    self:UpdateOverview()
 end
 
 function AntiRaidTools:UpdateOverviewHeaderButton()
@@ -287,7 +289,7 @@ function AntiRaidTools:UpdateOverviewHeaderButton()
     end
 
     if hasEncounterData then
-        if not InCombatLockdown() then self.overviewHeaderButton:Show() end
+        self.overviewHeaderButton:Show()
     else
         self.overviewHeaderButton:Hide()
     end
@@ -308,7 +310,14 @@ function AntiRaidTools:UpdateOverviewPopup()
     local index = 1
     for _, encounterId in ipairs(encounterIndexes) do
         local selectFunc = function() self:OverviewSelectEncounter(encounterId) end
-        self:ShowOverviewPopupListItem(index, self:GetEncounters()[encounterId], selectFunc)
+
+        local encounterName = self:GetEncounters()[encounterId]
+
+        if not encounterName then
+            encounterName = encounterId
+        end
+
+        self:ShowOverviewPopupListItem(index, encounterName, selectFunc)
         index = index + 1
     end
 

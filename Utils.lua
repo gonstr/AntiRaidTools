@@ -157,4 +157,3 @@ function isPlayerInAssignments(encounter, activeGroups, uuid)
 
     return result
 end
-

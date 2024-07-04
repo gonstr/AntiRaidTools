@@ -42,6 +42,7 @@ function AntiRaidTools:OnEnable()
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterEvent("ENCOUNTER_START")
     self:RegisterEvent("ENCOUNTER_END")
+    self:RegisterEvent("PLAYER_REGEN_ENABLED")
     self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     self:RegisterEvent("UNIT_HEALTH")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
@@ -56,6 +57,7 @@ function AntiRaidTools:OnDisable()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     self:UnregisterEvent("ENCOUNTER_START")
     self:UnregisterEvent("ENCOUNTER_END")
+    self:UnregisterEvent("PLAYER_REGEN_ENABLED")
     self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     self:UnregisterEvent("UNIT_HEALTH")
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
@@ -133,26 +135,34 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
     end
 end
 
-function AntiRaidTools:ART_WA_EVENT(_, waEvent, ...)
-    if waEvent == "WA_NUMEN_TIMER" then
+function AntiRaidTools:ART_WA_EVENT(_, event, ...)
+    if event == "WA_NUMEN_TIMER" then
         self:RaidAssignmentsHandleFojjiNumenTimer(...)
-        self:RaidAssignmentsUpdateGroups()
     end
 end
 
 function AntiRaidTools:ENCOUNTER_START(_, encounterId)
     self:OverviewSelectEncounter(encounterId)
-    self:OverviewSetLocked(true)
     self:RaidAssignmentsStartEncounter(encounterId)
 end
 
 function AntiRaidTools:ENCOUNTER_END()
-    self:OverviewSetLocked(false)
     self:RaidAssignmentsEndEncounter()
     self:ResetSpellsCache()
     self:ResetDeadCache()
     self:UpdateOverviewSpells()
     self:UpdateNotificationSpells()
+end
+
+function AntiRaidTools:PLAYER_REGEN_ENABLED()
+    -- This is just another way of registering an encounter ending
+    if not UnitIsDeadOrGhost("player") then
+        self:RaidAssignmentsEndEncounter()
+        self:ResetSpellsCache()
+        self:ResetDeadCache()
+        self:UpdateOverviewSpells()
+        self:UpdateNotificationSpells()
+    end
 end
 
 function AntiRaidTools:UNIT_HEALTH(_, unitId)

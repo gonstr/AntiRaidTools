@@ -3,13 +3,11 @@ local stringFind = string.find
 
 local AntiRaidTools = AntiRaidTools
 
-local isRaidLeader = false
-
 local activeEncounter = nil
 
 -- We use caches so we can do fast lookups for a trigger
 -- key: unitId, value = { raidAssignment, triggered }
-local unitHealthRaidAssignmentCache = {}
+local unitHealthTriggersCache = {}
 
 -- key: spellId, value = raidAssignment
 local spellCastAssignmentCache = {}
@@ -18,7 +16,6 @@ local spellCastAssignmentCache = {}
 local fojjiNumenTimers = {}
 
 local function resetState()
-    enabled = false
     activeEncounter = nil
     unitHealthTriggersCache = {}
     spellCastAssignmentCache = {}
@@ -32,17 +29,17 @@ end
 function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
     resetState()
 
-    if self:IsPlayerRaidLeader() then
-        isRaidLeader = true
-    end
-
-    if not isRaidLeader then
+    if not self:IsPlayerRaidLeader() then
         return
     end
 
-    if AntiRaidTools:EncounterExists(encounterId) then
-        activeEncounter = self.db.profile.data.encounters[encounterId]
+    activeEncounter = self.db.profile.data.encounters[encounterId]
 
+    if activeEncounter then
+        print("Starting encounter. Setting activeEncounter")
+    end
+
+    if activeEncounter then
         -- Populate caches
         for _, part in ipairs(activeEncounter) do
             if part.type == "RAID_ASSIGNMENTS" then
@@ -50,7 +47,7 @@ function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
                     local partCopy = AntiRaidTools:ShallowCopyTable(part)
                     partCopy.triggered = false
 
-                    unitHealthRaidAssignmentCache[part.trigger.unit] = partCopy
+                    unitHealthTriggersCache[part.trigger.unit] = partCopy
                 elseif part.trigger.type == "SPELL_CAST" then
                     spellCastAssignmentCache[part.trigger.spell_id] = part
                 end
@@ -62,13 +59,18 @@ function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
 end
 
 function AntiRaidTools:RaidAssignmentsEndEncounter()
+    print("End encounter")
     resetState()
     self:ResetGroups()
     self:UpdateOverviewActiveGroups()
 end
 
+function AntiRaidTools:RaidAssignmentsInEncounter()
+    return activeEncounter ~= nil
+end
+
 function AntiRaidTools:RaidAssignmentsUpdateGroups()
-    if not activeEncounter or not isRaidLeader then
+    if not activeEncounter then
         return
     end
 
@@ -163,46 +165,56 @@ local function sendNotification(uuid, countdown)
 end
 
 function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
-    if activeEncounter then
-        local part = unitHealthRaidAssignmentCache[unit]
+    if not activeEncounter then
+        return
+    end
 
-        if part and not part.triggered then
-            local maxHealth = UnitHealthMax(unit)
-            local health = UnitHealth(unit)
-            local percentage = health / maxHealth * 100
+    local part = unitHealthTriggersCache[unit]
 
-            local trigger = part.trigger
+    if part and not part.triggered then
+        local maxHealth = UnitHealthMax(unit)
+        local health = UnitHealth(unit)
+        local percentage = health / maxHealth * 100
 
-            if percentage < trigger.percentage then
-                part.triggered = true
+        local trigger = part.trigger
 
-                sendNotification(part.uuid)
-            end
+        if percentage < trigger.percentage then
+            part.triggered = true
+
+            sendNotification(part.uuid)
         end
     end
 end
 
 function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
-    if activeEncounter then
-        local _, _, _, castTime = GetSpellInfo(spellid)
+    if not activeEncounter then
+        return
+    end
 
-        -- We don't want to handle a spellcast twice so we only look for start events or success events for instant cast spells
-        if event == "SPELL_CAST_START" or (event == "SPELL_CAST_SUCCESS" and (not castTime or castTime == 0)) then
-            local part = spellCastAssignmentCache[spellId]
+    local _, _, _, castTime = GetSpellInfo(spellId)
 
-            if part then
-                sendNotification(part.uuid)
-            end
+    -- We don't want to handle a spellcast twice so we only look for start events or success events for instant cast spells
+    if event == "SPELL_CAST_START" or (event == "SPELL_CAST_SUCCESS" and (not castTime or castTime == 0)) then
+        local part = spellCastAssignmentCache[spellId]
+
+        if part then
+            print("SpellCast: ", event, spellId, castTime)
+        end
+
+        if part then
+            sendNotification(part.uuid)
         end
     end
 end
 
 function AntiRaidTools:RaidAssignmentsHandleRaidBossEmote(text)
-    if activeEncounter then
-        for _, part in ipairs(activeEncounter) do
-            if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) then
-                sendNotification(part.uuid)
-            end
+    if not activeEncounter then
+        return
+    end
+
+    for _, part in ipairs(activeEncounter) do
+        if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) then
+            sendNotification(part.uuid)
         end
     end
 end
@@ -217,17 +229,19 @@ local function cancelFojjiNumenTimer(key)
 end
 
 function AntiRaidTools:RaidAssignmentsHandleFojjiNumenTimer(key, countdown)
-    if activeEncounter then
-        for _, part in ipairs(activeEncounter) do
-            if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "FOJJI_NUMEN_TIMER" and part.trigger.key == key then
-                local internalCountdown = math.max(0, countdown - 5)
+    if not activeEncounter then
+        return
+    end
 
-                cancelFojjiNumenTimer(key)
+    for _, part in ipairs(activeEncounter) do
+        if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "FOJJI_NUMEN_TIMER" and part.trigger.key == key then
+            local internalCountdown = math.max(0, countdown - 5)
 
-                fojjiNumenTimers[key] = C_Timer.NewTimer(internalCountdown, function()
-                    sendNotification(part.uuid, 5)
-                end)
-            end
+            cancelFojjiNumenTimer(key)
+
+            fojjiNumenTimers[key] = C_Timer.NewTimer(internalCountdown, function()
+                sendNotification(part.uuid, 5)
+            end)
         end
     end
 end
