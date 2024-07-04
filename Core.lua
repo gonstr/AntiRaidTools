@@ -23,6 +23,9 @@ AntiRaidTools.defaults = {
 }
 
 function AntiRaidTools:OnInitialize()
+    self.DEBUG = false
+    self.TEST = false
+
     self.PREFIX_SYNC = "ART-S"
     self.PREFIX_SYNC_PROGRESS = "ART-SP"
     self.PREFIX_MAIN = "ART-M"
@@ -109,10 +112,12 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
         if ok then
             if payload.event == "ENCOUNTERS_ID" then
                 if sender ~= UnitName("player") then
+                    if self.DEBUG then print("[ART] Received message ENCOUNTERS_ID:", sender, payload.data) end
                     self:SyncEncountersHandleEncountersId(payload.data)
                 end
             elseif payload.event == "ENCOUNTERS_SYNC_PROGRESS" then
                 if sender ~= UnitName("player") and payload.data.encountersId ~= self.db.profile.data.encountersId then
+                    if self.DEBUG then print("[ART] Received message ENCOUNTERS_SYNC_PROGRESS:", sender, payload.data.progress) end
                     self.db.profile.data.encountersProgress = payload.data.progress
                     self.db.profile.data.encountersId = nil
                     self.db.profile.data.encounters = {}
@@ -120,15 +125,18 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
                 end
             elseif payload.event == "ENCOUNTERS" then
                 if sender ~= UnitName("player") then
+                    if self.DEBUG then print("[ART] Received message ENCOUNTERS") end
                     self.db.profile.data.encountersProgress = nil
                     self.db.profile.data.encountersId = payload.data.encountersId
                     self.db.profile.data.encounters = payload.data.encounters
                     self:UpdateOverview()
                 end
             elseif payload.event == "ACTIVE_GROUPS" then
+                if self.DEBUG then print("[ART] Received message ACTIVE_GROUPS") end
                 self:SetAllActiveGroups(payload.data)
                 self:UpdateOverviewActiveGroups()
             elseif payload.event == "SHOW_NOTIFICATION" then
+                if self.DEBUG then print("[ART] Received message SHOW_NOTIFICATION") end
                 self:RaidNotificationsShowRaidAssignment(payload.data.uuid, payload.data.countdown)
                 self:UpdateNotificationSpells()
             end

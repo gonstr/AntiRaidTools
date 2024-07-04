@@ -1,5 +1,6 @@
 local insert = table.insert
 local stringFind = string.find
+local tableSort = table.sort
 
 local AntiRaidTools = AntiRaidTools
 
@@ -36,11 +37,13 @@ function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
     activeEncounter = self.db.profile.data.encounters[encounterId]
 
     if activeEncounter then
+        if self.DEBUG then print("[ART] Encounter starting") end
+
         -- Populate caches
         for _, part in ipairs(activeEncounter) do
             if part.type == "RAID_ASSIGNMENTS" then
                 if part.trigger.type == "UNIT_HEALTH" then
-                    local partCopy = AntiRaidTools:ShallowCopyTable(part)
+                    local partCopy = AntiRaidTools:ShallowCopy(part)
                     partCopy.triggered = false
 
                     unitHealthTriggersCache[part.trigger.unit] = partCopy
@@ -55,6 +58,12 @@ function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
 end
 
 function AntiRaidTools:RaidAssignmentsEndEncounter()
+    if not activeEncounter then
+        return
+    end
+
+    if self.DEBUG then print("[ART] Encounter ended") end
+
     resetState()
     self:ResetGroups()
     self:UpdateOverviewActiveGroups()
@@ -64,18 +73,66 @@ function AntiRaidTools:RaidAssignmentsInEncounter()
     return activeEncounter ~= nil
 end
 
+function AntiRaidTools:RaidAssignmentsIsGroupsEqual(grp1, grp2)
+    if grp1 == nil and grp2 == nil then
+        return true
+    end
+
+    if grp1 == nil or grp2 == nil then
+        return false
+    end
+
+    if #grp1 ~= #grp2 then
+        return false
+    end
+
+    local grp1Copy = self:ShallowCopy(grp1)
+    local grp2Copy = self:ShallowCopy(grp2)
+
+    tableSort(grp1Copy)
+    tableSort(grp2Copy)
+
+    DevTool:AddData(grp1Copy, "grp1Copy")
+    DevTool:AddData(grp2Copy, "grp2Copy")
+
+    for i = 1, #grp1Copy do
+        if grp1Copy[i] ~= grp2Copy[i] then
+            return false
+        end
+    end
+
+    return true
+end
+
 function AntiRaidTools:RaidAssignmentsUpdateGroups()
     if not activeEncounter then
         return
     end
 
-    for i, part in ipairs(activeEncounter) do
+    if self.DEBUG then print("[ART] Running update groups") end
+
+    local groupsUpdated = false
+
+    for _, part in ipairs(activeEncounter) do
         if part.type == "RAID_ASSIGNMENTS" then
-            self:SetActiveGroup(part.uuid, self:RaidAssignmentsSelectGroup(part.assignments, part.strategy.type))
+            local activeGroups = self:GetActiveGroups(part.uuid)
+            local selectedGroups = self:RaidAssignmentsSelectGroup(part.assignments, part.strategy.type)
+
+            DevTool:AddData(activeGroups, "activeGroups")
+            DevTool:AddData(selectedGroups, "selectedGroups")
+
+            if not self:RaidAssignmentsIsGroupsEqual(activeGroups, selectedGroups) then
+                groupsUpdated = true
+                self:SetActiveGroup(part.uuid, selectedGroups)
+            end
         end
     end
 
-    self:SendRaidMessage("ACTIVE_GROUPS", self:GetAllActiveGroups())
+    if self.DEBUG then print("[ART] Update groups done:", groupsUpdated) end
+
+    if groupsUpdated then
+        self:SendRaidMessage("ACTIVE_GROUPS", self:GetAllActiveGroups())
+    end
 end
 
 function AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignments)
@@ -121,7 +178,7 @@ function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
 
     if strategy == "CHAIN" then
         -- CHAIN uses BEST_MATCH recursivly
-        local assignmentsCopy = AntiRaidTools:ShallowCopyTable(assignments)
+        local assignmentsCopy = AntiRaidTools:ShallowCopy(assignments)
 
         local bestMatchIndex = self:RaidAssignmentsSelectBestMatchIndex(assignmentsCopy)
         if bestMatchIndex then assignmentsCopy[bestMatchIndex] = nil end
@@ -171,6 +228,8 @@ function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
         local maxHealth = UnitHealthMax(unit)
         local percentage = health / maxHealth * 100
 
+        if self.DEBUG then print("[ART] Tracking unit health:", unit, percentage) end
+
         local trigger = part.trigger    
 
         if percentage < trigger.percentage then
@@ -193,6 +252,8 @@ function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
         local part = spellCastAssignmentCache[spellId]
 
         if part then
+            if self.DEBUG then print("[ART] Handling spell cast:", spellId) end
+
             sendNotification(part.uuid)
         end
     end
@@ -205,6 +266,8 @@ function AntiRaidTools:RaidAssignmentsHandleRaidBossEmote(text)
 
     for _, part in ipairs(activeEncounter) do
         if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) ~= nil then
+            if self.DEBUG then print("[ART] Handling raid boss emote:", text) end
+
             sendNotification(part.uuid)
         end
     end
@@ -226,6 +289,8 @@ function AntiRaidTools:RaidAssignmentsHandleFojjiNumenTimer(key, countdown)
 
     for _, part in ipairs(activeEncounter) do
         if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "FOJJI_NUMEN_TIMER" and part.trigger.key == key then
+            if self.DEBUG then print("[ART] Handling fojji numen timer:", key) end
+
             if countdown <= 5 then
                 sendNotification(part.uuid, countdown)
             else

@@ -369,6 +369,11 @@ local function createOverviewMainGroupAssignment(parentFrame)
     frame.iconFrame:SetSize(14, 14)
     frame.iconFrame:SetPoint("BOTTOMLEFT", 10, 3)
 
+    frame.cooldownFrame = CreateFrame("Cooldown", nil, frame.iconFrame, "CooldownFrameTemplate")
+    frame.cooldownFrame:SetAllPoints()
+
+    frame.iconFrame.cooldown = frame.cooldownFrame
+
     frame.icon = frame.iconFrame:CreateTexture(nil, "ARTWORK")
     frame.icon:SetAllPoints()
     frame.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
@@ -395,6 +400,8 @@ local function updateOverviewMainGroupAssignment(frame, assignment, index, total
     local color = AntiRaidTools:GetSpellColor(assignment.spell_id)
 
     frame.text:SetTextColor(color.r, color.g, color.b)
+
+    frame.cooldownFrame:Clear()
 
     frame:ClearAllPoints()
 
@@ -516,7 +523,7 @@ function AntiRaidTools:UpdateOverviewActiveGroups()
                     if activeGroups then
                         for _, index in ipairs(activeGroups) do
                             if index == groupFrame.index then
-                                groupFrame:SetBackdropColor(1, 1, 1, 0.6)
+                                groupFrame:SetBackdropColor(1, 1, 1, 0.4)
                             else
                                 groupFrame:SetBackdropColor(0, 0, 0, 0)
                             end
@@ -535,10 +542,17 @@ function AntiRaidTools:UpdateOverviewSpells()
     for _, groupFrame in pairs(self.overviewMainRaidAssignmentGroups) do
         for _, assignmentFrame in pairs(groupFrame.assignments) do
             if self:IsSpellActive(assignmentFrame.player, assignmentFrame.spellId) then
-                ActionButton_ShowOverlayGlow(assignmentFrame.iconFrame)
+                local castTimestamp = self:GetSpellCastTimestamp(assignmentFrame.player, assignmentFrame.spellId)
+                local spell = self:GetSpell(assignmentFrame.spellId)
+
+                if castTimestamp and spell then
+                    assignmentFrame.cooldownFrame:SetCooldown(castTimestamp, spell.duration)
+                end
+
+                --ActionButton_ShowOverlayGlow(assignmentFrame.iconFrame)
                 assignmentFrame:SetAlpha(1)
             else
-                ActionButton_HideOverlayGlow(assignmentFrame.iconFrame)
+                --ActionButton_HideOverlayGlow(assignmentFrame.iconFrame)
 
                 if self:IsSpellReady(assignmentFrame.player, assignmentFrame.spellId) then
                     assignmentFrame:SetAlpha(1)
