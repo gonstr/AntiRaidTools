@@ -99,7 +99,7 @@ local mainOptions = {
 }
 
 local notificationOptions = {
-    name = "Raid Notifications",
+    name = "Raid Assignments",
     type = "group",
     args =  {
         enableFeatureCheckbox = {
@@ -214,8 +214,8 @@ function AntiRaidTools:InitOptions()
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools", mainOptions)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools", "Anti Raid Tools")
 
-    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools Raid Notifications", notificationOptions)
-    LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools Raid Notifications", "Raid Notifications", "Anti Raid Tools")
+    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools Raid Assignments", notificationOptions)
+    LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools Raid Assignments", "Raid Assignments", "Anti Raid Tools")
 
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools Fojji Integration", fojjiIntegrationOptions)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools Fojji Integration", "Fojji Integration", "Anti Raid Tools")
