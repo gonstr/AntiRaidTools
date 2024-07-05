@@ -21,6 +21,7 @@ function AntiRaidTools:InitOverview()
     container:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 
     local popup = CreateFrame("Frame", "AntiRaidToolsOverviewPopup", UIParent, "BackdropTemplate")
+    popup:SetClampedToScreen(true)
     popup:SetSize(200, 50)
     popup:SetBackdrop({
         bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
