@@ -243,7 +243,7 @@ local function createPopupListItem(popupFrame, text, onClick)
     return item
 end
 
-function AntiRaidTools:ShowOverviewPopupListItem(index, text, onClick, accExtraOffset, extraOffset)
+function AntiRaidTools:ShowOverviewPopupListItem(index, text, setting, onClick, accExtraOffset, extraOffset)
     if not self.overviewPopupListItems[index] then
         self.overviewPopupListItems[index] = createPopupListItem(self.overviewPopup)
     end
@@ -258,6 +258,12 @@ function AntiRaidTools:ShowOverviewPopupListItem(index, text, onClick, accExtraO
 
     if extraOffset then
         yOfs = yOfs - 10
+    end
+
+    if setting then
+        item.text:SetTextColor(1, 1, 1, 1)
+    else
+        item.text:SetTextColor(1, 0.8235, 0)
     end
 
     item:SetPoint("TOPLEFT", 0, yOfs)
@@ -300,25 +306,36 @@ function AntiRaidTools:UpdateOverviewPopup()
     local index = 1
     for _, encounterId in ipairs(encounterIndexes) do
         local selectFunc = function() self:OverviewSelectEncounter(encounterId) end
-        self:ShowOverviewPopupListItem(index, self:GetEncounters()[encounterId], selectFunc)
+        self:ShowOverviewPopupListItem(index, self:GetEncounters()[encounterId], false, selectFunc)
         index = index + 1
     end
 
     local encounterListItems = index > 1
 
+    local toggleAnchorsFunc = function()
+        self:RaidNotificationsToggleFrameLock()
+        self:UpdateOverviewPopup()
+    end
+    
+    local anchorsText = "Hide Anchors"
+    if self:RaidNotificationsIsFrameLocked() then anchorsText = "Show Anchors" end
+    self:ShowOverviewPopupListItem(index, anchorsText, true, toggleAnchorsFunc, 0, encounterListItems)
+
+    index = index + 1
+
     local lockFunc = function() self:OverviewToggleLock() end
     local lockedText = "Lock Overview"
     if self.db.profile.overview.locked then lockedText = "Unlock Overview" end
-    self:ShowOverviewPopupListItem(index, lockedText, lockFunc, 0, encounterListItems)
+    self:ShowOverviewPopupListItem(index, lockedText, true, lockFunc, 0, encounterListItems)
 
     index = index + 1
 
     local configurationFunc = function() InterfaceOptionsFrame_OpenToCategory("Anti Raid Tools") end
-    self:ShowOverviewPopupListItem(index, "Configuration", configurationFunc, encounterListItems and 10 or 0, false)
+    self:ShowOverviewPopupListItem(index, "Configuration", true, configurationFunc, encounterListItems and 10 or 0, false)
 
     index = index + 1
 
-    local yOfs = self:ShowOverviewPopupListItem(index, "Close", nil, encounterListItems and 10 or 0, true)
+    local yOfs = self:ShowOverviewPopupListItem(index, "Close", true, nil, encounterListItems and 10 or 0, true)
 
     local popupHeight = math.abs(yOfs) + 30
 

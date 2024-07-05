@@ -22,9 +22,9 @@ function AntiRaidTools:InitMinimap()
         end,
         OnTooltipShow = function(tooltip)
             tooltip:AddLine("Anti Raid Tools")
-            tooltip:AddLine("Left click to open Configuration")
-            tooltip:AddLine("Right click to toggle Overview Visibility")
-            tooltip:AddLine("Shift + Right click to toggle Anchors")
+            tooltip:AddLine("|cFFFFFFFFleft click|r to open configuration")
+            tooltip:AddLine("|cFFFFFFFFright click|r to toggle overview visibility")
+            tooltip:AddLine("|cFFFFFFFFshift + right click|r to show/hide anchors")
         end,
     })
     

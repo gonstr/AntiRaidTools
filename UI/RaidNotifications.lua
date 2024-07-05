@@ -79,6 +79,10 @@ function AntiRaidTools:RaidNotificationsToggleFrameLock(lock)
     end
 end
 
+function AntiRaidTools:RaidNotificationsIsFrameLocked()
+    return not self.notificationFrame:IsMouseEnabled()
+end
+
 function AntiRaidTools:RaidNotificationsUpdateHeader(text)
     self.notificationContentFrame.header.text:SetText(self:StringEllipsis(text, 32))
 end
