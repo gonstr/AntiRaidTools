@@ -66,7 +66,7 @@ function AntiRaidTools:InitOverview()
     })
     header:SetBackdropColor(0, 0, 0, 0.8)
     header:SetScript("OnMouseDown", function(self, button)
-        if button == "LeftButton" then
+        if button == "LeftButton" and container:IsMouseEnabled() then
             self:GetParent():StartMoving()
         elseif button == "RightButton" then
             showPopup()
@@ -180,7 +180,6 @@ end
 
 function AntiRaidTools:OverviewUpdateLocked()
     self.overviewFrame:EnableMouse(not self.db.profile.overview.locked)
-    self.overviewHeader:EnableMouse(not self.db.profile.overview.locked)
     self:UpdateOverviewPopup()
 end
 
