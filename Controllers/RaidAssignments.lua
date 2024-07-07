@@ -133,7 +133,7 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
     if self.DEBUG then print("[ART] Update groups done:", groupsUpdated) end
 
     if groupsUpdated then
-        self:SendRaidMessage("ACTIVE_GROUPS", self:GetAllActiveGroups())
+        self:SendRaidMessage("ACT_GRPS", self:GetAllActiveGroups())
     end
 end
 
@@ -223,7 +223,7 @@ function AntiRaidTools:RaidAssignmentsSendNotification(uuid, countdown)
 
         if self.DEBUG then print("[ART] Sending notification done") end
 
-        self:SendRaidMessage("SHOW_NOTIFICATION", data)
+        self:SendRaidMessage("NOTIFY", data)
     end
 end
 

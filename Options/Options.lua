@@ -203,7 +203,7 @@ local importOptions = {
                     AntiRaidTools.db.profile.data.encounters = encounters
                 end
 
-                AntiRaidTools:SyncEncountersScheduleSend()
+                AntiRaidTools:SyncSchedule()
                 AntiRaidTools:UpdateOverview()
             end,
         },

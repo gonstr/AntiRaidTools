@@ -86,6 +86,22 @@ function AntiRaidTools:StringEllipsis(str, len)
     return str
 end
 
+function AntiRaidTools:StringJoin(strings, delimiter)
+    delimiter = delimiter or ", "
+
+    local result = ""
+
+    for i, str in ipairs(strings) do
+        result = result .. str
+
+        if i < #strings then
+            result = result .. delimiter
+        end
+    end
+
+    return result
+end
+
 function AntiRaidTools:IsPlayerRaidLeader()
     return IsInRaid() and UnitIsGroupLeader("player")
 end
