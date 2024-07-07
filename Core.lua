@@ -83,7 +83,7 @@ end
 function AntiRaidTools:PLAYER_ENTERING_WORLD(_, isInitialLogin, isReloadingUi)
     if isInitialLogin or isReloadingUi then
         self:InitEncounters()
-        self:SyncSendReq()
+        self:SyncSendStatus()
         self:SyncSchedule()
     end
 
@@ -116,10 +116,13 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
         if ok then
             AntiRaidTools:SyncSetClientVersion(sender, payload.v)
 
-            if payload.e == "SYNC_REQ" then
+            if payloed.e == "SYNC_REQ_VERSIONS" then
+                if self.DEBUG then print("[ART] Received message SYNC_REQ_VERSIONS:", sender) end
+                self:SyncSendVersion()
+            elseif payload.e == "SYNC_STATUS" then
                 if sender ~= UnitName("player") then
-                    if self.DEBUG then print("[ART] Received message SYNC_REQ:", sender) end
-                    self:SyncHandleReq(payload.d)
+                    if self.DEBUG then print("[ART] Received message SYNC_STATUS:", sender) end
+                    self:SyncHandleStatus(payload.d)
                 end
             elseif payload.e == "SYNC_PROG" then
                 if sender ~= UnitName("player") and payload.d.encountersId ~= self.db.profile.d.encountersId then
@@ -200,7 +203,7 @@ function AntiRaidTools:GROUP_ROSTER_UPDATE()
 
     if IsInRaid() and not self.IsInRaid then
         self.IsInRaid = IsInRaid()
-        self:SyncSendReq()
+        self:SyncSendStatus()
     end
 end
 

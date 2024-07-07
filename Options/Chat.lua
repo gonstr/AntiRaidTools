@@ -1,5 +1,7 @@
 local AntiRaidTools = AntiRaidTools
 
+local reqVersionsTimer = nil
+
 function AntiRaidTools:HandleChatCommand(input)
     if not input or input:trim() == "" then
         self:Print("Usage: /art [config,show,hide,versions]")
@@ -12,14 +14,20 @@ function AntiRaidTools:HandleChatCommand(input)
             self.db.profile.overview.show = trimmed == "show" and true or false
             self:UpdateOverview()
         elseif trimmed == "versions" then
-            self:SyncSetClientVersion(UnitName("player"), GetAddOnMetadata("AntiRaidTools", "Version"))
+            if not reqVersionsTimer then
+                self:SyncReqVersions()
 
-            for version, players in pairs(self:SyncGetClientVersions()) do
-                if not version then
-                    version = "Unknown"
-                end
+                reqVersionsTimer = C_Timer.NewTimer(10, function()
+                    reqVersionsTimer = nil
 
-                print("[ART] " .. version .. ": " .. self:StringJoin(players))
+                    for version, players in pairs(self:SyncGetClientVersions()) do
+                        if not version then
+                            version = "Unknown"
+                        end
+
+                        print("[ART] " .. version .. ": " .. self:StringJoin(players))
+                    end
+                end)
             end
         elseif trimmed == "debug" then
             self.DEBUG = not self.DEBUG

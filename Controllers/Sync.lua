@@ -48,7 +48,16 @@ function AntiRaidTools:SyncSchedule()
     end
 end
 
-function AntiRaidTools:SyncSendReq()
+function AntiRaidTools:SyncReqVersions()
+    self:SendRaidMessage("SYNC_REQ_VERSIONS", self.PREFIX_SYNC)
+end
+
+function AntiRaidTools:SyncSendVersion()
+    -- Send empty message
+    self:SendRaidMessage()
+end
+
+function AntiRaidTools:SyncSendStatus()
     if IsEncounterInProgress() or not IsInRaid() or self:IsPlayerRaidLeader() then
         return
     end
@@ -57,10 +66,10 @@ function AntiRaidTools:SyncSendReq()
         encountersId = self.db.profile.data.encountersId,
     }
 
-    self:SendRaidMessage("SYNC_REQ", data, self.PREFIX_SYNC)
+    self:SendRaidMessage("SYNC_STATUS", data, self.PREFIX_SYNC)
 end
 
-function AntiRaidTools:SyncHandleReq(data)
+function AntiRaidTools:SyncHandleStatus(data)
     if IsEncounterInProgress() or not self:IsPlayerRaidLeader() then
         return
     end
