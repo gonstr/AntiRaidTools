@@ -224,6 +224,12 @@ function AntiRaidTools:HandleCombatLog(subEvent, sourceName, destGUID, destName,
         end)
         self:RaidAssignmentsHandleSpellCast(subEvent, spellId)
         self:RaidAssignmentsUpdateGroups()
+
+        local spell = self:GetSpell(spellId)
+        if spell then
+            local AntiRaidTools = self
+            C_Timer.NewTimer(spell.duration, function() AntiRaidTools:RaidAssignmentsUpdateGroups() end)
+        end
     elseif subEvent == "UNIT_DIED" then
         if self:IsFriendlyRaidMemberOrPlayer(destGUID) then
             self:CacheUnitDied(destGUID)

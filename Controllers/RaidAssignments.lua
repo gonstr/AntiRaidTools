@@ -139,7 +139,7 @@ function AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignments)
     for i, group in ipairs(assignments) do
         local ready = true
         for _, assignment in ipairs(group) do
-            if not self:IsSpellReady(assignment.player, assignment.spell_id) then
+            if not self:IsSpellInUse(assignment.player, assignment.spell_id) and not self:IsSpellReady(assignment.player, assignment.spell_id) then
                 ready = false
                 break
             end
@@ -150,12 +150,12 @@ function AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignments)
         end
     end
     
-    -- Second pass: Find the group with the most ready assignemnts
+    -- Second pass: Find the group with the most ready assignments
     for i, group in pairs(assignments) do
         local readySpells = 0
         
         for _, assignment in ipairs(group) do
-            if self:IsSpellReady(assignment.player, assignment.spell_id) then
+            if self:IsSpellInUse(assignment.player, assignment.spell_id) or self:IsSpellReady(assignment.player, assignment.spell_id) then
                 readySpells = readySpells + 1
             end
         end
