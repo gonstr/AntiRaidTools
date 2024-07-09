@@ -141,7 +141,6 @@ local function updateNotificationGroupAssignment(frame, assignment, index, total
 
     frame.text:SetTextColor(color.r, color.g, color.b)
 
-    --ActionButton_HideOverlayGlow(frame.iconFrame)
     frame.cooldownFrame:Clear()
 
     frame:ClearAllPoints()
@@ -306,11 +305,8 @@ function AntiRaidTools:UpdateNotificationSpells()
                     assignmentFrame.cooldownFrame:SetCooldown(castTimestamp, spell.duration)
                 end
 
-                --ActionButton_ShowOverlayGlow(assignmentFrame.iconFrame)
                 assignmentFrame:SetAlpha(1)
             else
-                --ActionButton_HideOverlayGlow(assignmentFrame.iconFrame)
-
                 if self:IsSpellReady(assignmentFrame.player, assignmentFrame.spellId) then
                     assignmentFrame:SetAlpha(1)
                 else

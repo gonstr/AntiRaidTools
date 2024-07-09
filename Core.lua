@@ -1,5 +1,15 @@
 AntiRaidTools = LibStub("AceAddon-3.0"):NewAddon("AntiRaidTools", "AceConsole-3.0", "AceEvent-3.0", "AceComm-3.0", "AceSerializer-3.0")
 
+AntiRaidTools.DEBUG = false
+AntiRaidTools.TEST = false
+
+AntiRaidTools.PREFIX_SYNC = "ART-S"
+AntiRaidTools.PREFIX_SYNC_PROGRESS = "ART-SP"
+AntiRaidTools.PREFIX_MAIN = "ART-M"
+
+AntiRaidTools.VERSION = GetAddOnMetadata("AntiRaidTools", "Version")
+AntiRaidTools.IS_DEV = AntiRaidTools.VERSION == '\@project-version\@'
+
 -- AceDB defaults
 AntiRaidTools.defaults = {
     profile = {
@@ -24,15 +34,6 @@ AntiRaidTools.defaults = {
 }
 
 function AntiRaidTools:OnInitialize()
-    self.DEBUG = false
-    self.TEST = false
-
-    self.PREFIX_SYNC = "ART-S"
-    self.PREFIX_SYNC_PROGRESS = "ART-SP"
-    self.PREFIX_MAIN = "ART-M"
-
-    self.isInRaid = IsInRaid()
-
     self:InitDB() 
     self:InitOptions()
     self:InitMinimap()
@@ -93,7 +94,7 @@ end
 function AntiRaidTools:SendRaidMessage(event, data, prefix, prio, callbackFn)
     if IsInRaid() then
         local payload = {
-            v = GetAddOnMetadata("AntiRaidTools", "Version"),
+            v = self.VERSION,
             e = event,
             d = data,
         }
@@ -144,8 +145,8 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
                 if self.DEBUG then print("[ART] Received message ACT_GRPS") end
                 self:SetAllActiveGroups(payload.d)
                 self:UpdateOverviewActiveGroups()
-            elseif payload.e == "NOTIFY" then
-                if self.DEBUG then print("[ART] Received message NOTIFY") end
+            elseif payload.e == "TRIGGER" then
+                if self.DEBUG then print("[ART] Received message TRIGGER") end
                 self:RaidNotificationsShowRaidAssignment(payload.d.uuid, payload.d.countdown)
                 self:UpdateNotificationSpells()
             end
@@ -201,9 +202,11 @@ function AntiRaidTools:GROUP_ROSTER_UPDATE()
     self:UpdateOverviewSpells()
     self:UpdateNotificationSpells()
 
-    if IsInRaid() and not self.IsInRaid then
-        self.IsInRaid = IsInRaid()
+    if IsInRaid() and not self.sentRaidSync then
+        self.sentRaidSync = true
         self:SyncSendStatus()
+    else
+        self.sentRaidSync = false
     end
 end
 

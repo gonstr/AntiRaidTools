@@ -223,7 +223,7 @@ function AntiRaidTools:RaidAssignmentsSendNotification(uuid, countdown)
 
         if self.DEBUG then print("[ART] Sending notification done") end
 
-        self:SendRaidMessage("NOTIFY", data)
+        self:SendRaidMessage("TRIGGER", data)
     end
 end
 

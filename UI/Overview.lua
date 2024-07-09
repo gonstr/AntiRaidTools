@@ -202,7 +202,7 @@ function AntiRaidTools:UpdateOverviewHeaderText()
         if self.db.profile.data.encountersProgress then
             self.overviewHeaderText:SetText("Loading Assignments... |cFFFFFFFF" .. string.format("%.1f", self.db.profile.data.encountersProgress) .. "%|r")
         else
-            self.overviewHeaderText:SetText("ART |cFFFFFFFF" .. GetAddOnMetadata("AntiRaidTools", "Version") .. "|r")
+            self.overviewHeaderText:SetText("ART |cFFFFFFFF" .. self.VERSION .. "|r")
             self.overviewHeaderText:SetAlpha(0.8)
         end
     end
