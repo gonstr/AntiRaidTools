@@ -6,23 +6,23 @@ function AntiRaidTools:ImportYAML(str)
         return false
     end
 
-    local ok, result = pcall(AntiRaidTools.YAML.evalm, str)
+    local ok, result = AntiRaidTools.YAML.evalm(str)
 
     if not ok then
-        return false, "ParseError: " .. result or "Invalid import."
+        return false, "Error in document " .. result .. ": Failed to parse YAML."
     end
 
-    for _, part in ipairs(result) do
+    for i, part in ipairs(result) do
         if type(part) ~= "table" then
-            return false, "ParseError: Invalid import."
+            return false, "Error in document " .. i .. ": Invalid import."
         end
     end
 
-    for _, part in ipairs(result) do
+    for i, part in ipairs(result) do
         local ok, result = AntiRaidTools:ValidateImports(result)
 
         if not ok then
-            return false, "Invalid import: " .. result
+            return false, "Error in document " .. i .. ": " .. result
         end
     end
 
