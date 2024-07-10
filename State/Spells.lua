@@ -66,11 +66,11 @@ local spells = {
     }
 }
 
-function AntiRaidTools:ResetSpellsCache()
+function AntiRaidTools:SpellsResetCache()
     spellCastCache = {}
 end
 
-function AntiRaidTools:IsSpellInUse(unit, spellId)
+function AntiRaidTools:SpellsIsSpellInUse(unit, spellId)
     if not self.TEST then
         if UnitIsDeadOrGhost(unit) then
             return false
@@ -98,7 +98,7 @@ function AntiRaidTools:IsSpellInUse(unit, spellId)
     return false
 end
 
-function AntiRaidTools:IsSpellReady(unit, spellId, timestamp)
+function AntiRaidTools:SpellsIsSpellReady(unit, spellId, timestamp)
     if not self.TEST then
         if UnitIsDeadOrGhost(unit) then
             return false
@@ -126,7 +126,7 @@ function AntiRaidTools:IsSpellReady(unit, spellId, timestamp)
     return true
 end
 
-function AntiRaidTools:IsSpellActive(unit, spellId)
+function AntiRaidTools:SpellsIsSpellActive(unit, spellId)
     if not self.TEST then
         if UnitIsDeadOrGhost(unit) then
             return false
@@ -154,21 +154,21 @@ function AntiRaidTools:IsSpellActive(unit, spellId)
     return false
 end
 
-function AntiRaidTools:GetSpellCastTimestamp(unit, spellId)
+function AntiRaidTools:SpellsGetCastTimestamp(unit, spellId)
     local key = unit .. ":" .. spellId
 
     return spellCastCache[key]
 end
 
-function AntiRaidTools:GetSpells()
+function AntiRaidTools:SpellsGetAll()
     return spells
 end
 
-function AntiRaidTools:GetSpell(spellId)
+function AntiRaidTools:SpellsGetSpell(spellId)
     return spells[spellId]
 end
 
-function AntiRaidTools:CacheSpellCast(unit, spellId, updateFunc)
+function AntiRaidTools:SpellsCacheCast(unit, spellId, updateFunc)
     if not self.TEST then
         if not UnitIsPlayer(unit) and not UnitInRaid(unit) then
             return

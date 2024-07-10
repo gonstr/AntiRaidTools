@@ -3,7 +3,7 @@ local AntiRaidTools = AntiRaidTools
 local LDB = LibStub:GetLibrary("LibDataBroker-1.1")
 local LDI = LibStub:GetLibrary("LibDBIcon-1.0")
 
-function AntiRaidTools:InitMinimap()
+function AntiRaidTools:MinimapInit()
     local broker = LDB:NewDataObject("AntiRaidTools", {
         type = "data source",
         text = "AntiRaidTools",
@@ -13,10 +13,10 @@ function AntiRaidTools:InitMinimap()
                 InterfaceOptionsFrame_OpenToCategory("Anti Raid Tools")
             else
                 if IsShiftKeyDown() then
-                    AntiRaidTools:RaidNotificationsToggleFrameLock()
+                    AntiRaidTools:NotificationsToggleFrameLock()
                 else
                     AntiRaidTools.db.profile.overview.show = not AntiRaidTools.db.profile.overview.show
-                    AntiRaidTools:UpdateOverview()
+                    AntiRaidTools:OverviewUpdate()
                 end
             end
         end,

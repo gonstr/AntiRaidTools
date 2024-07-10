@@ -35,8 +35,9 @@ State\Spells.lua
 State\Encounters.lua
 State\Groups.lua
 State\Units.lua
+State\Triggers.lua
 Controllers\RaidAssignments.lua
 Controllers\Sync.lua
 UI\Minimap.lua
 UI\Overview.lua
-UI\RaidNotifications.lua
+UI\Notifications.lua

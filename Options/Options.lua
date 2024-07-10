@@ -65,7 +65,7 @@ do
 end
 
 local mainOptions = {
-    name = "Anti Raid Tools " .. self.VERSION,
+    name = "Anti Raid Tools " .. AntiRaidTools.VERSION,
     type = "group",
     args =  {
         buttonGroup = {
@@ -80,7 +80,7 @@ local mainOptions = {
                     desc = "Toggle the Overview visiblity.",
                     func = function()
                         AntiRaidTools.db.profile.overview.show = not AntiRaidTools.db.profile.overview.show
-                        AntiRaidTools:UpdateOverview()
+                        AntiRaidTools:OverviewUpdate()
                     end,
                     order = 1,
                 },
@@ -89,7 +89,7 @@ local mainOptions = {
                     name = "Toggle Anchors",
                     desc = "Toggle visibility of View Anchors.",
                     func = function()
-                        AntiRaidTools:RaidNotificationsToggleFrameLock()
+                        AntiRaidTools:NotificationsToggleFrameLock()
                     end,
                     order = 2,
                 },
@@ -99,22 +99,41 @@ local mainOptions = {
 }
 
 local notificationOptions = {
-    name = "Raid Assignments",
+    name = "Notifications",
     type = "group",
     args =  {
-        enableFeatureCheckbox = {
+        showOnlyOwnNotificationsCheckbox = {
             type = "toggle",
-            name = "Limit Raid Assignment Notifications",
+            name = "Limit Notifications",
             desc = "Show only Raid Notifications that apply to You.",
             width = "full",
             order = 1,
             get = function() return AntiRaidTools.db.profile.options.notifications.showOnlyOwnNotifications end,
             set = function(_, value) AntiRaidTools.db.profile.options.notifications.showOnlyOwnNotifications = value end,
         },
-        enableFeatureDescription = {
+        showOnlyOwnNotificationsDescription = {
             type = "description",
-            name = "Show only Raid Assignment Notifications that apply to you.",
+            name = "Show only Raid Notifications that apply to you.",
             order = 2,
+        },
+        separator = {
+            type = "description",
+            name = " ",
+            order = 3,
+        },
+        muteCheckbox = {
+            type = "toggle",
+            name = "Mute Notification Sounds",
+            desc = "Mute all Raid Notification Sounds.",
+            width = "full",
+            order = 4,
+            get = function() return AntiRaidTools.db.profile.options.notifications.mute end,
+            set = function(_, value) AntiRaidTools.db.profile.options.notifications.mute = value end,
+        },
+        muteDescription = {
+            type = "description",
+            name = "Mute all Raid Notification Sounds.",
+            order = 5,
         },
     },
 }
@@ -138,24 +157,24 @@ local fojjiIntegrationOptions = {
             fontSize = "medium",
             name = "|cffff0000WeakAuras is not installed.|r",
             order = 3,
-            hidden = function() return AntiRaidTools:IsWeakAurasInstalled() end
+            hidden = function() return AntiRaidTools:WeakAurasIsInstalled() end
         },
         helperWeakAuraInstalledMessage = {
             type = "description",
             fontSize = "medium",
             name = "|cff00ff00Anti Raid Tools Helper WeakAura Installed.|r",
             order = 4,
-            hidden = function() return not AntiRaidTools:IsHelperWeakauraInstalled() end
+            hidden = function() return not AntiRaidTools:WeakaurasIsHelperInstalled() end
         },
         installWeakAuraButton = {
             type = "execute",
             name = "Install WeakAura",
             desc = "Install the Anti Raid Tools Helper WeakAura.",
-            func = function() AntiRaidTools:InstallHelperWeakAura(function()
+            func = function() AntiRaidTools:WeakAurasInstallHelper(function()
                 LibStub("AceConfigRegistry-3.0"):NotifyChange("AntiRaidTools Fojji Integration")
             end) end,
             order = 5,
-            hidden = function() return not AntiRaidTools:IsWeakAurasInstalled() or AntiRaidTools:IsHelperWeakauraInstalled() end
+            hidden = function() return not AntiRaidTools:WeakAurasIsInstalled() or AntiRaidTools:WeakaurasIsHelperInstalled() end
         },
     },
 }
@@ -197,25 +216,25 @@ local importOptions = {
 
                 if val ~= nil and val ~= "" then
                     local _, result = AntiRaidTools:ImportYAML(val)
-                    local encounters, encountersId = AntiRaidTools:CreateEncountersData(result)
+                    local encounters, encountersId = AntiRaidTools:ImportCreateEncountersData(result)
 
                     AntiRaidTools.db.profile.data.encountersId = encountersId
                     AntiRaidTools.db.profile.data.encounters = encounters
                 end
 
                 AntiRaidTools:SyncSchedule()
-                AntiRaidTools:UpdateOverview()
+                AntiRaidTools:OverviewUpdate()
             end,
         },
     },
 }
 
-function AntiRaidTools:InitOptions()
+function AntiRaidTools:OptionsInit()
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools", mainOptions)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools", "Anti Raid Tools")
 
-    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools Raid Notifications", notificationOptions)
-    LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools Raid Notifications", "Raid Notifications", "Anti Raid Tools")
+    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools Notifications", notificationOptions)
+    LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools Notifications", "Notifications", "Anti Raid Tools")
 
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("AntiRaidTools Fojji Integration", fojjiIntegrationOptions)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions("AntiRaidTools Fojji Integration", "Fojji Integration", "Anti Raid Tools")

@@ -19,7 +19,7 @@ function AntiRaidTools:ImportYAML(str)
     end
 
     for i, part in ipairs(result) do
-        local ok, result = AntiRaidTools:ValidateImports(result)
+        local ok, result = AntiRaidTools:ValidationValidateImports(result)
 
         if not ok then
             return false, "Error in document " .. i .. ": " .. result
@@ -33,7 +33,7 @@ function AntiRaidTools:ImportYAML(str)
     return true, result
 end
 
-function AntiRaidTools:CreateEncountersData(import)
+function AntiRaidTools:ImportCreateEncountersData(import)
     local result = {}
 
     for _, part in ipairs(import) do
@@ -47,4 +47,23 @@ function AntiRaidTools:CreateEncountersData(import)
     local uuid = self:GenerateUUID()
 
     return result, uuid
+end
+
+function AntiRaidTools:ImportCreateDefaults(import)
+    for _, part in ipairs(import) do
+        if part.type == "RAID_ASIGNMENTS" then
+            if not part.untrigger then
+                if part.strategy.type == "BEST_MATCH" then
+                    part.untrigger = {
+                        type = "TIMED",
+                        duration = 5
+                    }
+                elseif part.strategy.type == "SHOW_ALL" then
+                    part.untrigger = {
+                        type = "ASSIGNMENTS_COMPLETE",
+                    }
+                end
+            end
+        end
+    end
 end

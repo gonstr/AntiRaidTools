@@ -2,11 +2,11 @@ local AntiRaidTools = AntiRaidTools
 
 local deadCache = {}
 
-function AntiRaidTools:CacheUnitDied(destGUID)
+function AntiRaidTools:UnitsSetDead(destGUID)
     deadCache[destGUID] = true
 end
 
-function AntiRaidTools:IsCachedUnitDead(destGUID)
+function AntiRaidTools:UnitsIsDead(destGUID)
     if deadCache[destGUID] then
         return true
     end
@@ -14,10 +14,10 @@ function AntiRaidTools:IsCachedUnitDead(destGUID)
     return false
 end
 
-function AntiRaidTools:ClearCachedUnitDead(destGUID)
+function AntiRaidTools:UnitsClearDead(destGUID)
     deadCache[destGUID] = nil
 end
 
-function AntiRaidTools:ResetDeadCache()
+function AntiRaidTools:UnitsResetDeadCache()
     deadCache = {}
 end

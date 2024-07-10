@@ -19,6 +19,9 @@ local spellAuraAssignmentCache = {}
 -- key: timer key, value = C_Timer.NewTimer
 local fojjiNumenTimers = {}
 
+-- key: part uuid, value = C_Timer.NewTimer
+local untriggerTimers = {}
+
 local function resetState()
     activeEncounter = nil
     unitHealthTriggersCache = {}
@@ -28,6 +31,11 @@ local function resetState()
     for key, timer in pairs(fojjiNumenTimers) do
         timer:Cancel()
         fojjiNumenTimers[key] = nil
+    end
+
+    for key, timer in pairs(untriggerTimers) do
+        timer:Cancel()
+        untriggerTimers[key] = nil
     end
 end
 
@@ -71,8 +79,8 @@ function AntiRaidTools:RaidAssignmentsEndEncounter()
     if self.DEBUG then print("[ART] Encounter ended") end
 
     resetState()
-    self:ResetGroups()
-    self:UpdateOverviewActiveGroups()
+    self:GroupsReset()
+    self:OverviewUpdateActiveGroups()
 end
 
 function AntiRaidTools:RaidAssignmentsInEncounter()
@@ -118,22 +126,22 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
 
     for _, part in ipairs(activeEncounter) do
         if part.type == "RAID_ASSIGNMENTS" then
-            local activeGroups = self:GetActiveGroups(part.uuid)
+            local activeGroups = self:GroupsGetActive(part.uuid)
             local selectedGroups = self:RaidAssignmentsSelectGroup(part.assignments, part.strategy.type)
 
             if not self:RaidAssignmentsIsGroupsEqual(activeGroups, selectedGroups) then
                 if self.DEBUG then print("[ART] Updated groups for", part.uuid) end
 
                 groupsUpdated = true
-                self:SetActiveGroup(part.uuid, selectedGroups)
+                self:GroupsSetActive(part.uuid, selectedGroups)
             end
         end
     end
 
-    if self.DEBUG then print("[ART] Update groups done:", groupsUpdated) end
+    if self.DEBUG then print("[ART] Update groups done. Changed:", groupsUpdated) end
 
     if groupsUpdated then
-        self:SendRaidMessage("ACT_GRPS", self:GetAllActiveGroups())
+        self:SendRaidMessage("ACT_GRPS", self:GroupsGetAllActive())
     end
 end
 
@@ -145,7 +153,7 @@ function AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignments)
     for i, group in ipairs(assignments) do
         local ready = true
         for _, assignment in ipairs(group) do
-            if not self:IsSpellInUse(assignment.player, assignment.spell_id) and not self:IsSpellReady(assignment.player, assignment.spell_id) then
+            if not self:SpellsIsSpellInUse(assignment.player, assignment.spell_id) and not self:SpellsIsSpellReady(assignment.player, assignment.spell_id) then
                 ready = false
                 break
             end
@@ -161,7 +169,7 @@ function AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignments)
         local readySpells = 0
         
         for _, assignment in ipairs(group) do
-            if self:IsSpellInUse(assignment.player, assignment.spell_id) or self:IsSpellReady(assignment.player, assignment.spell_id) then
+            if self:SpellsIsSpellInUse(assignment.player, assignment.spell_id) or self:SpellsIsSpellReady(assignment.player, assignment.spell_id) then
                 readySpells = readySpells + 1
             end
         end
@@ -178,18 +186,10 @@ end
 function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
     local groups = {}
 
-    if strategy == "CHAIN" then
-        -- CHAIN uses BEST_MATCH recursivly
-        local assignmentsCopy = self:ShallowCopy(assignments)
-
-        local bestMatchIndex = self:RaidAssignmentsSelectBestMatchIndex(assignmentsCopy)
-        if bestMatchIndex then assignmentsCopy[bestMatchIndex] = nil end
-
-        while bestMatchIndex do
-            insert(groups, bestMatchIndex)
-
-            bestMatchIndex = self:RaidAssignmentsSelectBestMatchIndex(assignmentsCopy)
-            if bestMatchIndex then assignmentsCopy[bestMatchIndex] = nil end
+    if strategy == "SHOW_ALL" then
+        -- SHOW_ALL returns all assignments
+        for i in ipairs(assignments) do
+            insert(groups, i)
         end
     else
         -- Must be BEST_MATCH
@@ -203,27 +203,40 @@ function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
     return groups
 end
 
-function AntiRaidTools:RaidAssignmentsSendNotification(uuid, countdown)
-    if self.DEBUG then print("[ART] Sending notification start") end
+local function cancelUntriggerTimer(uuid)
+    local timer = untriggerTimers[uuid]
 
-    local activeGroups = self:GetActiveGroups(uuid)
+    if timer then
+        timer:Cancel()
+        untriggerTimers[uuid] = nil
+    end
+end
+
+function AntiRaidTools:RaidAssignmentsTrigger(part, countdown)
+    if self.DEBUG then print("[ART] Sending TRIGGER start") end
+
+    local activeGroups = self:GroupsGetActive(part.uuid)
 
     countdown = countdown or 0
 
-    if self.DEBUG then
-        print("[ART] Notification active groups", activeGroups)
-        print("[ART] Notification countdown", countdown)
-    end
-
     if activeGroups and #activeGroups > 0 then
         local data = {
-            uuid = uuid,
+            uuid = part.uuid,
             countdown = countdown
         }
 
-        if self.DEBUG then print("[ART] Sending notification done") end
+        if self.DEBUG then print("[ART] Sending TRIGGER done") end
 
         self:SendRaidMessage("TRIGGER", data)
+
+        -- Schedule untrigger for TIMED untrigger types
+        if part.untrigger.type == "TIMED" then
+            cancelUntriggerTimer(part.uuid)
+
+            untriggerTimers[part.uuid] = C_Timer.NewTimer(part.untrigger.type.duration, function()
+                self:SendRaidMessage("UNTRIGGER", part.uuid)
+            end)
+        end
     end
 end
 
@@ -246,7 +259,7 @@ function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
         if percentage < trigger.percentage then
             part.triggered = true
 
-            self:RaidAssignmentsSendNotification(part.uuid)
+            self:RaidAssignmentsTrigger(part)
         end
     end
 end
@@ -265,7 +278,7 @@ function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
         if part then
             if self.DEBUG then print("[ART] Handling spell cast:", spellId) end
 
-            self:RaidAssignmentsSendNotification(part.uuid)
+            self:RaidAssignmentsTrigger(part)
         end
     end
 end
@@ -293,7 +306,7 @@ function AntiRaidTools:RaidAssignmentsHandleRaidBossEmote(text)
         if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) ~= nil then
             if self.DEBUG then print("[ART] Handling raid boss emote:", text) end
 
-            self:RaidAssignmentsSendNotification(part.uuid)
+            self:RaidAssignmentsTrigger(part)
         end
     end
 end
@@ -317,12 +330,12 @@ function AntiRaidTools:RaidAssignmentsHandleFojjiNumenTimer(key, countdown)
             if self.DEBUG then print("[ART] Handling fojji numen timer:", key) end
 
             if countdown <= 5 then
-                self:RaidAssignmentsSendNotification(part.uuid, countdown)
+                self:RaidAssignmentsTrigger(part, countdown)
             else
                 cancelFojjiNumenTimer(key)
 
                 fojjiNumenTimers[key] = C_Timer.NewTimer(countdown - 5, function()
-                    self:RaidAssignmentsSendNotification(part.uuid, 5)
+                    self:RaidAssignmentsTrigger(part, 5)
                 end)
             end
         end

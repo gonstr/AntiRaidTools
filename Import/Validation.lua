@@ -111,8 +111,8 @@ local function validateRaidAssignments(import, spells)
             return false, "Import has an invalid strategy field. Requires type."
         end
 
-        if import.strategy.type ~= "BEST_MATCH" and import.strategy.type ~= "CHAIN" then
-            return false, "Import has an unknown strategy: " .. stringSafe(import.strategy.type) .. ". Supported values are `BEST_MATCH`, `CHAIN`."
+        if import.strategy.type ~= "BEST_MATCH" and import.strategy.type ~= "SHOW_ALL" then
+            return false, "Import has an unknown strategy: " .. stringSafe(import.strategy.type) .. ". Supported values are `BEST_MATCH`, `SHOW_ALL`."
         end
 
         if not import.assignments then
@@ -170,6 +170,10 @@ local function validateTrigger(import)
             return false, "Import trigger is missing a type field."
         end
 
+        if not import.trigger.type == "UNIT_HEALTH" and not import.trigger.type == "SPELL_CAST" and not import.trigger.type == "RAID_BOSS_EMOTE" and not import.trigger.type == "FOJJI_NUMEN_TIMER" then
+            return false, "Import with type RAID_ASSIGNMENTS has an invalid trigger type."
+        end
+
         if import.trigger.type == "UNIT_HEALTH" then
             if not import.trigger.unit then
                 return false, "Import with trigger type UNIT_HEALTH is missing a unit field."
@@ -219,18 +223,60 @@ local function validateTrigger(import)
         if import.trigger.countdown and (type(import.trigger.countdown) ~= "number" or import.trigger.countdown ~= math.floor(import.trigger.countdown)) then
             return false, "Import has an invalid countdown value: " .. stringSafe(import.trigger.countdown) .. "."
         end
+    end
 
-        if import.trigger.duration and (type(import.trigger.duration) ~= "number" or import.trigger.duration ~= math.floor(import.trigger.duration)) then
-            return false, "Import has an invalid duration field: " .. stringSafe(import.trigger.duration) .. "."
+    return true
+end
+
+local function validateUntrigger(import)
+    if import.untrigger then
+        if not import.untrigger.type then
+            return false, "Import untrigger is missing a type field."
+        end
+
+        if not import.trigger.type == "TIMED" and not import.trigger.type == "ASSIGNMENTS_COMPLETE" and not import.trigger.type == "UNIT_HEALTH" and not import.trigger.type == "SPELL_CAST" and not import.trigger.type == "RAID_BOSS_EMOTE" then
+            return false, "Import with type RAID_ASSIGNMENTS has an invalid untrigger type."
+        end
+
+        if import.untrigger.type == "TIMED" then
+            if not import.untrigger.duration then
+                return false, "Import with untrigger type TIMED is missing a duration field."
+            end
+        end
+
+        if import.untrigger.type == "UNIT_HEALTH" then
+            if not import.untrigger.unit then
+                return false, "Import with untrigger type UNIT_HEALTH is missing a unit field."
+            end
+
+            if not import.untrigger.percentage then
+                return false, "Import with untrigger type UNIT_HEALTH is missing a percentage field."
+            end
+        end
+
+        if import.untrigger.type == "SPELL_CAST" then
+            if not import.untrigger.spell_id then
+                return false, "Import with untrigger type SPELL_CAST is missing a spell_id field."
+            end
+
+            if type(import.untrigger.spell_id) ~= "number" or import.untrigger.spell_id ~= math.floor(import.untrigger.spell_id) then
+                return false, "Import has an invalid spell_id value: " .. stringSafe(import.untrigger.spell_id) .. "."
+            end
+        end
+
+        if import.untrigger.type == "RAID_BOSS_EMOTE" then
+            if not import.untrigger.text then
+                return false, "Import with untrigger type UNIT_HEALTH is missing a text field."
+            end
         end
     end
 
     return true
 end
 
-function AntiRaidTools:ValidateImports(imports)
-    local spells = self:GetSpells()
-    local encounters = self:GetEncounters()
+function AntiRaidTools:ValidationValidateImports(imports)
+    local spells = self:SpellsGetAll()
+    local encounters = self:EncountersGetAll()
 
     for _, import in pairs(imports) do
         local ok, err = validateRequiredFields(import)
@@ -243,6 +289,9 @@ function AntiRaidTools:ValidateImports(imports)
         if not ok then return false, err end
 
         ok, err = validateTrigger(import)
+        if not ok then return false, err end
+
+        ok, err = validateUntrigger(import)
         if not ok then return false, err end
 
         ok, err = validateRaidAssignments(import, spells)

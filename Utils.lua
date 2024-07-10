@@ -3,18 +3,22 @@ local AntiRaidTools = AntiRaidTools
 local random = math.random
 
 function AntiRaidTools:GenerateUUID()
-    local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    return string.gsub(template, '[xy]', function (c)
-        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
-        return string.format('%x', v)
-    end)
-end
+    local chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    local base = #chars
+    local id = ''
 
+    for i = 1, 8 do
+        local rand = math.random(base)
+        id = id .. chars:sub(rand, rand)
+    end
+        
+    return id
+end
 
 local fallbackColor = { r = 0, g = 0, b = 0 }
 
 function AntiRaidTools:GetSpellColor(spellId)
-    local spell = self:GetSpell(spellId)
+    local spell = self:SpellsGetSpell(spellId)
 
     if not spell then
         return fallbackColor
@@ -112,7 +116,7 @@ function AntiRaidTools:IsPlayerInActiveGroup(uuid)
     local encounters = self.db.profile.data.encounters
 
     if encounters then
-        local activeGroups = self:GetActiveGroups(uuid)
+        local activeGroups = self:GroupsGetActive(uuid)
 
         for _, encounter in pairs(encounters) do
             for _, part in pairs(encounter) do

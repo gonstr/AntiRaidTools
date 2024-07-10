@@ -2,7 +2,7 @@ local AntiRaidTools = AntiRaidTools
 
 local SONAR_SOUND_FILE = "Interface\\AddOns\\AntiRaidTools\\Media\\PowerAuras_Sounds_Sonar.mp3"
 
-function AntiRaidTools:InitRaidNotification()
+function AntiRaidTools:NotificationsInit()
     local container = CreateFrame("Frame", "AntiRaidToolsNotification", UIParent, "BackdropTemplate")
     container:SetPoint("CENTER", UIParent, "CENTER", 0, 200)
     container:SetSize(250, 50)
@@ -66,7 +66,7 @@ function AntiRaidTools:InitRaidNotification()
     self.notificationContentFrame = content
 end
 
-function AntiRaidTools:RaidNotificationsToggleFrameLock(lock)
+function AntiRaidTools:NotificationsToggleFrameLock(lock)
     if lock or self.notificationFrame:IsMouseEnabled() then
         self.notificationFrame:EnableMouse(false)
         self.notificationFrame:SetBackdropColor(0, 0, 0, 0)
@@ -79,11 +79,11 @@ function AntiRaidTools:RaidNotificationsToggleFrameLock(lock)
     end
 end
 
-function AntiRaidTools:RaidNotificationsIsFrameLocked()
+function AntiRaidTools:NotificationsIsFrameLocked()
     return not self.notificationFrame:IsMouseEnabled()
 end
 
-function AntiRaidTools:RaidNotificationsUpdateHeader(text)
+function AntiRaidTools:NotificationsUpdateHeader(text)
     self.notificationContentFrame.header.text:SetText(self:StringEllipsis(text, 32))
 end
 
@@ -195,7 +195,7 @@ local function updateCountdown(_, elapsed)
     end
 end
 
-function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
+function AntiRaidTools:NotificationsShowRaidAssignment(uuid, countdown)
     local selectedEncounterId = self.db.profile.overview.selectedEncounterId
     local encounter = self.db.profile.data.encounters[selectedEncounterId]
 
@@ -214,18 +214,20 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
         local prevFrame = self.notificationContentFrame.header
         for _, part in pairs(encounter) do
             if part.type == "RAID_ASSIGNMENTS" and part.uuid == uuid then
-                local activeGroups = self:GetActiveGroups(uuid)
+                local activeGroups = self:GroupsGetActive(uuid)
 
                 if not activeGroups then
                     return
                 end
                 
-                self:RaidNotificationsToggleFrameLock(true)
+                self:NotificationsToggleFrameLock(true)
     
                 self.notificationFrameFadeOut:Stop()
                 self.notificationContentFrame:Show()
             
-                PlaySoundFile(SONAR_SOUND_FILE, "Master")
+                if not self.db.profile.options.notifications.mute then
+                    PlaySoundFile(SONAR_SOUND_FILE, "Master")
+                end
 
                 -- Update header
                 local headerText
@@ -237,7 +239,7 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
                     headerText = part.metadata.name
                 end
 
-                self:RaidNotificationsUpdateHeader(headerText)
+                self:NotificationsUpdateHeader(headerText)
                         
                 if part.trigger.spell_id then
                     local _, _, _, castTime = GetSpellInfo(part.trigger.spell_id)
@@ -272,7 +274,7 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
                     end
                 end)
 
-                local activeGroups = self:GetActiveGroups(uuid)
+                local activeGroups = self:GroupsGetActive(uuid)
 
                 -- Update groups
                 for _, index in ipairs(activeGroups) do
@@ -294,12 +296,12 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
     end
 end
 
-function AntiRaidTools:UpdateNotificationSpells()
+function AntiRaidTools:NotificationsUpdateSpells()
     for _, groupFrame in pairs(self.notificationRaidAssignmentGroups) do
         for _, assignmentFrame in pairs(groupFrame.assignments) do
-            if self:IsSpellActive(assignmentFrame.player, assignmentFrame.spellId) then
-                local castTimestamp = self:GetSpellCastTimestamp(assignmentFrame.player, assignmentFrame.spellId)
-                local spell = self:GetSpell(assignmentFrame.spellId)
+            if self:SpellsIsSpellActive(assignmentFrame.player, assignmentFrame.spellId) then
+                local castTimestamp = self:SpellsGetCastTimestamp(assignmentFrame.player, assignmentFrame.spellId)
+                local spell = self:SpellsGetSpell(assignmentFrame.spellId)
 
                 if castTimestamp and spell then
                     assignmentFrame.cooldownFrame:SetCooldown(castTimestamp, spell.duration)
@@ -307,7 +309,7 @@ function AntiRaidTools:UpdateNotificationSpells()
 
                 assignmentFrame:SetAlpha(1)
             else
-                if self:IsSpellReady(assignmentFrame.player, assignmentFrame.spellId) then
+                if self:SpellsIsSpellReady(assignmentFrame.player, assignmentFrame.spellId) then
                     assignmentFrame:SetAlpha(1)
                 else
                     assignmentFrame:SetAlpha(0.4)

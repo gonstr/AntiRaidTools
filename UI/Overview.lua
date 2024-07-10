@@ -2,7 +2,7 @@ local AntiRaidTools = AntiRaidTools
 
 local MIN_HEIGHT = 200
 
-function AntiRaidTools:InitOverview()
+function AntiRaidTools:OverviewInit()
     local container = CreateFrame("Frame", "AntiRaidToolsOverview", UIParent, "BackdropTemplate")
     container:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     container:SetSize(200, MIN_HEIGHT)
@@ -143,7 +143,7 @@ function AntiRaidTools:OverviewResize()
     self.overviewFrame:SetHeight(math.max(MIN_HEIGHT, maxHeight))
 end
 
-function AntiRaidTools:UpdateOverview()
+function AntiRaidTools:OverviewUpdate()
     local encounters = self.db.profile.data.encounters
 
     local show = self.db.profile.overview.show
@@ -171,20 +171,20 @@ function AntiRaidTools:UpdateOverview()
         self.db.profile.overview.selectedEncounterId = encounterIndexes[1]
     end
 
-    self:UpdateOverviewHeaderText()
-    self:UpdateOverviewPopup()
-    self:UpdateOverviewMain()
-    self:UpdateOverviewSpells()
+    self:OverviewUpdateHeaderText()
+    self:OverviewUpdatePopup()
+    self:OverviewUpdateMain()
+    self:OverviewUpdateSpells()
     self:OverviewUpdateLocked()
     self.overviewFrame:Show()
 end
 
 function AntiRaidTools:OverviewUpdateLocked()
     self.overviewFrame:EnableMouse(not self.db.profile.overview.locked)
-    self:UpdateOverviewPopup()
+    self:OverviewUpdatePopup()
 end
 
-function AntiRaidTools:UpdateOverviewHeaderText()
+function AntiRaidTools:OverviewUpdateHeaderText()
     local encounters = self.db.profile.data.encounters
 
     local encountersExists = false
@@ -197,7 +197,7 @@ function AntiRaidTools:UpdateOverviewHeaderText()
     self.overviewHeaderText:SetAlpha(1)
 
     if encountersExists then
-        self.overviewHeaderText:SetText(self:GetEncounters()[self.db.profile.overview.selectedEncounterId])
+        self.overviewHeaderText:SetText(self:EncountersGetAll()[self.db.profile.overview.selectedEncounterId])
     else
         if self.db.profile.data.encountersProgress then
             self.overviewHeaderText:SetText("Loading Assignments... |cFFFFFFFF" .. string.format("%.1f", self.db.profile.data.encountersProgress) .. "%|r")
@@ -243,7 +243,7 @@ local function createPopupListItem(popupFrame, text, onClick)
     return item
 end
 
-function AntiRaidTools:ShowOverviewPopupListItem(index, text, setting, onClick, accExtraOffset, extraOffset)
+function AntiRaidTools:OverviewShowPopupListItem(index, text, setting, onClick, accExtraOffset, extraOffset)
     if not self.overviewPopupListItems[index] then
         self.overviewPopupListItems[index] = createPopupListItem(self.overviewPopup)
     end
@@ -279,7 +279,7 @@ end
 
 function AntiRaidTools:OverviewSelectEncounter(encounterId)
     self.db.profile.overview.selectedEncounterId = encounterId
-    self:UpdateOverview()
+    self:OverviewUpdate()
 end
 
 function AntiRaidTools:OverviewToggleLock()
@@ -287,7 +287,7 @@ function AntiRaidTools:OverviewToggleLock()
     self:OverviewUpdateLocked()
 end
 
-function AntiRaidTools:UpdateOverviewPopup()
+function AntiRaidTools:OverviewUpdatePopup()
     if InCombatLockdown() then
         return
     end
@@ -306,36 +306,36 @@ function AntiRaidTools:UpdateOverviewPopup()
     local index = 1
     for _, encounterId in ipairs(encounterIndexes) do
         local selectFunc = function() self:OverviewSelectEncounter(encounterId) end
-        self:ShowOverviewPopupListItem(index, self:GetEncounters()[encounterId], false, selectFunc)
+        self:OverviewShowPopupListItem(index, self:EncountersGetAll()[encounterId], false, selectFunc)
         index = index + 1
     end
 
     local encounterListItems = index > 1
 
     local toggleAnchorsFunc = function()
-        self:RaidNotificationsToggleFrameLock()
-        self:UpdateOverviewPopup()
+        self:NotificationsToggleFrameLock()
+        self:OverviewUpdatePopup()
     end
     
     local anchorsText = "Hide Anchors"
-    if self:RaidNotificationsIsFrameLocked() then anchorsText = "Show Anchors" end
-    self:ShowOverviewPopupListItem(index, anchorsText, true, toggleAnchorsFunc, 0, encounterListItems)
+    if self:NotificationsIsFrameLocked() then anchorsText = "Show Anchors" end
+    self:OverviewShowPopupListItem(index, anchorsText, true, toggleAnchorsFunc, 0, encounterListItems)
 
     index = index + 1
 
     local lockFunc = function() self:OverviewToggleLock() end
     local lockedText = "Lock Overview"
     if self.db.profile.overview.locked then lockedText = "Unlock Overview" end
-    self:ShowOverviewPopupListItem(index, lockedText, true, lockFunc, 0, encounterListItems)
+    self:OverviewShowPopupListItem(index, lockedText, true, lockFunc, 0, encounterListItems)
 
     index = index + 1
 
     local configurationFunc = function() InterfaceOptionsFrame_OpenToCategory("Anti Raid Tools") end
-    self:ShowOverviewPopupListItem(index, "Configuration", true, configurationFunc, encounterListItems and 10 or 0, false)
+    self:OverviewShowPopupListItem(index, "Configuration", true, configurationFunc, encounterListItems and 10 or 0, false)
 
     index = index + 1
 
-    local yOfs = self:ShowOverviewPopupListItem(index, "Close", true, nil, encounterListItems and 10 or 0, true)
+    local yOfs = self:OverviewShowPopupListItem(index, "Close", true, nil, encounterListItems and 10 or 0, true)
 
     local popupHeight = math.abs(yOfs) + 30
 
@@ -488,7 +488,7 @@ local function updateOverviewMainGroup(frame, prevFrame, group, uuid, index)
     end
 end
 
-function AntiRaidTools:UpdateOverviewMain()
+function AntiRaidTools:OverviewUpdateMain()
     for _, header in pairs(self.overviewMainHeaders) do
         header:Hide()
     end
@@ -547,7 +547,7 @@ function AntiRaidTools:UpdateOverviewMain()
     self:OverviewResize()
 end
 
-function AntiRaidTools:UpdateOverviewActiveGroups()
+function AntiRaidTools:OverviewUpdateActiveGroups()
     for _, groupFrame in ipairs(self.overviewMainRaidAssignmentGroups) do
         local selectedEncounterId = self.db.profile.overview.selectedEncounterId
         local encounter = self.db.profile.data.encounters[selectedEncounterId]
@@ -556,7 +556,7 @@ function AntiRaidTools:UpdateOverviewActiveGroups()
         if encounter then
             for _, part in ipairs(encounter) do
                 if part.uuid == groupFrame.uuid and part.strategy.type == 'BEST_MATCH' then
-                    local activeGroups = self:GetActiveGroups(groupFrame.uuid)
+                    local activeGroups = self:GroupsGetActive(groupFrame.uuid)
 
                     if activeGroups then
                         for _, index in ipairs(activeGroups) do
@@ -576,12 +576,12 @@ function AntiRaidTools:UpdateOverviewActiveGroups()
     end    
 end
 
-function AntiRaidTools:UpdateOverviewSpells()
+function AntiRaidTools:OverviewUpdateSpells()
     for _, groupFrame in pairs(self.overviewMainRaidAssignmentGroups) do
         for _, assignmentFrame in pairs(groupFrame.assignments) do
-            if self:IsSpellActive(assignmentFrame.player, assignmentFrame.spellId) then
-                local castTimestamp = self:GetSpellCastTimestamp(assignmentFrame.player, assignmentFrame.spellId)
-                local spell = self:GetSpell(assignmentFrame.spellId)
+            if self:SpellsIsSpellActive(assignmentFrame.player, assignmentFrame.spellId) then
+                local castTimestamp = self:SpellsGetCastTimestamp(assignmentFrame.player, assignmentFrame.spellId)
+                local spell = self:SpellsGetSpell(assignmentFrame.spellId)
 
                 if castTimestamp and spell then
                     assignmentFrame.cooldownFrame:SetCooldown(castTimestamp, spell.duration)
@@ -592,7 +592,7 @@ function AntiRaidTools:UpdateOverviewSpells()
             else
                 --ActionButton_HideOverlayGlow(assignmentFrame.iconFrame)
 
-                if self:IsSpellReady(assignmentFrame.player, assignmentFrame.spellId) then
+                if self:SpellsIsSpellReady(assignmentFrame.player, assignmentFrame.spellId) then
                     assignmentFrame:SetAlpha(1)
                 else
                     assignmentFrame:SetAlpha(0.4)
