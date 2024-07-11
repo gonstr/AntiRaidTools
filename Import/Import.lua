@@ -48,22 +48,3 @@ function AntiRaidTools:ImportCreateEncountersData(import)
 
     return result, uuid
 end
-
-function AntiRaidTools:ImportCreateDefaults(import)
-    for _, part in ipairs(import) do
-        if part.type == "RAID_ASIGNMENTS" then
-            if not part.untrigger then
-                if part.strategy.type == "BEST_MATCH" then
-                    part.untrigger = {
-                        type = "TIMED",
-                        duration = 5
-                    }
-                elseif part.strategy.type == "SHOW_ALL" then
-                    part.untrigger = {
-                        type = "ASSIGNMENTS_COMPLETE",
-                    }
-                end
-            end
-        end
-    end
-end

@@ -65,7 +65,7 @@ For most triggers, `countdown` and `duration` fields can also be set. The `count
 
 ### Strategy
 
-The strategy for deciding how to display raid assignments. Can be of types `BEST_MATCH`, and `SHOW_ALL`.
+The strategy for deciding how to display raid assignments. Can be of types `BEST_MATCH`, and `CHAIN`.
 
 #### BEST_MATCH
 
@@ -88,9 +88,9 @@ If player `Sîf` has already used Rallying Cry (97462), the best match would be 
 
 If player `Anticipâte` is dead, the best match would also be the second row of assignments.
 
-#### SHOW_ALL
+#### CHAIN
 
-If the stategy is set to `SHOW_ALL`, the addon will show all available assignments in a list. This can be useful if you want to chain raid CDs during phases of boss fights.
+If the stategy is set to `CHAIN`, the addon will show all available assignments in a list. This can be useful if you want to chain raid CDs during phases of boss fights.
 
 ### Assignments
 
@@ -103,7 +103,7 @@ type: RAID_ASSIGNMENTS
 encounter: 1024
 trigger: { type: UNIT_HEALTH, unit: boss1, percentage: 35 }
 metadata: { name: "Boss 25%" }
-strategy: { type: SHOW_ALL }
+strategy: { type: CHAIN }
 assignments:
 - [{ type: SPELL, player: Anticipâte, spell_id: 31821 }]
 - [{ type: SPELL, player: Kondec, spell_id: 62618 }]

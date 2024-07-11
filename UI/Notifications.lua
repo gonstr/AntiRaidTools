@@ -1,3 +1,5 @@
+local insert = table.insert
+
 local AntiRaidTools = AntiRaidTools
 
 local SONAR_SOUND_FILE = "Interface\\AddOns\\AntiRaidTools\\Media\\PowerAuras_Sounds_Sonar.mp3"
@@ -53,6 +55,25 @@ function AntiRaidTools:NotificationsInit()
 
     content:Hide()
 
+    local extraInfo = CreateFrame("Frame", nil, content, "BackdropTemplate")
+    extraInfo:SetHeight(30)
+    extraInfo:SetBackdrop({
+        bgFile = "Interface\\Addons\\AntiRaidTools\\Media\\gradient32x32.tga",
+        tile = true,
+        tileSize = 32,
+    })
+    extraInfo:SetBackdropColor(0, 0, 0, 0.6)
+    extraInfo.text = extraInfo:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    extraInfo.text:SetFont("Fonts\\ARIALN.TTF", 12)
+    extraInfo.text:SetTextColor(1, 1, 1, 0.8)
+    extraInfo.text:SetPoint("BOTTOMLEFT", 32, 8)
+    extraInfo.text:SetWidth(200)
+    extraInfo.text:SetJustifyH("LEFT")
+    extraInfo.text:SetJustifyV("TOP")
+    extraInfo.text:SetWordWrap(true)
+
+    extraInfo:Hide()
+
     self.notificationFrameFadeOut = AntiRaidTools:CreateFadeOut(content, function()
         AntiRaidTools.notificationContentFrame:Hide()
     end)
@@ -64,10 +85,7 @@ function AntiRaidTools:NotificationsInit()
 
     self.notificationFrame = container
     self.notificationContentFrame = content
-end
-
-function AntiRaidTools:NotificationsUpdate()
-    self:NotificationsUpdateSpells()
+    self.notificationExtraInfoFrame = extraInfo
 end
 
 function AntiRaidTools:NotificationsToggleFrameLock(lock)
@@ -187,6 +205,41 @@ local function updateNotificationGroup(frame, prevFrame, group, uuid, index)
     end
 end
 
+local function updateExtraInfo(frame, prevFrame, assignments, activeGroups)
+    local clone = AntiRaidTools:ShallowCopy(assignments)
+
+    for _, index in ipairs(activeGroups) do
+        clone[index] = nil
+    end
+
+    local playersKeySet = {}
+
+    for _, group in pairs(clone) do
+        for _, assignment in ipairs(group) do
+            if assignment.type == "SPELL" and AntiRaidTools:SpellsIsSpellReady(assignment.player, assignment.spell_id) then
+                playersKeySet[assignment.player] = true
+            end
+        end
+    end
+
+    local players={}
+
+    for player in pairs(playersKeySet) do
+        insert(players, player)
+    end
+
+    if #players > 0 then
+        frame:Show()
+
+        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0, 0)
+        frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0, 0)
+
+        frame.text:SetText("→ " .. AntiRaidTools:StringJoin(players) .. " get ready to follow up.")
+
+        frame:SetHeight(frame.text:GetStringHeight() + 10)
+    end
+end
+
 local function updateCountdown(_, elapsed)
     AntiRaidTools.notificationsCountdown = AntiRaidTools.notificationsCountdown - elapsed
 
@@ -204,10 +257,20 @@ function AntiRaidTools:NotificationsShowRaidAssignment(uuid, countdown)
     local encounter = self.db.profile.data.encounters[selectedEncounterId]
 
     if self.db.profile.options.notifications.showOnlyOwnNotifications then
-        if not self:IsPlayerInActiveGroup(uuid) then
-            return
+        local part = self:GetRaidAssignmentPart(uuid)
+
+        if part then
+            if part.strategy.type == "BEST_MATCH" and not self:IsPlayerInActiveGroup(part) then
+                return
+            end
+
+            if part.strategy.type == "CHAIN" and not self:IsPlayerInAssignments(part.assignments) then
+                return
+            end
         end
     end
+
+    self.notificationExtraInfoFrame:Hide()
 
     for _, group in pairs(self.notificationRaidAssignmentGroups) do
         group:Hide()
@@ -278,8 +341,6 @@ function AntiRaidTools:NotificationsShowRaidAssignment(uuid, countdown)
                     end
                 end)
 
-                local activeGroups = self:GroupsGetActive(uuid)
-
                 -- Update groups
                 for _, index in ipairs(activeGroups) do
                     if not self.notificationRaidAssignmentGroups[groupIndex] then
@@ -292,6 +353,10 @@ function AntiRaidTools:NotificationsShowRaidAssignment(uuid, countdown)
 
                     prevFrame = frame
                     groupIndex = groupIndex + 1
+                end
+
+                if part.strategy.type == "CHAIN" then
+                    updateExtraInfo(self.notificationExtraInfoFrame, prevFrame, part.assignments, activeGroups)
                 end
 
                 break

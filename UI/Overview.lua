@@ -555,7 +555,7 @@ function AntiRaidTools:OverviewUpdateActiveGroups()
 
         if encounter then
             for _, part in ipairs(encounter) do
-                if part.uuid == groupFrame.uuid and part.strategy.type == 'BEST_MATCH' then
+                if part.uuid == groupFrame.uuid then
                     local activeGroups = self:GroupsGetActive(groupFrame.uuid)
 
                     if activeGroups then

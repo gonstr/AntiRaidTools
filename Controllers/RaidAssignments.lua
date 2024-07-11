@@ -19,9 +19,6 @@ local spellAuraAssignmentCache = {}
 -- key: timer key, value = C_Timer.NewTimer
 local fojjiNumenTimers = {}
 
--- key: part uuid, value = C_Timer.NewTimer
-local untriggerTimers = {}
-
 local function resetState()
     activeEncounter = nil
     unitHealthTriggersCache = {}
@@ -31,11 +28,6 @@ local function resetState()
     for key, timer in pairs(fojjiNumenTimers) do
         timer:Cancel()
         fojjiNumenTimers[key] = nil
-    end
-
-    for key, timer in pairs(untriggerTimers) do
-        timer:Cancel()
-        untriggerTimers[key] = nil
     end
 end
 
@@ -127,7 +119,7 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
     for _, part in ipairs(activeEncounter) do
         if part.type == "RAID_ASSIGNMENTS" then
             local activeGroups = self:GroupsGetActive(part.uuid)
-            local selectedGroups = self:RaidAssignmentsSelectGroup(part.assignments, part.strategy.type)
+            local selectedGroups = self:RaidAssignmentsSelectGroup(part.assignments)
 
             if not self:RaidAssignmentsIsGroupsEqual(activeGroups, selectedGroups) then
                 if self.DEBUG then print("[ART] Updated groups for", part.uuid) end
@@ -183,33 +175,17 @@ function AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignments)
     return bestMatchIndex
 end
 
-function AntiRaidTools:RaidAssignmentsSelectGroup(assignments, strategy)
+-- All strategies use BEST_MATCH currently. It's just UI notification UI that's different really.
+function AntiRaidTools:RaidAssignmentsSelectGroup(assignments)
     local groups = {}
 
-    if strategy == "SHOW_ALL" then
-        -- SHOW_ALL returns all assignments
-        for i in ipairs(assignments) do
-            insert(groups, i)
-        end
-    else
-        -- Must be BEST_MATCH
-        local bestMatchIndex = self:RaidAssignmentsSelectBestMatchIndex(assignments)
+    local bestMatchIndex = self:RaidAssignmentsSelectBestMatchIndex(assignments)
 
-        if bestMatchIndex then
-            insert(groups, bestMatchIndex)
-        end 
+    if bestMatchIndex then
+        insert(groups, bestMatchIndex)
     end
 
     return groups
-end
-
-local function cancelUntriggerTimer(uuid)
-    local timer = untriggerTimers[uuid]
-
-    if timer then
-        timer:Cancel()
-        untriggerTimers[uuid] = nil
-    end
 end
 
 function AntiRaidTools:RaidAssignmentsTrigger(part, countdown)
@@ -228,15 +204,6 @@ function AntiRaidTools:RaidAssignmentsTrigger(part, countdown)
         if self.DEBUG then print("[ART] Sending TRIGGER done") end
 
         self:SendRaidMessage("TRIGGER", data)
-
-        -- Schedule untrigger for TIMED untrigger types
-        if part.untrigger.type == "TIMED" then
-            cancelUntriggerTimer(part.uuid)
-
-            untriggerTimers[part.uuid] = C_Timer.NewTimer(part.untrigger.type.duration, function()
-                self:SendRaidMessage("UNTRIGGER", part.uuid)
-            end)
-        end
     end
 end
 
@@ -293,7 +260,7 @@ function AntiRaidTools:RaidAssignmentsHandleSpellAura(event, spellId)
     if part then
         if self.DEBUG then print("[ART] Handling spell aura:", spellId) end
 
-        self:RaidAssignmentsSendNotification(part.uuid)
+        self:RaidAssignmentsTrigger(part)
     end
 end
 
