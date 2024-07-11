@@ -70,34 +70,6 @@ function AntiRaidTools:SpellsResetCache()
     spellCastCache = {}
 end
 
-function AntiRaidTools:SpellsIsSpellInUse(unit, spellId)
-    if not self.TEST then
-        if UnitIsDeadOrGhost(unit) then
-            return false
-        end
-
-        if not UnitIsPlayer(unit) and not UnitInRaid(unit) then
-            return false
-        end
-    end
-
-    timestamp = GetTime()
-
-    local key = unit .. ":" .. spellId
-
-    local cachedCastTimestamp = spellCastCache[key]
-
-    if not cachedCastTimestamp then
-        return false
-    end
-
-    if timestamp < cachedCastTimestamp + spells[spellId].duration then
-        return true
-    end
-
-    return false
-end
-
 function AntiRaidTools:SpellsIsSpellReady(unit, spellId, timestamp)
     if not self.TEST then
         if UnitIsDeadOrGhost(unit) then

@@ -1,10 +1,14 @@
 local AntiRaidTools = AntiRaidTools
 
--- Key: Trigger UUID, value = true / false
+-- Key: Trigger UUID, Value: timestamp
 local activeTriggers = {}
 
-function AntiRaidTools:TriggersSetTriggered(uuid)
-    activeTriggers[uuid] = true
+function AntiRaidTools:TriggersSetTriggered(uuid, countdown)
+    if not countdown then
+        countdown = 0
+    end
+
+    activeTriggers[uuid] = GetTime() + countdown
 end
 
 function AntiRaidTools:TriggersSetUntriggered(uuid)

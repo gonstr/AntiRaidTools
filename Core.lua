@@ -148,9 +148,12 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
                 self:OverviewUpdateActiveGroups()
             elseif payload.e == "TRIGGER" then
                 if self.DEBUG then print("[ART] Received message TRIGGER") end
-                self:TriggersSetTriggered(payload.d.uuid)
-                self:NotificationsShowRaidAssignment(payload.d.uuid, payload.d.countdown)
-                self:NotificationsUpdateSpells()
+                self:TriggersSetTriggered(payload.d.uuid, payload.d.countdown)
+                self:NotificationsUpdate()
+            elseif payload.e == "UNTRIGGER" then
+                if self.DEBUG then print("[ART] Received message UNTRIGGER") end
+                self:TriggersSetUntriggered(payload.d.uuid, payload.d.countdown)
+                self:NotificationsUpdate()
             end
         end
     end

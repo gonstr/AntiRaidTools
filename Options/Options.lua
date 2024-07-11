@@ -105,7 +105,7 @@ local notificationOptions = {
         showOnlyOwnNotificationsCheckbox = {
             type = "toggle",
             name = "Limit Notifications",
-            desc = "Show only Raid Notifications that apply to You.",
+            desc = "Only show Raid Notifications that apply to You.",
             width = "full",
             order = 1,
             get = function() return AntiRaidTools.db.profile.options.notifications.showOnlyOwnNotifications end,
@@ -113,7 +113,7 @@ local notificationOptions = {
         },
         showOnlyOwnNotificationsDescription = {
             type = "description",
-            name = "Show only Raid Notifications that apply to you.",
+            name = "Only show Raid Notifications that apply to you.",
             order = 2,
         },
         separator = {
@@ -123,7 +123,7 @@ local notificationOptions = {
         },
         muteCheckbox = {
             type = "toggle",
-            name = "Mute Notification Sounds",
+            name = "Mute Sounds",
             desc = "Mute all Raid Notification Sounds.",
             width = "full",
             order = 4,
@@ -144,7 +144,7 @@ local fojjiIntegrationOptions = {
     args = {
         weakAuraText = {
             type = "description",
-            name = "Fojji Integration require the use of a Helper WeakAura. This WeakAura is only required if you are the Raid Leader and set up assignments that are activated by Fojji timers.",
+            name = "Fojji Integration require the use of a Helper WeakAura. This WeakAura is only required if you are the Raid Leader and configure assignments that are activated by Fojji timers.",
             order = 1,
         },
         separator = {

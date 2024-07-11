@@ -66,6 +66,10 @@ function AntiRaidTools:NotificationsInit()
     self.notificationContentFrame = content
 end
 
+function AntiRaidTools:NotificationsUpdate()
+    self:NotificationsUpdateSpells()
+end
+
 function AntiRaidTools:NotificationsToggleFrameLock(lock)
     if lock or self.notificationFrame:IsMouseEnabled() then
         self.notificationFrame:EnableMouse(false)
