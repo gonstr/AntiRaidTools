@@ -13,6 +13,9 @@ local unitHealthTriggersCache = {}
 -- key: spellId, value = raidAssignment
 local spellCastAssignmentCache = {}
 
+-- key: spellId, value = raidAssignment
+local spellAuraAssignmentCache = {}
+
 -- key: timer key, value = C_Timer.NewTimer
 local fojjiNumenTimers = {}
 
@@ -20,6 +23,7 @@ local function resetState()
     activeEncounter = nil
     unitHealthTriggersCache = {}
     spellCastAssignmentCache = {}
+    spellAuraAssignmentCache = {}
 
     for key, timer in pairs(fojjiNumenTimers) do
         timer:Cancel()
@@ -49,6 +53,8 @@ function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
                     unitHealthTriggersCache[part.trigger.unit] = partCopy
                 elseif part.trigger.type == "SPELL_CAST" then
                     spellCastAssignmentCache[part.trigger.spell_id] = part
+                elseif part.trigger.type == "SPELL_AURA" then
+                    spellAuraAssignmentCache[part.trigger.spell_id] = part
                 end
             end
         end
@@ -261,6 +267,20 @@ function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
 
             self:RaidAssignmentsSendNotification(part.uuid)
         end
+    end
+end
+
+function AntiRaidTools:RaidAssignmentsHandleSpellAura(event, spellId)
+    if not activeEncounter then
+        return
+    end
+
+    local part = spellAuraAssignmentCache[spellId]
+
+    if part then
+        if self.DEBUG then print("[ART] Handling spell aura:", spellId) end
+
+        self:RaidAssignmentsSendNotification(part.uuid)
     end
 end
 

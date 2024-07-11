@@ -190,6 +190,16 @@ local function validateTrigger(import)
             end
         end
 
+        if import.trigger.type == "SPELL_AURA" then
+            if not import.trigger.spell_id then
+                return false, "Import with trigger type SPELL_AURA is missing a spell_id field."
+            end
+
+            if type(import.trigger.spell_id) ~= "number" or import.trigger.spell_id ~= math.floor(import.trigger.spell_id) then
+                return false, "Import has an invalid spell_id value: " .. stringSafe(import.trigger.spell_id) .. "."
+            end
+        end
+
         if import.trigger.type == "RAID_BOSS_EMOTE" then
             if not import.trigger.text then
                 return false, "Import with trigger type UNIT_HEALTH is missing a text field."
