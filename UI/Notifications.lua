@@ -206,25 +206,48 @@ local function updateNotificationGroup(frame, prevFrame, group, uuid, index)
 end
 
 local function updateExtraInfo(frame, prevFrame, assignments, activeGroups)
-    local clone = AntiRaidTools:ShallowCopy(assignments)
+    -- Use BETCH_MATCH recursivly to create list of follow ups. This list might not be
+    -- the correct order in which assignments will be selected but its the best
+    -- estimation we can do.
+    local groups = {}
+
+    local assignmentsClone = AntiRaidTools:ShallowCopy(assignments)
+
+    local bestMatchIndex = AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignmentsClone)
+    if bestMatchIndex then assignmentsClone[bestMatchIndex] = nil end
+
+    while bestMatchIndex do
+        insert(groups, bestMatchIndex)
+
+        bestMatchIndex = AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignmentsClone)
+        if bestMatchIndex then assignmentsClone[bestMatchIndex] = nil end
+    end
 
     for _, index in ipairs(activeGroups) do
-        clone[index] = nil
+        for i, group in ipairs(groups) do
+            if group == index then
+                groups[i] = nil
+            end
+        end
     end
 
     local playersKeySet = {}
 
-    for _, group in pairs(clone) do
-        for _, assignment in ipairs(group) do
-            if assignment.type == "SPELL" and AntiRaidTools:SpellsIsSpellReady(assignment.player, assignment.spell_id) then
-                playersKeySet[assignment.player] = true
+    for _, index in pairs(groups) do
+        local group = assignments[index]
+
+        if group then
+            for _, assignment in ipairs(group) do
+                if assignment.type == "SPELL" and AntiRaidTools:SpellsIsSpellReady(assignment.player, assignment.spell_id) then
+                    insert(playersKeySet, assignment.player)
+                end
             end
         end
     end
 
     local players={}
 
-    for player in pairs(playersKeySet) do
+    for _, player in pairs(playersKeySet) do
         insert(players, player)
     end
 
@@ -234,7 +257,7 @@ local function updateExtraInfo(frame, prevFrame, assignments, activeGroups)
         frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0, 0)
         frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0, 0)
 
-        frame.text:SetText("→ " .. AntiRaidTools:StringJoin(players) .. " get ready to follow up.")
+        frame.text:SetText("→ " .. AntiRaidTools:StringJoin(players) .. " follow up.")
 
         frame:SetHeight(frame.text:GetStringHeight() + 10)
     end

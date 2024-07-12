@@ -19,7 +19,7 @@ function AntiRaidTools:SyncSchedule()
         local timeSinceLastSync = GetTime() - lastSyncTime
         local waitTime = math.max(0, SYNC_WAIT_TIME - timeSinceLastSync)
 
-        if self.DEBUG then print("[ART] Scheduling raid sync in", waitTime, "seconds") end
+        if self.DEBUG then self:Print("Scheduling raid sync in", waitTime, "seconds") end
 
         syncTimer = C_Timer.NewTimer(waitTime, function()
             lastSyncTime = GetTime()
@@ -30,7 +30,7 @@ function AntiRaidTools:SyncSchedule()
                 encounters = self.db.profile.data.encounters
             }
 
-            if self.DEBUG then print("[ART] Sending raid sync") end
+            if self.DEBUG then self:Print("Sending raid sync") end
 
             AntiRaidTools:SendRaidMessage("SYNC", data, self.PREFIX_SYNC, "BULK", function(_, sent, total)
                 if sent == total then

@@ -41,7 +41,7 @@ function AntiRaidTools:RaidAssignmentsStartEncounter(encounterId)
     activeEncounter = self.db.profile.data.encounters[encounterId]
 
     if activeEncounter then
-        if self.DEBUG then print("[ART] Encounter starting") end
+        if self.DEBUG then self:Print("Encounter starting") end
 
         -- Populate caches
         for _, part in ipairs(activeEncounter) do
@@ -68,7 +68,7 @@ function AntiRaidTools:RaidAssignmentsEndEncounter()
         return
     end
 
-    if self.DEBUG then print("[ART] Encounter ended") end
+    if self.DEBUG then self:Print("Encounter ended") end
 
     resetState()
     self:GroupsReset()
@@ -112,7 +112,7 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
         return
     end
 
-    if self.DEBUG then print("[ART] Update groups start") end
+    if self.DEBUG then self:Print("Update groups start") end
 
     local groupsUpdated = false
 
@@ -122,7 +122,7 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
             local selectedGroups = self:RaidAssignmentsSelectGroup(part.assignments)
 
             if not self:RaidAssignmentsIsGroupsEqual(activeGroups, selectedGroups) then
-                if self.DEBUG then print("[ART] Updated groups for", part.uuid) end
+                if self.DEBUG then self:Print("Updated groups for", part.uuid) end
 
                 groupsUpdated = true
                 self:GroupsSetActive(part.uuid, selectedGroups)
@@ -130,7 +130,7 @@ function AntiRaidTools:RaidAssignmentsUpdateGroups()
         end
     end
 
-    if self.DEBUG then print("[ART] Update groups done. Changed:", groupsUpdated) end
+    if self.DEBUG then self:Print("Update groups done. Changed:", groupsUpdated) end
 
     if groupsUpdated then
         self:SendRaidMessage("ACT_GRPS", self:GroupsGetAllActive())
@@ -189,7 +189,7 @@ function AntiRaidTools:RaidAssignmentsSelectGroup(assignments)
 end
 
 function AntiRaidTools:RaidAssignmentsTrigger(part, countdown)
-    if self.DEBUG then print("[ART] Sending TRIGGER start") end
+    if self.DEBUG then self:Print("Sending TRIGGER start") end
 
     local activeGroups = self:GroupsGetActive(part.uuid)
 
@@ -201,7 +201,7 @@ function AntiRaidTools:RaidAssignmentsTrigger(part, countdown)
             countdown = countdown
         }
 
-        if self.DEBUG then print("[ART] Sending TRIGGER done") end
+        if self.DEBUG then self:Print("Sending TRIGGER done") end
 
         self:SendRaidMessage("TRIGGER", data)
     end
@@ -219,7 +219,7 @@ function AntiRaidTools:RaidAssignmentsHandleUnitHealth(unit)
         local maxHealth = UnitHealthMax(unit)
         local percentage = health / maxHealth * 100
 
-        if self.DEBUG then print("[ART] Tracking unit health:", unit, percentage) end
+        if self.DEBUG then self:Print("Tracking unit health:", unit, percentage) end
 
         local trigger = part.trigger    
 
@@ -243,7 +243,7 @@ function AntiRaidTools:RaidAssignmentsHandleSpellCast(event, spellId)
         local part = spellCastAssignmentCache[spellId]
 
         if part then
-            if self.DEBUG then print("[ART] Handling spell cast:", spellId) end
+            if self.DEBUG then self:Print("Handling spell cast:", spellId) end
 
             self:RaidAssignmentsTrigger(part)
         end
@@ -258,7 +258,7 @@ function AntiRaidTools:RaidAssignmentsHandleSpellAura(event, spellId)
     local part = spellAuraAssignmentCache[spellId]
 
     if part then
-        if self.DEBUG then print("[ART] Handling spell aura:", spellId) end
+        if self.DEBUG then self:Print("Handling spell aura:", spellId) end
 
         self:RaidAssignmentsTrigger(part)
     end
@@ -271,7 +271,7 @@ function AntiRaidTools:RaidAssignmentsHandleRaidBossEmote(text)
 
     for _, part in ipairs(activeEncounter) do
         if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "RAID_BOSS_EMOTE" and stringFind(text, part.trigger.text) ~= nil then
-            if self.DEBUG then print("[ART] Handling raid boss emote:", text) end
+            if self.DEBUG then self:Print("Handling raid boss emote:", text) end
 
             self:RaidAssignmentsTrigger(part)
         end
@@ -294,7 +294,7 @@ function AntiRaidTools:RaidAssignmentsHandleFojjiNumenTimer(key, countdown)
 
     for _, part in ipairs(activeEncounter) do
         if part.type == "RAID_ASSIGNMENTS" and part.trigger.type == "FOJJI_NUMEN_TIMER" and part.trigger.key == key then
-            if self.DEBUG then print("[ART] Handling fojji numen timer:", key) end
+            if self.DEBUG then self:Print("Handling fojji numen timer:", key) end
 
             if countdown <= 5 then
                 self:RaidAssignmentsTrigger(part, countdown)

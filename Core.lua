@@ -119,16 +119,16 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
             self:SyncSetClientVersion(sender, payload.v)
 
             if payload.e == "SYNC_REQ_VERSIONS" then
-                if self.DEBUG then print("[ART] Received message SYNC_REQ_VERSIONS:", sender) end
+                if self.DEBUG then self:Print("Received message SYNC_REQ_VERSIONS:", sender) end
                 self:SyncSendVersion()
             elseif payload.e == "SYNC_STATUS" then
                 if sender ~= UnitName("player") then
-                    if self.DEBUG then print("[ART] Received message SYNC_STATUS:", sender) end
+                    if self.DEBUG then self:Print("Received message SYNC_STATUS:", sender) end
                     self:SyncHandleStatus(payload.d)
                 end
             elseif payload.e == "SYNC_PROG" then
                 if sender ~= UnitName("player") and payload.d.encountersId ~= self.db.profile.data.encountersId then
-                    if self.DEBUG then print("[ART] Received message SYNC_PROG:", sender, payload.d.progress) end
+                    if self.DEBUG then self:Print("Received message SYNC_PROG:", sender, payload.d.progress) end
                     self.db.profile.data.encountersProgress = payload.d.progress
                     self.db.profile.data.encountersId = nil
                     self.db.profile.data.encounters = {}
@@ -136,18 +136,18 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
                 end
             elseif payload.e == "SYNC" then
                 if sender ~= UnitName("player") then
-                    if self.DEBUG then print("[ART] Received message SYNC") end
+                    if self.DEBUG then self:Print("Received message SYNC") end
                     self.db.profile.data.encountersProgress = nil
                     self.db.profile.data.encountersId = payload.d.encountersId
                     self.db.profile.data.encounters = payload.d.encounters
                     self:OverviewUpdate()
                 end
             elseif payload.e == "ACT_GRPS" then
-                if self.DEBUG then print("[ART] Received message ACT_GRPS") end
+                if self.DEBUG then self:Print("Received message ACT_GRPS") end
                 self:GroupsSetAllActive(payload.d)
                 self:OverviewUpdateActiveGroups()
             elseif payload.e == "TRIGGER" then
-                if self.DEBUG then print("[ART] Received message TRIGGER") end
+                if self.DEBUG then self:Print("Received message TRIGGER") end
                 self:NotificationsShowRaidAssignment(payload.d.uuid, payload.d.countdown)
                 self:NotificationsUpdateSpells()
             end
@@ -189,7 +189,7 @@ function AntiRaidTools:UNIT_HEALTH(_, unitId)
     local guid = UnitGUID(unitId)
 
     if self:UnitsIsDead(guid) and UnitHealth(unitId) > 0 and not UnitIsGhost(unitId) then
-        if self.DEBUG then print("[ART] Handling cached unit coming back to life") end
+        if self.DEBUG then self:Print("Handling cached unit coming back to life") end
         self:UnitsClearDead(guid)
         self:RaidAssignmentsUpdateGroups()
         self:OverviewUpdateSpells()
