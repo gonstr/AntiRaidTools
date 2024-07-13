@@ -59,9 +59,9 @@ triggers:
     key: HALFUS_PROTOBREATH
 ```
 
-### Countdown and duration
+### Countdown
 
-For most triggers, `countdown` and `duration` fields can also be set. The `countdown` value controls the countdown timer in the raid assignments popup. `duration` control how long the popup will be visible for.
+For most triggers, `countdown` can also be set. The `countdown` value controls the countdown timer in the raid assignments popup. This is useful to set if you want to delay the use of a raid cd after an event triggers. `countdown` can not be set if the trigger type is a timer.
 
 ### Strategy
 
@@ -122,7 +122,7 @@ assignments:
 ---
 type: RAID_ASSIGNMENTS
 encounter: 1022
-trigger: { type: FOJJI_NUMEN_TIMER, key: ATRAMEDES_SEARING_FLAME, duration: 7 }
+trigger: { type: FOJJI_NUMEN_TIMER, key: ATRAMEDES_SEARING_FLAME }
 metadata: { name: Flames }
 strategy: { type: BEST_MATCH }
 assignments: 
@@ -131,7 +131,7 @@ assignments:
 ---
 type: RAID_ASSIGNMENTS
 encounter: 1026
-trigger: { type: RAID_BOSS_EMOTE, text: "The air crackles with electricity!", countdown: 5, duration: 10 }
+trigger: { type: RAID_BOSS_EMOTE, text: "The air crackles with electricity!", countdown: 5 }
 metadata: { name: "Crackle" }
 strategy: { type: BEST_MATCH }
 assignments:

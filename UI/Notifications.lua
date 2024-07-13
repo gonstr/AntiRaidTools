@@ -351,10 +351,6 @@ function AntiRaidTools:NotificationsShowRaidAssignment(uuid, countdown)
 
                 local duration = 5
 
-                if part.trigger.duration then
-                    duration = part.trigger.duration
-                end
-
                 local showId = self:GenerateUUID()
                 self.notificationShowId = showId
 
