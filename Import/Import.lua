@@ -19,7 +19,7 @@ function AntiRaidTools:ImportYAML(str)
     end
 
     for i, part in ipairs(result) do
-        local ok, result = AntiRaidTools:ValidateImports(result)
+        local ok, result = AntiRaidTools:ValidationValidateImports(result)
 
         if not ok then
             return false, "Error in document " .. i .. ": " .. result
@@ -33,7 +33,7 @@ function AntiRaidTools:ImportYAML(str)
     return true, result
 end
 
-function AntiRaidTools:CreateEncountersData(import)
+function AntiRaidTools:ImportCreateEncountersData(import)
     local result = {}
 
     for _, part in ipairs(import) do

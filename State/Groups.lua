@@ -3,22 +3,22 @@ local AntiRaidTools = AntiRaidTools
 -- Key: UUID, value = assignment group index
 local activeGroups = {}
 
-function AntiRaidTools:SetActiveGroup(uuid, groups)
+function AntiRaidTools:GroupsSetActive(uuid, groups)
     activeGroups[uuid] = groups
 end
 
-function AntiRaidTools:GetActiveGroups(uuid)
+function AntiRaidTools:GroupsGetActive(uuid)
     return activeGroups[uuid]
 end
 
-function AntiRaidTools:GetAllActiveGroups()
+function AntiRaidTools:GroupsGetAllActive()
     return activeGroups
 end
 
-function AntiRaidTools:SetAllActiveGroups(groups)
+function AntiRaidTools:GroupsSetAllActive(groups)
     activeGroups = groups
 end
 
-function AntiRaidTools:ResetGroups()
+function AntiRaidTools:GroupsReset()
     activeGroups = {}
 end

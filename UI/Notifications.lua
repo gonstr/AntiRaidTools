@@ -1,8 +1,10 @@
+local insert = table.insert
+
 local AntiRaidTools = AntiRaidTools
 
 local SONAR_SOUND_FILE = "Interface\\AddOns\\AntiRaidTools\\Media\\PowerAuras_Sounds_Sonar.mp3"
 
-function AntiRaidTools:InitRaidNotification()
+function AntiRaidTools:NotificationsInit()
     local container = CreateFrame("Frame", "AntiRaidToolsNotification", UIParent, "BackdropTemplate")
     container:SetPoint("CENTER", UIParent, "CENTER", 0, 200)
     container:SetSize(250, 50)
@@ -53,6 +55,25 @@ function AntiRaidTools:InitRaidNotification()
 
     content:Hide()
 
+    local extraInfo = CreateFrame("Frame", nil, content, "BackdropTemplate")
+    extraInfo:SetHeight(30)
+    extraInfo:SetBackdrop({
+        bgFile = "Interface\\Addons\\AntiRaidTools\\Media\\gradient32x32.tga",
+        tile = true,
+        tileSize = 32,
+    })
+    extraInfo:SetBackdropColor(0, 0, 0, 0.6)
+    extraInfo.text = extraInfo:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    extraInfo.text:SetFont("Fonts\\ARIALN.TTF", 12)
+    extraInfo.text:SetTextColor(1, 1, 1, 0.8)
+    extraInfo.text:SetPoint("BOTTOMLEFT", 32, 8)
+    extraInfo.text:SetWidth(200)
+    extraInfo.text:SetJustifyH("LEFT")
+    extraInfo.text:SetJustifyV("TOP")
+    extraInfo.text:SetWordWrap(true)
+
+    extraInfo:Hide()
+
     self.notificationFrameFadeOut = AntiRaidTools:CreateFadeOut(content, function()
         AntiRaidTools.notificationContentFrame:Hide()
     end)
@@ -64,9 +85,10 @@ function AntiRaidTools:InitRaidNotification()
 
     self.notificationFrame = container
     self.notificationContentFrame = content
+    self.notificationExtraInfoFrame = extraInfo
 end
 
-function AntiRaidTools:RaidNotificationsToggleFrameLock(lock)
+function AntiRaidTools:NotificationsToggleFrameLock(lock)
     if lock or self.notificationFrame:IsMouseEnabled() then
         self.notificationFrame:EnableMouse(false)
         self.notificationFrame:SetBackdropColor(0, 0, 0, 0)
@@ -79,11 +101,11 @@ function AntiRaidTools:RaidNotificationsToggleFrameLock(lock)
     end
 end
 
-function AntiRaidTools:RaidNotificationsIsFrameLocked()
+function AntiRaidTools:NotificationsIsFrameLocked()
     return not self.notificationFrame:IsMouseEnabled()
 end
 
-function AntiRaidTools:RaidNotificationsUpdateHeader(text)
+function AntiRaidTools:NotificationsUpdateHeader(text)
     self.notificationContentFrame.header.text:SetText(self:StringEllipsis(text, 32))
 end
 
@@ -141,7 +163,6 @@ local function updateNotificationGroupAssignment(frame, assignment, index, total
 
     frame.text:SetTextColor(color.r, color.g, color.b)
 
-    --ActionButton_HideOverlayGlow(frame.iconFrame)
     frame.cooldownFrame:Clear()
 
     frame:ClearAllPoints()
@@ -184,6 +205,64 @@ local function updateNotificationGroup(frame, prevFrame, group, uuid, index)
     end
 end
 
+local function updateExtraInfo(frame, prevFrame, assignments, activeGroups)
+    -- Use BETCH_MATCH recursivly to create list of follow ups. This list might not be
+    -- the correct order in which assignments will be selected but its the best
+    -- estimation we can do.
+    local groups = {}
+
+    local assignmentsClone = AntiRaidTools:ShallowCopy(assignments)
+
+    local bestMatchIndex = AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignmentsClone)
+    if bestMatchIndex then assignmentsClone[bestMatchIndex] = nil end
+
+    while bestMatchIndex do
+        insert(groups, bestMatchIndex)
+
+        bestMatchIndex = AntiRaidTools:RaidAssignmentsSelectBestMatchIndex(assignmentsClone)
+        if bestMatchIndex then assignmentsClone[bestMatchIndex] = nil end
+    end
+
+    for _, index in ipairs(activeGroups) do
+        for i, group in ipairs(groups) do
+            if group == index then
+                groups[i] = nil
+            end
+        end
+    end
+
+    local playersKeySet = {}
+
+    for _, index in pairs(groups) do
+        local group = assignments[index]
+
+        if group then
+            for _, assignment in ipairs(group) do
+                if assignment.type == "SPELL" and AntiRaidTools:SpellsIsSpellReady(assignment.player, assignment.spell_id) then
+                    insert(playersKeySet, assignment.player)
+                end
+            end
+        end
+    end
+
+    local players={}
+
+    for _, player in pairs(playersKeySet) do
+        insert(players, player)
+    end
+
+    if #players > 0 then
+        frame:Show()
+
+        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0, 0)
+        frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0, 0)
+
+        frame.text:SetText("→ " .. AntiRaidTools:StringJoin(players) .. " follow up.")
+
+        frame:SetHeight(frame.text:GetStringHeight() + 10)
+    end
+end
+
 local function updateCountdown(_, elapsed)
     AntiRaidTools.notificationsCountdown = AntiRaidTools.notificationsCountdown - elapsed
 
@@ -196,15 +275,25 @@ local function updateCountdown(_, elapsed)
     end
 end
 
-function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
+function AntiRaidTools:NotificationsShowRaidAssignment(uuid, countdown)
     local selectedEncounterId = self.db.profile.overview.selectedEncounterId
     local encounter = self.db.profile.data.encounters[selectedEncounterId]
 
     if self.db.profile.options.notifications.showOnlyOwnNotifications then
-        if not self:IsPlayerInActiveGroup(uuid) then
-            return
+        local part = self:GetRaidAssignmentPart(uuid)
+
+        if part then
+            if part.strategy.type == "BEST_MATCH" and not self:IsPlayerInActiveGroup(part) then
+                return
+            end
+
+            if part.strategy.type == "CHAIN" and not self:IsPlayerInAssignments(part.assignments) then
+                return
+            end
         end
     end
+
+    self.notificationExtraInfoFrame:Hide()
 
     for _, group in pairs(self.notificationRaidAssignmentGroups) do
         group:Hide()
@@ -215,18 +304,20 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
         local prevFrame = self.notificationContentFrame.header
         for _, part in pairs(encounter) do
             if part.type == "RAID_ASSIGNMENTS" and part.uuid == uuid then
-                local activeGroups = self:GetActiveGroups(uuid)
+                local activeGroups = self:GroupsGetActive(uuid)
 
                 if not activeGroups then
                     return
                 end
                 
-                self:RaidNotificationsToggleFrameLock(true)
+                self:NotificationsToggleFrameLock(true)
     
                 self.notificationFrameFadeOut:Stop()
                 self.notificationContentFrame:Show()
             
-                PlaySoundFile(SONAR_SOUND_FILE, "Master")
+                if not self.db.profile.options.notifications.mute then
+                    PlaySoundFile(SONAR_SOUND_FILE, "Master")
+                end
 
                 -- Update header
                 local headerText
@@ -238,7 +329,7 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
                     headerText = part.metadata.name
                 end
 
-                self:RaidNotificationsUpdateHeader(headerText)
+                self:NotificationsUpdateHeader(headerText)
                         
                 if part.trigger.spell_id then
                     local _, _, _, castTime = GetSpellInfo(part.trigger.spell_id)
@@ -273,8 +364,6 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
                     end
                 end)
 
-                local activeGroups = self:GetActiveGroups(uuid)
-
                 -- Update groups
                 for _, index in ipairs(activeGroups) do
                     if not self.notificationRaidAssignmentGroups[groupIndex] then
@@ -289,29 +378,30 @@ function AntiRaidTools:RaidNotificationsShowRaidAssignment(uuid, countdown)
                     groupIndex = groupIndex + 1
                 end
 
+                if part.strategy.type == "CHAIN" then
+                    updateExtraInfo(self.notificationExtraInfoFrame, prevFrame, part.assignments, activeGroups)
+                end
+
                 break
             end
         end
     end
 end
 
-function AntiRaidTools:UpdateNotificationSpells()
+function AntiRaidTools:NotificationsUpdateSpells()
     for _, groupFrame in pairs(self.notificationRaidAssignmentGroups) do
         for _, assignmentFrame in pairs(groupFrame.assignments) do
-            if self:IsSpellActive(assignmentFrame.player, assignmentFrame.spellId) then
-                local castTimestamp = self:GetSpellCastTimestamp(assignmentFrame.player, assignmentFrame.spellId)
-                local spell = self:GetSpell(assignmentFrame.spellId)
+            if self:SpellsIsSpellActive(assignmentFrame.player, assignmentFrame.spellId) then
+                local castTimestamp = self:SpellsGetCastTimestamp(assignmentFrame.player, assignmentFrame.spellId)
+                local spell = self:SpellsGetSpell(assignmentFrame.spellId)
 
                 if castTimestamp and spell then
                     assignmentFrame.cooldownFrame:SetCooldown(castTimestamp, spell.duration)
                 end
 
-                --ActionButton_ShowOverlayGlow(assignmentFrame.iconFrame)
                 assignmentFrame:SetAlpha(1)
             else
-                --ActionButton_HideOverlayGlow(assignmentFrame.iconFrame)
-
-                if self:IsSpellReady(assignmentFrame.player, assignmentFrame.spellId) then
+                if self:SpellsIsSpellReady(assignmentFrame.player, assignmentFrame.spellId) then
                     assignmentFrame:SetAlpha(1)
                 else
                     assignmentFrame:SetAlpha(0.4)

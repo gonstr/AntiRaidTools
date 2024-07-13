@@ -5,7 +5,7 @@ local encountersInitialized = false
 
 local encounters = {}
 
-function AntiRaidTools:InitEncounters()
+function AntiRaidTools:EncountersInit()
     if encountersInitialized then
         return
     end
@@ -42,6 +42,6 @@ function AntiRaidTools:InitEncounters()
     EJ_SelectTier(currTier)
 end
 
-function AntiRaidTools:GetEncounters()
+function AntiRaidTools:EncountersGetAll()
     return encounters
 end

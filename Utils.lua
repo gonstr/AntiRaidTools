@@ -3,18 +3,22 @@ local AntiRaidTools = AntiRaidTools
 local random = math.random
 
 function AntiRaidTools:GenerateUUID()
-    local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    return string.gsub(template, '[xy]', function (c)
-        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
-        return string.format('%x', v)
-    end)
-end
+    local chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    local base = #chars
+    local id = ''
 
+    for i = 1, 8 do
+        local rand = math.random(base)
+        id = id .. chars:sub(rand, rand)
+    end
+        
+    return id
+end
 
 local fallbackColor = { r = 0, g = 0, b = 0 }
 
 function AntiRaidTools:GetSpellColor(spellId)
-    local spell = self:GetSpell(spellId)
+    local spell = self:SpellsGetSpell(spellId)
 
     if not spell then
         return fallbackColor
@@ -86,46 +90,79 @@ function AntiRaidTools:StringEllipsis(str, len)
     return str
 end
 
+function AntiRaidTools:StringJoin(strings, delimiter)
+    delimiter = delimiter or ", "
+
+    local result = ""
+
+    for i, str in ipairs(strings) do
+        result = result .. str
+
+        if i < #strings then
+            result = result .. delimiter
+        end
+    end
+
+    return result
+end
+
 function AntiRaidTools:IsPlayerRaidLeader()
     return IsInRaid() and UnitIsGroupLeader("player")
 end
 
-function AntiRaidTools:IsPlayerInActiveGroup(uuid)
-    local isInAssignments = false
-    
+function AntiRaidTools:GetRaidAssignmentPart(uuid)
     local encounters = self.db.profile.data.encounters
 
     if encounters then
-        local activeGroups = self:GetActiveGroups(uuid)
-
         for _, encounter in pairs(encounters) do
             for _, part in pairs(encounter) do
                 if part.uuid == uuid then
-                    if activeGroups then
-                        for _, groupIndex in ipairs(activeGroups) do
-                            local group = part.assignments[groupIndex]
-                            if group then
-                                for _, assignment in ipairs(group) do
-                                    if assignment.player == UnitName("player") then
-                                        isInAssignments = true
-                                        break
-                                    end
-                                end
-                            end
-    
-                            if isInAssignments then break end
-                        end
-                    end
+                    return part
                 end
-    
-                if isInAssignments then break end
             end
+        end
+    end
+end
 
-            if isInAssignments then break end
+function AntiRaidTools:IsPlayerInAssignments(assignments)
+    local inAssignments = false
+    
+    for _, group in ipairs(assignments) do
+        for _, assignment in ipairs(group) do
+            if assignment.player == UnitName("player") then
+                inAssignments = true
+                break
+            end
         end
     end
 
-    return isInAssignments
+    return inAssignments
+end
+
+function AntiRaidTools:IsPlayerInActiveGroup(part)
+    local inActiveGroup = false
+
+    local encounters = self.db.profile.data.encounters
+
+    local activeGroups = self:GroupsGetActive(uuid)
+
+    if activeGroups then
+        for _, groupIndex in ipairs(activeGroups) do
+            local group = part.assignments[groupIndex]
+            if group then
+                for _, assignment in ipairs(group) do
+                    if assignment.player == UnitName("player") then
+                        inActiveGroup = true
+                        break
+                    end
+                end
+            end
+
+            if inActiveGroup then break end
+        end
+    end
+
+    return inActiveGroup
 end
 
 function isPlayerInAssignments(encounter, activeGroups, uuid)

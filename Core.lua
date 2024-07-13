@@ -1,12 +1,23 @@
 AntiRaidTools = LibStub("AceAddon-3.0"):NewAddon("AntiRaidTools", "AceConsole-3.0", "AceEvent-3.0", "AceComm-3.0", "AceSerializer-3.0")
 
+AntiRaidTools.DEBUG = false
+AntiRaidTools.TEST = false
+
+AntiRaidTools.PREFIX_SYNC = "ART-S"
+AntiRaidTools.PREFIX_SYNC_PROGRESS = "ART-SP"
+AntiRaidTools.PREFIX_MAIN = "ART-M"
+
+AntiRaidTools.VERSION = GetAddOnMetadata("AntiRaidTools", "Version")
+AntiRaidTools.IS_DEV = AntiRaidTools.VERSION == '\@project-version\@'
+
 -- AceDB defaults
 AntiRaidTools.defaults = {
     profile = {
         options = {
             import = "",
             notifications = {
-                showOnlyOwnNotifications = false
+                showOnlyOwnNotifications = false,
+                mute = false
             }
         },
         data = {
@@ -24,20 +35,11 @@ AntiRaidTools.defaults = {
 }
 
 function AntiRaidTools:OnInitialize()
-    self.DEBUG = false
-    self.TEST = false
-
-    self.PREFIX_SYNC = "ART-S"
-    self.PREFIX_SYNC_PROGRESS = "ART-SP"
-    self.PREFIX_MAIN = "ART-M"
-
-    self.isInRaid = IsInRaid()
-
-    self:InitDB() 
-    self:InitOptions()
-    self:InitMinimap()
-    self:InitOverview()
-    self:InitRaidNotification()
+    self:DBInit() 
+    self:OptionsInit()
+    self:MinimapInit()
+    self:OverviewInit()
+    self:NotificationsInit()
 
     self:RegisterComm(self.PREFIX_SYNC)
     self:RegisterComm(self.PREFIX_SYNC_PROGRESS)
@@ -57,7 +59,7 @@ function AntiRaidTools:OnEnable()
 
     self:RegisterMessage("ART_WA_EVENT")
 
-    self:RegisterChatCommand("art", "HandleChatCommand")
+    self:RegisterChatCommand("art", "ChatHandleCommand")
 end
 
 function AntiRaidTools:OnDisable()
@@ -76,25 +78,26 @@ function AntiRaidTools:OnDisable()
     self:UnregisterChatCommand("art")
 end
 
-function AntiRaidTools:InitDB()
+function AntiRaidTools:DBInit()
     self.db = LibStub("AceDB-3.0"):New("AntiRaidTools", self.defaults)
 end
 
 function AntiRaidTools:PLAYER_ENTERING_WORLD(_, isInitialLogin, isReloadingUi)
     if isInitialLogin or isReloadingUi then
-        self:InitEncounters()
-        self:SyncEncountersSendCurrentId()
-        self:SyncEncountersScheduleSend()
+        self:EncountersInit()
+        self:SyncSendStatus()
+        self:SyncSchedule()
     end
 
-    self:UpdateOverview()
+    self:OverviewUpdate()
 end
 
 function AntiRaidTools:SendRaidMessage(event, data, prefix, prio, callbackFn)
     if IsInRaid() then
         local payload = {
-            event = event,
-            data = data,
+            v = self.VERSION,
+            e = event,
+            d = data,
         }
 
         if not prefix then
@@ -113,35 +116,40 @@ function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
     if prefix == self.PREFIX_MAIN or prefix == self.PREFIX_SYNC or prefix == self.PREFIX_SYNC_PROGRESS then
         local ok, payload = self:Deserialize(message)
         if ok then
-            if payload.event == "ENCOUNTERS_ID" then
+            self:SyncSetClientVersion(sender, payload.v)
+
+            if payload.e == "SYNC_REQ_VERSIONS" then
+                if self.DEBUG then self:Print("Received message SYNC_REQ_VERSIONS:", sender) end
+                self:SyncSendVersion()
+            elseif payload.e == "SYNC_STATUS" then
                 if sender ~= UnitName("player") then
-                    if self.DEBUG then print("[ART] Received message ENCOUNTERS_ID:", sender, payload.data) end
-                    self:SyncEncountersHandleEncountersId(payload.data)
+                    if self.DEBUG then self:Print("Received message SYNC_STATUS:", sender) end
+                    self:SyncHandleStatus(payload.d)
                 end
-            elseif payload.event == "ENCOUNTERS_SYNC_PROGRESS" then
-                if sender ~= UnitName("player") and payload.data.encountersId ~= self.db.profile.data.encountersId then
-                    if self.DEBUG then print("[ART] Received message ENCOUNTERS_SYNC_PROGRESS:", sender, payload.data.progress) end
-                    self.db.profile.data.encountersProgress = payload.data.progress
+            elseif payload.e == "SYNC_PROG" then
+                if sender ~= UnitName("player") and payload.d.encountersId ~= self.db.profile.data.encountersId then
+                    if self.DEBUG then self:Print("Received message SYNC_PROG:", sender, payload.d.progress) end
+                    self.db.profile.data.encountersProgress = payload.d.progress
                     self.db.profile.data.encountersId = nil
                     self.db.profile.data.encounters = {}
-                    self:UpdateOverview()
+                    self:OverviewUpdate()
                 end
-            elseif payload.event == "ENCOUNTERS" then
+            elseif payload.e == "SYNC" then
                 if sender ~= UnitName("player") then
-                    if self.DEBUG then print("[ART] Received message ENCOUNTERS") end
+                    if self.DEBUG then self:Print("Received message SYNC") end
                     self.db.profile.data.encountersProgress = nil
-                    self.db.profile.data.encountersId = payload.data.encountersId
-                    self.db.profile.data.encounters = payload.data.encounters
-                    self:UpdateOverview()
+                    self.db.profile.data.encountersId = payload.d.encountersId
+                    self.db.profile.data.encounters = payload.d.encounters
+                    self:OverviewUpdate()
                 end
-            elseif payload.event == "ACTIVE_GROUPS" then
-                if self.DEBUG then print("[ART] Received message ACTIVE_GROUPS") end
-                self:SetAllActiveGroups(payload.data)
-                self:UpdateOverviewActiveGroups()
-            elseif payload.event == "SHOW_NOTIFICATION" then
-                if self.DEBUG then print("[ART] Received message SHOW_NOTIFICATION") end
-                self:RaidNotificationsShowRaidAssignment(payload.data.uuid, payload.data.countdown)
-                self:UpdateNotificationSpells()
+            elseif payload.e == "ACT_GRPS" then
+                if self.DEBUG then self:Print("Received message ACT_GRPS") end
+                self:GroupsSetAllActive(payload.d)
+                self:OverviewUpdateActiveGroups()
+            elseif payload.e == "TRIGGER" then
+                if self.DEBUG then self:Print("Received message TRIGGER") end
+                self:NotificationsShowRaidAssignment(payload.d.uuid, payload.d.countdown)
+                self:NotificationsUpdateSpells()
             end
         end
     end
@@ -160,44 +168,46 @@ end
 
 function AntiRaidTools:ENCOUNTER_END()
     self:RaidAssignmentsEndEncounter()
-    self:ResetSpellsCache()
-    self:ResetDeadCache()
-    self:UpdateOverviewSpells()
-    self:UpdateNotificationSpells()
+    self:SpellsResetCache()
+    self:UnitsResetDeadCache()
+    self:OverviewUpdateSpells()
+    self:NotificationsUpdateSpells()
 end
 
 function AntiRaidTools:PLAYER_REGEN_ENABLED()
     -- This is just another way of registering an encounter ending
     if not UnitIsDeadOrGhost("player") then
         self:RaidAssignmentsEndEncounter()
-        self:ResetSpellsCache()
-        self:ResetDeadCache()
-        self:UpdateOverviewSpells()
-        self:UpdateNotificationSpells()
+        self:SpellsResetCache()
+        self:UnitsResetDeadCache()
+        self:OverviewUpdateSpells()
+        self:NotificationsUpdateSpells()
     end
 end
 
 function AntiRaidTools:UNIT_HEALTH(_, unitId)
     local guid = UnitGUID(unitId)
 
-    if self:IsCachedUnitDead(guid) and UnitHealth(unitId) > 0 and not UnitIsGhost(unitId) then
-        if self.DEBUG then print("[ART] Handling cached unit coming back to life") end
-        self:ClearCachedUnitDead(guid)
+    if self:UnitsIsDead(guid) and UnitHealth(unitId) > 0 and not UnitIsGhost(unitId) then
+        if self.DEBUG then self:Print("Handling cached unit coming back to life") end
+        self:UnitsClearDead(guid)
         self:RaidAssignmentsUpdateGroups()
-        self:UpdateOverviewSpells()
-        self:UpdateNotificationSpells()
+        self:OverviewUpdateSpells()
+        self:NotificationsUpdateSpells()
     end
 
     self:RaidAssignmentsHandleUnitHealth(unitId)
 end
 
 function AntiRaidTools:GROUP_ROSTER_UPDATE()
-    self:UpdateOverviewSpells()
-    self:UpdateNotificationSpells()
+    self:OverviewUpdateSpells()
+    self:NotificationsUpdateSpells()
 
-    if IsInRaid() and not self.IsInRaid then
-        self.IsInRaid = IsInRaid()
-        self:SyncEncountersSendCurrentId()
+    if IsInRaid() and not self.sentRaidSync then
+        self.sentRaidSync = true
+        self:SyncSendStatus()
+    else
+        self.sentRaidSync = false
     end
 end
 
@@ -218,14 +228,14 @@ function AntiRaidTools:HandleCombatLog(subEvent, sourceName, destGUID, destName,
     if subEvent == "SPELL_CAST_START" then
         self:RaidAssignmentsHandleSpellCast(subEvent, spellId)
     elseif subEvent == "SPELL_CAST_SUCCESS" then
-        self:CacheSpellCast(sourceName, spellId, function()
-            self:UpdateOverviewSpells()
-            self:UpdateNotificationSpells()
+        self:SpellsCacheCast(sourceName, spellId, function()
+            self:OverviewUpdateSpells()
+            self:NotificationsUpdateSpells()
         end)
         self:RaidAssignmentsHandleSpellCast(subEvent, spellId)
         self:RaidAssignmentsUpdateGroups()
 
-        local spell = self:GetSpell(spellId)
+        local spell = self:SpellsGetSpell(spellId)
         if spell then
             local AntiRaidTools = self
             C_Timer.NewTimer(spell.duration, function() AntiRaidTools:RaidAssignmentsUpdateGroups() end)
@@ -234,10 +244,10 @@ function AntiRaidTools:HandleCombatLog(subEvent, sourceName, destGUID, destName,
         self:RaidAssignmentsHandleSpellAura(subEvent, spellId)
     elseif subEvent == "UNIT_DIED" then
         if self:IsFriendlyRaidMemberOrPlayer(destGUID) then
-            self:CacheUnitDied(destGUID)
+            self:UnitsSetDead(destGUID)
             self:RaidAssignmentsUpdateGroups()
-            self:UpdateOverviewSpells()
-            self:UpdateNotificationSpells()
+            self:OverviewUpdateSpells()
+            self:NotificationsUpdateSpells()
         end
     end
 end

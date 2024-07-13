@@ -90,7 +90,7 @@ If player `Anticipâte` is dead, the best match would also be the second row of 
 
 #### CHAIN
 
-If the stategy is set to `CHAIN`, the addon will show all available assignments in a list. This can be useful if you want to chain raid CDs during phases of boss fights. When using `CHAIN`, be sure to set a trigger `duration` that is long enough to cover the raid CD chain. This will ensure the raid popup stays on the players screen throughout the CD chain.
+If the stategy is set to `CHAIN`, the addon will show all available assignments in a list. This can be useful if you want to chain raid CDs during phases of boss fights.
 
 ### Assignments
 
