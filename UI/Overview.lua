@@ -46,6 +46,8 @@ function AntiRaidTools:OverviewInit()
             return
         end
 
+        AntiRaidTools:OverviewUpdatePopup()
+
         local scale = UIParent:GetEffectiveScale()
         local x, y = GetCursorPosition()
         x, y = x / scale, y / scale
@@ -172,7 +174,6 @@ function AntiRaidTools:OverviewUpdate()
     end
 
     self:OverviewUpdateHeaderText()
-    self:OverviewUpdatePopup()
     self:OverviewUpdateMain()
     self:OverviewUpdateSpells()
     self:OverviewUpdateLocked()
@@ -181,7 +182,6 @@ end
 
 function AntiRaidTools:OverviewUpdateLocked()
     self.overviewFrame:EnableMouse(not self.db.profile.overview.locked)
-    self:OverviewUpdatePopup()
 end
 
 function AntiRaidTools:OverviewUpdateHeaderText()
@@ -314,7 +314,6 @@ function AntiRaidTools:OverviewUpdatePopup()
 
     local toggleAnchorsFunc = function()
         self:NotificationsToggleFrameLock()
-        self:OverviewUpdatePopup()
     end
     
     local anchorsText = "Hide Anchors"
