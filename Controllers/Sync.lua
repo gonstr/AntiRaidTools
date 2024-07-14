@@ -3,7 +3,7 @@ local insert = table.insert
 local AntiRaidTools = AntiRaidTools
 
 -- seconds
-local SYNC_WAIT_TIME = 120
+local SYNC_WAIT_TIME = 60
 
 local lastSyncTime = 0
 local syncTimer = nil

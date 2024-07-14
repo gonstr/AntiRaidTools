@@ -467,8 +467,8 @@ local function updateOverviewMainGroup(frame, prevFrame, group, uuid, index)
     frame:ClearAllPoints()
     
     if prevFrame then
-        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0, index == 1 and -2 or 0)
-        frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0, index == 1 and -2 or 0)
+        frame:SetPoint("TOPLEFT", prevFrame, "BOTTOMLEFT", 0, 0)
+        frame:SetPoint("TOPRIGHT", prevFrame, "BOTTOMRIGHT", 0, 0)
     else
         frame:SetPoint("TOPLEFT", 0)
         frame:SetPoint("TOPRIGHT", 0)
