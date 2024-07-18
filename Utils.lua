@@ -125,26 +125,19 @@ function AntiRaidTools:GetRaidAssignmentPart(uuid)
 end
 
 function AntiRaidTools:IsPlayerInAssignments(assignments)
-    local inAssignments = false
-    
     for _, group in ipairs(assignments) do
         for _, assignment in ipairs(group) do
             if assignment.player == UnitName("player") then
-                inAssignments = true
-                break
+                return true
             end
         end
     end
 
-    return inAssignments
+    return false
 end
 
 function AntiRaidTools:IsPlayerInActiveGroup(part)
-    local inActiveGroup = false
-
-    local encounters = self.db.profile.data.encounters
-
-    local activeGroups = self:GroupsGetActive(uuid)
+    local activeGroups = self:GroupsGetActive(part.uuid)
 
     if activeGroups then
         for _, groupIndex in ipairs(activeGroups) do
@@ -152,45 +145,12 @@ function AntiRaidTools:IsPlayerInActiveGroup(part)
             if group then
                 for _, assignment in ipairs(group) do
                     if assignment.player == UnitName("player") then
-                        inActiveGroup = true
-                        break
+                        return true
                     end
                 end
             end
-
-            if inActiveGroup then break end
         end
     end
 
-    return inActiveGroup
-end
-
-function isPlayerInAssignments(encounter, activeGroups, uuid)
-    local result = false
-
-    if encounter then            
-        for _, part in pairs(encounter) do
-            if part.uuid == uuid then
-                if activeGroups then
-                    for _, groupIndex in ipairs(activeGroups) do
-                        local group = part.assignments[groupIndex]
-                        if group then
-                            for _, assignment in ipairs(group) do
-                                if assignment.player == UnitName("player") then
-                                    result = true
-                                    break
-                                end
-                            end
-                        end
-
-                        if result then break end
-                    end
-                end
-            end
-
-            if result then break end
-        end
-    end
-
-    return result
+    return false
 end

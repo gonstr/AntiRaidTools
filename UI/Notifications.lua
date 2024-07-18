@@ -245,7 +245,7 @@ local function updateExtraInfo(frame, prevFrame, assignments, activeGroups)
         end
     end
 
-    local players={}
+    local players = {}
 
     for _, player in pairs(playersKeySet) do
         insert(players, player)

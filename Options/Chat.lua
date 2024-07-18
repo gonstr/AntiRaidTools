@@ -33,6 +33,9 @@ function AntiRaidTools:ChatHandleCommand(input)
         elseif trimmed == "debug" then
             self.DEBUG = not self.DEBUG
             self:Print("debug =", self.DEBUG)
+        elseif trimmed == "test" then
+            self.TEST = not self.TEST
+            self:Print("test =", self.TEST)
         elseif trimmed == "teststart" then
             self:InternalTestStart()
         elseif trimmed == "testend" then
