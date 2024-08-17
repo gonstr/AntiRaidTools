@@ -1,6 +1,6 @@
 ## Interface: 40400
 ## Title: Anti Raid Tools
-## Notes: Raid Automation and Coordination
+## Notes: In-game raid timers, events and notifications
 ## Author: Anti
 ## Version: @project-version@
 ## X-Curse-Project-ID: 1048555
@@ -16,27 +16,31 @@ Libs\AceGUI-3.0\AceGUI-3.0.xml
 Libs\AceConsole-3.0\AceConsole-3.0.xml
 Libs\AceConfig-3.0\AceConfig-3.0.xml
 Libs\AceDB-3.0\AceDB-3.0.xml
-Libs\AceComm-3.0\AceComm-3.0.xml
-Libs\AceSerializer-3.0\AceSerializer-3.0.xml
+# Libs\AceComm-3.0\AceComm-3.0.xml
+# Libs\AceSerializer-3.0\AceSerializer-3.0.xml
 Libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
 Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
+Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 
-Core.lua
-Test.lua
+AntiRaidTools.lua
+UI\AceGUI\AntiRaidToolsImport.lua
+# Test.lua
 Utils.lua
-Options\Chat.lua
-Options\WeakAuras.lua
-Options\Options.lua
-Import\YAML.lua
-Import\Import.lua
-Import\Validation.lua
-State\Spells.lua
-State\Encounters.lua
-State\Groups.lua
-State\Units.lua
-Controllers\RaidAssignments.lua
-Controllers\Sync.lua
-UI\Minimap.lua
-UI\Overview.lua
-UI\Notifications.lua
+Parsers\Base64.lua
+Parsers\Import.lua
+Parsers\JSON.lua
+ImportValidator.lua
+Import.lua
+# Options\Chat.lua
+# Options\WeakAuras.lua
+Options.lua
+# State\Spells.lua
+# State\Encounters.lua
+# State\Groups.lua
+# State\Units.lua
+# Controllers\RaidAssignments.lua
+# Controllers\Sync.lua
+# UI\Minimap.lua
+# UI\Overview.lua
+# UI\Notifications.lua

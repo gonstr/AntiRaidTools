@@ -1,0 +1,16 @@
+type: RAID_ASSIGNMENTS
+encounter: 1035
+trigger: { type: SPELL_CAST, spell_id: 93059, duration: 6 }
+metadata: { name: 'Storm Shield' }
+strategy: { type: BEST_MATCH }
+assignments: 
+- [{ type: SPELL, player: Anticipâte, spell_id: 31821 }, { type: SPELL, player: Dableach, spell_id: 51052 }]
+- [{ type: SPELL, player: Elí, spell_id: 31821 }, { type: SPELL, player: Solfernus, spell_id: 51052 }]
+---
+type: RAID_ASSIGNMENTS
+encounter: 1035
+trigger: { type: SPELL_AURA, spell_id: 53563, duration: 6 }
+metadata: { name: 'Storm Shield' }
+strategy: { type: BEST_MATCH }
+assignments: 
+- [{ type: SPELL, player: Elí, spell_id: 31821 }]

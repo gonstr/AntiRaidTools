@@ -1,0 +1,32 @@
+type: RAID_ASSIGNMENTS
+encounter: 1035
+trigger: { type: FOJJI_NUMEN_TIMER, key: CONCLAVE_STORM_SHIELD }
+metadata: { name: 'Storm Shield Fojji Timer' }
+strategy: { type: CHAIN }
+assignments: 
+...
+- [{ type: SPELL, player: Anticipâte, spell_id: 31821 }]
+---
+type: RAID_ASSIGNMENTS
+encounter: 1035
+trigger: { type: SPELL_CAST, spell_id: 86192 }
+metadata: { name: 'Tornados Spell Cast' }
+strategy: { type: BEST_MATCH }
+assignments: 
+- [{ type: SPELL, player: Anticipâte, spell_id: 31821 }]
+---
+type: RAID_ASSIGNMENTS
+encounter: 1035
+trigger: { type: SPELL_AURA, spell_id: 86182 }
+metadata: { name: 'Slicing Gale Aura' }
+strategy: { type: BEST_MATCH }
+assignments: 
+- [{ type: SPELL, player: Anticipâte, spell_id: 31821 }]
+---
+type: RAID_ASSIGNMENTS
+encounter: 1035
+trigger: { type: RAID_BOSS_EMOTE, text: "As I am the strongest wind" }
+metadata: { name: 'Rohash Aggro Yell' }
+strategy: { type: BEST_MATCH }
+assignments: 
+- [{ type: SPELL, player: Anticipâte, spell_id: 31821 }]
