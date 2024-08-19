@@ -1,10 +1,12 @@
+
+local addonName, addon = ...
+
 local gsub = string.gsub
+local insert = table.insert
 
-local AntiRaidTools = AntiRaidTools
+addon.UtilsPrototype = {}
 
-AntiRaidTools.UtilsPrototype = {}
-
-local Utils = AntiRaidTools.UtilsPrototype
+local Utils = addon.UtilsPrototype
 Utils.__index = Utils
 
 function Utils:new()
@@ -121,6 +123,36 @@ end
 -- Removed code line information from error messages
 function Utils:stripErrorFileAndLine(errorMsg)
     return gsub(errorMsg, "^.+:%d+: ", "")
+end
+
+function Utils:filterTable(table, filterFunc)
+    local result = {}
+    
+    for _, item in pairs(table) do
+        if filterFunc(item) then
+            insert(result, item)
+        end
+    end
+
+    return result
+end
+
+-- keyFunc should return a key to group by.
+-- Should probably return a string or number.
+function Utils:groupTable(table, keyFunc)
+    local result = {}
+    
+    for _, item in pairs(table) do
+        local key = keyFunc(item)
+
+        if not result[key] then
+            result[key] = {}
+        end
+
+        insert(result[key], item)
+    end
+
+    return result
 end
 
 -- local random = math.random

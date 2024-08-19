@@ -1,19 +1,18 @@
-﻿local insert = table.insert
+﻿local addonName, addon = ...
 
-AntiRaidTools = LibStub("AceAddon-3.0"):NewAddon("AntiRaidTools", "AceConsole-3.0", "AceEvent-3.0")
+local insert = table.insert
 
-AntiRaidTools.EVENTS = {
+addon = LibStub("AceAddon-3.0"):NewAddon(addon, addonName, "AceConsole-3.0", "AceEvent-3.0")
+
+addon.EVENTS = {
     IMPORT_LOADED = "ART_IMPORT_LOADED"
 }
 
-AntiRaidTools.DEBUG = false
-AntiRaidTools.TEST = false
-
-AntiRaidTools.VERSION = GetAddOnMetadata("AntiRaidTools", "Version")
-AntiRaidTools.IS_DEV = AntiRaidTools.VERSION == '\@project-version\@'
+addon.VERSION = GetAddOnMetadata("AntiRaidTools", "Version")
+addon.IS_DEV = addon.VERSION == '\@project-version\@'
 
 -- AceDB defaults
-AntiRaidTools.defaults = {
+addon.defaults = {
     profile = {
         v1 = {
             options = {
@@ -22,8 +21,9 @@ AntiRaidTools.defaults = {
                 --     showOnlyOwnNotifications = false,
                 --     mute = false
                 -- }
+                packOptions = {}
             },
-            imports = {}
+            packs = {}
         }
         -- data = {
         --     encountersProgress = nil,
@@ -39,16 +39,22 @@ AntiRaidTools.defaults = {
     },
 }
 
-function AntiRaidTools:OnInitialize()
-    -- Init DB
-    self.db = LibStub("AceDB-3.0"):New("AntiRaidTools", self.defaults)
+function addon:OnInitialize()
+    self.db = LibStub("AceDB-3.0"):New(addonName, self.defaults)
 
-    self.options = self.OptionsPrototype:new()
-    self.options:init(self.db)
+    self.utils = self.UtilsPrototype:new()
+    self.jsonParser = self.JsonParserPrototype:new()
+    self.base64Parser = self.Base64ParserPrototype:new()
+    self.importParser = self.ImportParserPrototype:new(self.jsonParser, self.base64Parser)
+    self.importValidator = self.ImportValidatorPrototype:new(self.utils)
+    self.import = self.ImportPrototype:new(self.utils, self.importParser, self.base64Parser, self.importValidator)
+    self.encounters = self.EncountersPrototype:new()
+
+    self.options = self.OptionsPrototype:new(self.utils, self.import, self.db, self.encounters)
 end
 
-function AntiRaidTools:OnEnable()
-    -- self:RegisterEvent("PLAYER_ENTERING_WORLD")
+function addon:OnEnable()
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
     -- self:RegisterEvent("ENCOUNTER_START")
     -- self:RegisterEvent("ENCOUNTER_END")
     -- self:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -64,37 +70,36 @@ function AntiRaidTools:OnEnable()
     -- self:RegisterChatCommand("art", "ChatHandleCommand")
 end
 
-function AntiRaidTools:ART_IMPORT_LOADED(_, val)
-    insert(self.db.profile.v1.imports, val)
-    
+function addon:OnDisable()
+    self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+    -- self:UnregisterEvent("ENCOUNTER_START")
+    -- self:UnregisterEvent("ENCOUNTER_END")
+    -- self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+    -- self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    -- self:UnregisterEvent("UNIT_HEALTH")
+    -- self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    -- self:UnregisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
+    -- self:UnregisterEvent("CHAT_MSG_MONSTER_YELL")
+
+    self:UnregisterMessage(self.EVENTS.IMPORT_LOADED)
+    -- self:UnregisterMessage("ART_WA_EVENT")
+
+    -- self:UnregisterChatCommand("art")
+end
+
+function addon:ART_IMPORT_LOADED(_, val)
+    -- We can assume (for now) that an import will always be an array of size 1,
+    -- and the item will be of type `PACK`. This is ensured by import validation.
+    self.db.profile.v1.packs[pack.id] = val[1]
+
     self.options:notifyChange()
 end
 
--- function AntiRaidTools:OnDisable()
---     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
---     self:UnregisterEvent("ENCOUNTER_START")
---     self:UnregisterEvent("ENCOUNTER_END")
---     self:UnregisterEvent("PLAYER_REGEN_ENABLED")
---     self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
---     self:UnregisterEvent("UNIT_HEALTH")
---     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
---     self:UnregisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
---     self:UnregisterEvent("CHAT_MSG_MONSTER_YELL")
-
---     self:UnregisterMessage("ART_WA_EVENT")
-
---     self:UnregisterChatCommand("art")
--- end
-
--- function AntiRaidTools:PLAYER_ENTERING_WORLD(_, isInitialLogin, isReloadingUi)
---     if isInitialLogin or isReloadingUi then
---         self:EncountersInit()
---         self:SyncSendStatus()
---         self:SyncSchedule()
---     end
-
---     self:OverviewUpdate()
--- end
+function addon:PLAYER_ENTERING_WORLD(_, isialLogin, isReloadingUi)
+    if isInitialLogin or isReloadingUi then
+        self.encounters:init()
+    end
+end
 
 -- function AntiRaidTools:SendRaidMessage(event, data, prefix, prio, callbackFn)
 --     if IsInRaid() then

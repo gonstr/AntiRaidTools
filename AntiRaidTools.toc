@@ -24,7 +24,7 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 
 AntiRaidTools.lua
-UI\AceGUI\AntiRaidToolsImport.lua
+UI\AceGUI\AntiRaidToolsPlaceholder.lua
 # Test.lua
 Utils.lua
 Parsers\Base64.lua
@@ -34,9 +34,9 @@ ImportValidator.lua
 Import.lua
 # Options\Chat.lua
 # Options\WeakAuras.lua
+Encounters.lua
 Options.lua
 # State\Spells.lua
-# State\Encounters.lua
 # State\Groups.lua
 # State\Units.lua
 # Controllers\RaidAssignments.lua

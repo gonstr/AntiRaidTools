@@ -390,11 +390,11 @@ end
 
 -- Manual edits below this line
 
-local AntiRaidTools = AntiRaidTools
+local addonName, addon = ...
 
-AntiRaidTools.JsonParserPrototype = {}
+addon.JsonParserPrototype = {}
 
-local JsonParser = AntiRaidTools.JsonParserPrototype
+local JsonParser = addon.JsonParserPrototype
 JsonParser.__index = JsonParser
 
 function JsonParser:new()

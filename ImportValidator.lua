@@ -1,10 +1,10 @@
+local addonName, addon = ...
+
 local insert = table.insert
 
-local AntiRaidTools = AntiRaidTools
+addon.ImportValidatorPrototype = {}
 
-AntiRaidTools.ImportValidatorPrototype = {}
-
-local ImportValidator = AntiRaidTools.ImportValidatorPrototype
+local ImportValidator = addon.ImportValidatorPrototype
 ImportValidator.__index = ImportValidator
 
 local function toString(thing, indent)
@@ -46,7 +46,7 @@ end
 function ImportValidator:new(utils)
     local instance = setmetatable({}, self)
 
-    self.utils = utils or AntiRaidTools.UtilsPrototype:new()
+    self.utils = utils or addon.UtilsPrototype:new()
     self.types = { "PACK", "TRIGGER", "TIMER", "STATE", "EVENT", "RAID_FRAME_ICON", "SOUND" }
 
     return instance
@@ -59,6 +59,10 @@ function ImportValidator:validate(import)
 
     if not self.utils:isArray(import) then
         error("Import is not an array")
+    end
+
+    if not #import == 1 or import[1].type ~= "PACK" then
+        error("Import can only contain one `PACK` item (for now)")
     end
 
     for _, item in pairs(import) do
@@ -133,6 +137,10 @@ end
 function ImportValidator:validatePack(item)
     if not item.name then
         error("Item of type `PACK` is missing name")
+    end
+
+    if not item.id then
+        error("Item of type `PACK` is missing `id`")
     end
 
     if not item.packVersion then

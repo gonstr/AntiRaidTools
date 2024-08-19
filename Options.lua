@@ -1,122 +1,174 @@
 
-local insert = table.insert
+local addonName, addon = ...
 
-local AntiRaidTools = AntiRaidTools
+local insert = table.insert
 
 local SharedMedia = LibStub("LibSharedMedia-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
 
-AntiRaidTools.OptionsPrototype = {}
+addon.OptionsPrototype = {}
 
-local Options = AntiRaidTools.OptionsPrototype
+local Options = addon.OptionsPrototype
 Options.__index = Options
 
-function Options:new(import, utils)
-    local instance = setmetatable({}, self)
+_G.StaticPopupDialogs["ART_Link"] = {
+    text = "Press Ctrl+C to copy the URL to your clipboard",
+    hasEditBox = 1,
+    button1 = _G.OKAY,
+    OnShow = function(self)
+        if addon.url then
+            local box = getglobal(self:GetName() .. "EditBox")
+            if box then
+                box:SetWidth(275)
+                box:SetText(addon.url)
+                box:HighlightText()
+                box:SetFocus()
+            end
+        end
+    end,
 
-    self.import = import or AntiRaidTools.ImportPrototype:new()
-    self.utils = utils or AntiRaidTools.UtilsPrototype:new()
+    EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1
+}
 
-    return instance
-end
+local listedPackTypes = {
+    ["TIMER"] = "Timers",
+    ["STATE"] = "State",
+    ["EVENT"] = "Events",
+    ["RAID_FRAME_ICON"] = "Raid Frame Icons",
+    ["SOUND"] = "Sounds"
+}
 
-local function mainOptions(db)
-    local options = {
-        name = "Anti Raid Tools " .. AntiRaidTools.VERSION,
-        type = "group",
-        args =  {
-            buttonGroup = {
-                type = "group",
-                inline = true,
-                name = "",
-                order = 1,
-                args = {
-                    joinDiscord = {
-                        type = "execute",
-                        name = "Join Discord",
-                        desc = "Join Discord",
-                        func = function()
-                            if not InCombatLockdown() then
-                                -- TODO
-                            end
-                        end,
-                        order = 1,
-                    },
-                    toggleAnchors = {
-                        type = "execute",
-                        name = "Toggle Anchors",
-                        desc = "Toggle UI Anchors visibility",
-                        func = function()
-                            if not InCombatLockdown() then
-                                -- TODO
-                            end
-                        end,
-                        order = 2,
-                    },
-                    toggleTestMode = {
-                        type = "execute",
-                        name = "Toggle Test Mode",
-                        desc = "Toggle Test Mode",
-                        func = function()
-                            if not InCombatLockdown() then
-                                -- TODO
-                            end
-                        end,
-                        order = 3,
-                    },
-                },
-            },
-            importGroup = {
-                type = "group",
-                inline = true,
-                name = "",
-                order = 2,
-                args = {}
-            }
-        },
+local function packArgs(db, pack, utils, encounters)
+    local order = 1    
+
+    local args = {
+        header = {
+            type = "header",
+            --dialogControl = "AntiRaidToolsPackHeader",
+            width = "full",
+            name = pack.name,
+            order = order,
+        }
     }
 
-    local importIndex = 1
+    order = order + 1
 
-    for _, import in ipairs(db.profile.v1.imports) do
-        options.args.importGroup.args["import" .. importIndex] = {
-            type = "execute",
-            dialogControl = "AntiRaidToolsImport",
-            name = import.name or "",
+    for encounter, items in pairs(utils:groupTable(pack.items, function(item) return item.encounter end)) do
+        args["encounter:" .. encounter] = {
+            type = "header",
             width = "full",
-            order = importIndex,
-            arg = {
-                improt = import
-            }
+            name = encounters:get(encounter) or "???",
+            order = order
         }
 
-        importIndex = importIndex + 1
-    end
+        order = order + 1
+
+        for packType, header in pairs(listedPackTypes) do
+            local items = utils:filterTable(items, function(item) return item.type == packType end)
     
-    return options
+            if #items > 0 then
+                local typeArgs = {}
+
+                args["items:" .. packType] = {
+                    type = "group",
+                    inline = true,
+                    name = header,
+                    order = order,
+                    args = typeArgs
+                }
+
+                local typeOrder = 1
+
+                for _, item in ipairs(items) do
+                    typeArgs["item:" .. item.id] = {
+                        type = "toggle",
+                        name = item.id,
+                        order = typeOrder,
+                        get = function()
+                            local packOptions = db.profile.v1.options.packOptions[pack.id]
+
+                            if packOptions and packOptions[item.id] ~= nil then
+                                return packOptions[item.id]
+                            end
+
+                            return true
+                        end,
+                        set = function(_, val)
+                            local packOptions = db.profile.v1.options.packOptions[pack.id]
+
+                            if not packOptions then
+                                db.profile.v1.options.packOptions[pack.id] = {}
+                            end
+
+                            db.profile.v1.options.packOptions[pack.id][item.id] = val
+                        end
+                    }
+    
+                    typeOrder = typeOrder + 1
+                end
+            end
+
+            order = order + 1
+        end
+    end
+
+    return args
 end
 
-local importDescription = [[
-Paste import data below:
-]]
+local function packsGroup(db, utils, encounters)
+    local group = {
+        name = "Packs",
+        type = "group",
+        order = 4,
+        childGroups = "tree",
+        args = {}
+    }
 
-local function importOptions(db, import, utils)
+    local order = 1
+
+    for _, pack in pairs(db.profile.v1.packs) do
+        group.args["pack:" .. pack.id] = {
+            type = "group",
+            name = pack.name,
+            order = order,
+            args = packArgs(db, pack, utils, encounters)
+        }
+
+        order = order + 1
+    end
+
+    if order == 1 then
+        -- No packs
+        group.args["noPacksPlaceholder"] = {
+            type = "description",
+            width = "full",
+            dialogControl = "AntiRaidToolsPlaceholder", 
+            name = "Join our discord to download and import addon packs."
+        }
+    end
+
+    return group
+end
+
+local function importGroup(db, utils, import)
     return {
         name = "Import",
         type = "group",
+        order = 5,
         args = {
             description = {
                 type = "description",
-                name = importDescription,
-                fontSize = "medium",
+                name = "Paste import data:",
                 order = 1,
             },
             import = {
                 type = "input",
-                name = "Import",
-                desc = "Paste your import data here.",
+                name = "",
                 multiline = 25,
                 width = "full",
                 order = 2,
@@ -126,13 +178,13 @@ local function importOptions(db, import, utils)
                         val = val:trim()
                     end
 
-                    if val and not AntiRaidTools.Base64ParserPrototype:new():isBase64Encoded(val) then
+                    if val and not addon.Base64ParserPrototype:new():isBase64Encoded(val) then
                         db.profile.v1.options.import = val
                     else
                         db.profile.v1.options.import = nil
                     end
 
-                    AntiRaidTools:SendMessage(AntiRaidTools.EVENTS.IMPORT_LOADED, val)
+                    addon:SendMessage(addon.EVENTS.IMPORT_LOADED, import:import(val))
                 end,
                 validate = function(_, val)            
                     if val then
@@ -156,15 +208,71 @@ local function importOptions(db, import, utils)
     }
 end
 
-function Options:init(db)
-    AceConfigRegistry:RegisterOptionsTable("AntiRaidTools", mainOptions(db))
-    AceConfigDialog:AddToBlizOptions("AntiRaidTools", "Anti Raid Tools")
-    
-    AceConfigRegistry:RegisterOptionsTable("AntiRaidTools Import", importOptions(db, self.import, self.utils))
-    AceConfigDialog:AddToBlizOptions("AntiRaidTools Import", "Import", "Anti Raid Tools")
+local function lookAndFeelGroup()
+    return {
+        name = "Look and Feel",
+        type = "group",
+        order = 6,
+        args = {}
+    }
+end
 
-    AceConfigRegistry:RegisterOptionsTable("AntiRaidTools Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(db))
-    AceConfigDialog:AddToBlizOptions("AntiRaidTools Profiles", "Profiles", "Anti Raid Tools")
+local function optionsTable(db, utils, import, encounters)
+    return {
+        name = "Anti Raid Tools " .. addon.VERSION,
+        type = "group",
+        childGroups = "tab",
+        args =  {
+            discordButton = {
+                type = "execute",
+                name = "Join Discord",
+                order = 1,
+                func = function()
+                    addon.url = "https://discord.gg/antiraidtools"
+                    _G.StaticPopup_Show("ART_Link")
+                    addon.url = nil
+                end
+            },
+            toggleAnchorsButton = {
+                type = "execute",
+                name = "Toggle Anchors",
+                func = function()
+                    if not InCombatLockdown() then
+                        -- TODO
+                    end
+                end,
+                order = 2,
+            },
+            toggleTestModeButton = {
+                type = "execute",
+                name = "Toggle Test Mode",
+                func = function()
+                    if not InCombatLockdown() then
+                        -- TODO
+                    end
+                end,
+                order = 3,
+            },
+            packsGroup = packsGroup(db, utils, encounters),
+            importGroup = importGroup(db, utils, import),
+            lookAndFeelGroup = lookAndFeelGroup(),
+            profileGroup = LibStub("AceDBOptions-3.0"):GetOptionsTable(db)
+        }
+    }
+end
+
+function Options:new(utils, import, db, encounters)
+    local instance = setmetatable({}, self)
+
+    self.utils = utils or addon.UtilsPrototype:new()
+    self.import = import or addon.ImportPrototype:new()
+    self.db = assert(db)
+    self.encounters = assert(encounters)
+    
+    AceConfigRegistry:RegisterOptionsTable("AntiRaidTools", function() return optionsTable(self.db, self.utils, self.import, self.encounters) end)
+    AceConfigDialog:AddToBlizOptions("AntiRaidTools", "Anti Raid Tools")
+
+    return instance
 end
 
 function Options:notifyChange()

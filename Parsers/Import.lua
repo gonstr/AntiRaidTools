@@ -1,17 +1,17 @@
+local addonName, addon = ...
+
 local insert = table.insert
 
-local AntiRaidTools = AntiRaidTools
+addon.ImportParserPrototype = {}
 
-AntiRaidTools.ImportParserPrototype = {}
-
-local ImportParser = AntiRaidTools.ImportParserPrototype
+local ImportParser = addon.ImportParserPrototype
 ImportParser.__index = ImportParser
 
 function ImportParser:new(jsonParser, base64Parser)
     local instance = setmetatable({}, self)
 
-    instance.jsonParser = jsonParser or AntiRaidTools.JsonParserPrototype:new()
-    instance.base64Parser = base64Parser or AntiRaidTools.Base64ParserPrototype:new()
+    instance.jsonParser = jsonParser or addon.JsonParserPrototype:new()
+    instance.base64Parser = base64Parser or addon.Base64ParserPrototype:new()
 
     return instance
 end

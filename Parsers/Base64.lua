@@ -204,11 +204,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 -- Manual edits below this line
 
-local AntiRaidTools = AntiRaidTools
+local addonName, addon = ...
 
-AntiRaidTools.Base64ParserPrototype = {}
+addon.Base64ParserPrototype = {}
 
-local Base64Parser = AntiRaidTools.Base64ParserPrototype
+local Base64Parser = addon.Base64ParserPrototype
 Base64Parser.__index = Base64Parser
 
 function Base64Parser:new()

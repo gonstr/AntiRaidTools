@@ -1,17 +1,17 @@
-local AntiRaidTools = AntiRaidTools
+local addonName, addon = ...
 
-AntiRaidTools.ImportPrototype = {}
+addon.ImportPrototype = {}
 
-local Import = AntiRaidTools.ImportPrototype
+local Import = addon.ImportPrototype
 Import.__index = Import
 
 function Import:new(utils, importParser, base64Parser, importValidator)
     local instance = setmetatable({}, self)
 
-    self.utils = utils or AntiRaidTools.UtilsPrototype:new()
-    self.importParser = importParser or AntiRaidTools.ImportParserPrototype:new()
-    self.base64Parser = base64Parser or AntiRaidTools.Base64ParserPrototype:new()
-    self.importValidator = importValidator or AntiRaidTools.ImportValidatorPrototype:new()
+    self.utils = utils or addon.UtilsPrototype:new()
+    self.importParser = importParser or addon.ImportParserPrototype:new()
+    self.base64Parser = base64Parser or addon.Base64ParserPrototype:new()
+    self.importValidator = importValidator or addon.ImportValidatorPrototype:new()
 
     return instance
 end

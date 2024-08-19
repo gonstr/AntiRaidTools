@@ -1,6 +1,3 @@
-require("Utils")
-require("ImportValidator")
-
 TestImportValidator = {}
 
 local trigger = {
@@ -68,7 +65,7 @@ local sound = {
     id = "sound-1",
     encounter = 1040,
     trigger = "trigger-1",
-    sound = "Interface\\AddOns\\AntiRaidTools\\Media\\PowerAuras_Sounds_Sonar.mp3"
+    sound = "Interface\\AddOns\\addon\\Media\\PowerAuras_Sounds_Sonar.mp3"
 }
 
 local tts = {
@@ -84,19 +81,31 @@ local pack = {
     type = "PACK",
     version = 1,
     name = "The best raid pack",
+    id = "Pack-123",
     packVersion = 1,
     items = { trigger, timer, state, event, raidFrameIcon, sound, tts }
 }
 
+local function createPack(item)
+    return {
+        type = "PACK",
+        version = 1,
+        name = "Test Pack",
+        id = "test-pack",
+        packVersion = 1,
+        items = { item }
+    }
+end
+
 function TestImportValidator:TestImport()
-    local validator = AntiRaidTools.ImportValidatorPrototype:new()
+    local validator = addon.ImportValidatorPrototype:new()
 
     luaunit.assertTrue(validator:validate({ pack }))
 end
 
 function TestImportValidator:TestImportNoVersion()
-    local validator = AntiRaidTools.ImportValidatorPrototype:new()
-    local utils = AntiRaidTools.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:new()
+    local utils = addon.UtilsPrototype:new()
 
     local clone = utils:deepClone(pack)
     clone.version = nil
@@ -107,8 +116,8 @@ function TestImportValidator:TestImportNoVersion()
 end
 
 function TestImportValidator:TestImportInvalidType()
-    local validator = AntiRaidTools.ImportValidatorPrototype:new()
-    local utils = AntiRaidTools.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:new()
+    local utils = addon.UtilsPrototype:new()
 
     luaunit.assertError(function()
         local clone = utils:deepClone(trigger)
@@ -118,7 +127,7 @@ function TestImportValidator:TestImportInvalidType()
 end
 
 function TestImportValidator:TestImportNotArray()
-    local validator = AntiRaidTools.ImportValidatorPrototype:new()
+    local validator = addon.ImportValidatorPrototype:new()
 
     luaunit.assertError(function()
         validator:validate("foo")
@@ -132,8 +141,8 @@ function TestImportValidator:TestImportNotArray()
 end
 
 function TestImportValidator:TestImportPack()
-    local validator = AntiRaidTools.ImportValidatorPrototype:new()
-    local utils = AntiRaidTools.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:new()
+    local utils = addon.UtilsPrototype:new()
 
     luaunit.assertTrue(validator:validate({ pack }))
 
@@ -151,6 +160,12 @@ function TestImportValidator:TestImportPack()
 
     luaunit.assertError(function()
         local clone = utils:deepClone(pack)
+        clone.id = nil
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
         clone.items = nil
         validator:validate({ clone })
     end)
@@ -163,63 +178,63 @@ function TestImportValidator:TestImportPack()
 end
 
 function TestImportValidator:TestImportTrigger()
-    local validator = AntiRaidTools.ImportValidatorPrototype:new()
-    local utils = AntiRaidTools.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:new()
+    local utils = addon.UtilsPrototype:new()
 
-    luaunit.assertTrue(validator:validate({ trigger }))
+    luaunit.assertTrue(validator:validate({ createPack(trigger) }))
 
     luaunit.assertError(function()
         local clone = utils:deepClone(trigger)
         clone.id = nil
-        validator:validate({ clone })
+        validator:validate({ createPack(clone) })
     end)
 
     luaunit.assertError(function()
         local clone = utils:deepClone(trigger)
         clone.encounter = nil
-        validator:validate({ clone })
+        validator:validate({ createPack(clone) })
     end)
 
     luaunit.assertError(function()
         local clone = utils:deepClone(trigger)
         clone.triggers = nil
-        validator:validate({ clone })
+        validator:validate({ createPack(clone) })
     end)
 
     local clone = utils:deepClone(trigger)
     clone.untriggers = nil
     
-    luaunit.assertTrue(validator:validate({ clone }))
+    luaunit.assertTrue(validator:validate({ createPack(clone) }))
 end
 
 function TestImportValidator:TestImportTimer()
-    local validator = AntiRaidTools.ImportValidatorPrototype:new()
-    local utils = AntiRaidTools.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:new()
+    local utils = addon.UtilsPrototype:new()
 
-    luaunit.assertTrue(validator:validate({ timer }))
+    luaunit.assertTrue(validator:validate({ createPack(timer) }))
 
     luaunit.assertError(function()
         local clone = utils:deepClone(timer)
         clone.id = nil
-        validator:validate({ clone })
+        validator:validate({ createPack(clone) })
     end)
 
     luaunit.assertError(function()
         local clone = utils:deepClone(timer)
         clone.encounter = nil
-        validator:validate({ clone })
+        validator:validate({ createPack(clone) })
     end)
 
     luaunit.assertError(function()
         local clone = utils:deepClone(timer)
         clone.name = nil
-        validator:validate({ clone })
+        validator:validate({ createPack(clone) })
     end)
 
 
     luaunit.assertError(function()
         local clone = utils:deepClone(timer)
         clone.trigger = nil
-        validator:validate({ clone })
+        validator:validate({ createPack(clone) })
     end)
 end

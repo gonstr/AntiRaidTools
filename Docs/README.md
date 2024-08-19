@@ -13,6 +13,7 @@ An example import could look like this:
     "type": "PACK",
     "version": 1,
     "name": "Some raid pack",
+    "id": "pack-123",
     "packVersion": 1,
     "items": [{
         "type": "TIMER",

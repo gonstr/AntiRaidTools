@@ -1,33 +1,31 @@
-require("Parsers/JSON")
-
 TestJsonParser = {}
 
 function TestJsonParser:TestEncode()
-    local parser = AntiRaidTools.JsonParserPrototype:new()
+    local parser = addon.JsonParserPrototype:new()
 
     luaunit.assertEquals(parser:encode({ foo = "bar" }), '{"foo":"bar"}')
 end
 
 function TestJsonParser:TestDecodeObject()
-    local parser = AntiRaidTools.JsonParserPrototype:new()
+    local parser = addon.JsonParserPrototype:new()
 
     luaunit.assertEquals(parser:decode('{ "foo": "bar" }'), { foo = "bar" })
 end
 
 function TestJsonParser:TestDecodeArray()
-    local parser = AntiRaidTools.JsonParserPrototype:new()
+    local parser = addon.JsonParserPrototype:new()
 
     luaunit.assertEquals(parser:decode('["foo", "bar"]'), { "foo", "bar" })
 end
 
 function TestJsonParser:TestFailDecode()
-    local parser = AntiRaidTools.JsonParserPrototype:new()
+    local parser = addon.JsonParserPrototype:new()
 
     luaunit.assertError(function() parser:decode('["foo", {"bar"]') end)
 end
 
 function TestJsonParser:TestDecodeImport()
-    local parser = AntiRaidTools.JsonParserPrototype:new()
+    local parser = addon.JsonParserPrototype:new()
 
     local import = [[
         [{
