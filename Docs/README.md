@@ -49,6 +49,47 @@ See https://wowpedia.fandom.com/wiki/DungeonEncounterID for a list of values.
 
 Packs are used as a way to distribute a list of items. This can be used to distrubute a raid or boss pack or any other collection of items.
 
+```json
+{
+    "type": "PACK",
+    "version": 1,
+    "gameVersion": "CATA",
+    "name": "Some raid pack",
+    "id": "pack-123",
+    "packVersion": 1,
+    "options": {
+        "headerTexture": "interface/questionframe/warboardzonescata",
+        "headerTexCords": [0.0009765625, 0.2626953125, 0.001953125, 0.240234375],
+        "groups": [{
+            "header": "Boss name",
+            "items": [{
+                "type": "TOGGLE",
+                "name": "Some ability",
+                "description": "Enable notifications and raid icons for ability 123",
+                "id": "ability-1",
+                "default": true
+            }]
+        }]
+    },
+    "items": [{
+        "type": "TRIGGER",
+        "version": 1,
+        "id": "trigger-1",
+        "encounter": 1035,
+        "triggers": [{ "type": "SPELL_AURA", "spellId": 1234 }],
+        "untriggers": [{ "type": "EMOTE_OR_YELL", "text": "This ends now!" }],
+    },{
+        "type": "TIMER",
+        "version": 1,
+        "load": "${ctx.pack.options.ability-1}",
+        "id": "timer-1",
+        "encounter": 1035,
+        "trigger": "trigger-1",
+        "name": "Some ability",
+    }]
+}
+```
+
 ## Triggers
 
 A reusable trigger.
@@ -157,6 +198,43 @@ Example sound:
 ```
 
 `icon` is optional.
+
+## Conditional loading
+
+If you created a pack with options, you might want to conditionally load an item.
+
+Example:
+```json
+{
+    "type": "PACK",
+    "version": 1,
+    "name": "Some raid pack",
+    "id": "pack-123",
+    "packVersion": 1,
+    "options": [{
+        "sections": [{
+            "header": "Boss name",
+            "subSections": [{
+                "header": "Events",
+                "items": [{
+                    "type": "TOGGLE",
+                    "name": "Some ability",
+                    "id": "ability-1",
+                    "default": true
+                }] 
+            }]
+        }]
+    }],
+    "items": [{
+        "type": "TIMER",
+        "version": 1,
+        "load": "${ctx.pack.options.ability-1}",
+        "id": "timer-1",
+        "trigger": "trigger-1",
+        "name": "Some ability",
+    }]
+}
+```
 
 ## Triggers and Untriggers
 

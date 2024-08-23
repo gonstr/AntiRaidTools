@@ -155,6 +155,16 @@ function Utils:groupTable(table, keyFunc)
     return result
 end
 
+function Utils:isGameVersion(version)
+    local gameVersion = select(4,GetBuildInfo())
+
+    if version == "CATA" then
+        return gameVersion >= 40000 and gameVersion < 50000
+    end
+
+    return false
+end
+
 -- local random = math.random
 
 -- function AntiRaidTools:GenerateUUID()

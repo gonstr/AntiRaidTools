@@ -4,10 +4,6 @@ local insert = table.insert
 
 addon = LibStub("AceAddon-3.0"):NewAddon(addon, addonName, "AceConsole-3.0", "AceEvent-3.0")
 
-addon.EVENTS = {
-    IMPORT_LOADED = "ART_IMPORT_LOADED"
-}
-
 addon.VERSION = GetAddOnMetadata("AntiRaidTools", "Version")
 addon.IS_DEV = addon.VERSION == '\@project-version\@'
 
@@ -21,8 +17,9 @@ addon.defaults = {
                 --     showOnlyOwnNotifications = false,
                 --     mute = false
                 -- }
-                packOptions = {}
+                
             },
+            packOptions = {},
             packs = {}
         }
         -- data = {
@@ -48,13 +45,12 @@ function addon:OnInitialize()
     self.importParser = self.ImportParserPrototype:new(self.jsonParser, self.base64Parser)
     self.importValidator = self.ImportValidatorPrototype:new(self.utils)
     self.import = self.ImportPrototype:new(self.utils, self.importParser, self.base64Parser, self.importValidator)
-    self.encounters = self.EncountersPrototype:new()
 
     self.options = self.OptionsPrototype:new(self.utils, self.import, self.db, self.encounters)
 end
 
 function addon:OnEnable()
-    self:RegisterEvent("PLAYER_ENTERING_WORLD")
+    -- self:RegisterEvent("PLAYER_ENTERING_WORLD")
     -- self:RegisterEvent("ENCOUNTER_START")
     -- self:RegisterEvent("ENCOUNTER_END")
     -- self:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -64,14 +60,13 @@ function addon:OnEnable()
     -- self:RegisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
     -- self:RegisterEvent("CHAT_MSG_MONSTER_YELL")
 
-    self:RegisterMessage(self.EVENTS.IMPORT_LOADED)
     -- self:RegisterMessage("ART_WA_EVENT")
 
     -- self:RegisterChatCommand("art", "ChatHandleCommand")
 end
 
 function addon:OnDisable()
-    self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+    -- self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     -- self:UnregisterEvent("ENCOUNTER_START")
     -- self:UnregisterEvent("ENCOUNTER_END")
     -- self:UnregisterEvent("PLAYER_REGEN_ENABLED")
@@ -81,25 +76,16 @@ function addon:OnDisable()
     -- self:UnregisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
     -- self:UnregisterEvent("CHAT_MSG_MONSTER_YELL")
 
-    self:UnregisterMessage(self.EVENTS.IMPORT_LOADED)
     -- self:UnregisterMessage("ART_WA_EVENT")
 
     -- self:UnregisterChatCommand("art")
 end
 
-function addon:ART_IMPORT_LOADED(_, val)
-    -- We can assume (for now) that an import will always be an array of size 1,
-    -- and the item will be of type `PACK`. This is ensured by import validation.
-    self.db.profile.v1.packs[pack.id] = val[1]
-
-    self.options:notifyChange()
-end
-
-function addon:PLAYER_ENTERING_WORLD(_, isialLogin, isReloadingUi)
-    if isInitialLogin or isReloadingUi then
-        self.encounters:init()
-    end
-end
+-- function addon:PLAYER_ENTERING_WORLD(_, isialLogin, isReloadingUi)
+--     if isInitialLogin or isReloadingUi then
+--         self.encounters:init()
+--     end
+-- end
 
 -- function AntiRaidTools:SendRaidMessage(event, data, prefix, prio, callbackFn)
 --     if IsInRaid() then

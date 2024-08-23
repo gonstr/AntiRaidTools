@@ -13,7 +13,7 @@ addon.OptionsPrototype = {}
 local Options = addon.OptionsPrototype
 Options.__index = Options
 
-_G.StaticPopupDialogs["ART_Link"] = {
+_G.StaticPopupDialogs["ART_LINK"] = {
     text = "Press Ctrl+C to copy the URL to your clipboard",
     hasEditBox = 1,
     button1 = _G.OKAY,
@@ -35,6 +35,21 @@ _G.StaticPopupDialogs["ART_Link"] = {
     hideOnEscape = 1
 }
 
+_G.StaticPopupDialogs["ART_DELETE_PACK"] = {
+    text = "Are you sure you want to delete this pack?",
+    button1 = _G.YES,
+    button2 = _G.NO,
+    OnAccept = function()
+        if addon.packId then
+            addon.db.profile.v1.packs[addon.packId] = nil
+            addon.options:notifyChange()
+        end
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+}
+
 local listedPackTypes = {
     ["TIMER"] = "Timers",
     ["STATE"] = "State",
@@ -43,84 +58,101 @@ local listedPackTypes = {
     ["SOUND"] = "Sounds"
 }
 
-local function packArgs(db, pack, utils, encounters)
-    local order = 1    
-
+function Options:packArgs(pack)
     local args = {
         header = {
             type = "header",
-            --dialogControl = "AntiRaidToolsPackHeader",
+            dialogControl = "AntiRaidToolsPackHeader",
             width = "full",
             name = pack.name,
-            order = order,
-        }
+            order = 1,
+            arg = {
+                header = pack.name,
+                version = pack.packVersion,
+                headerTexture = pack.options.headerTexture,
+                headerTexCords = pack.options.headerTexCords
+            }
+        },
+        enabled = {
+            type = "toggle",
+            name = "Enabled",
+            order = 2,
+            get = function()
+                return self.db.profile.v1.packOptions[pack.id].enabled
+            end,
+            set = function(_, val)
+                self.db.profile.v1.packOptions[pack.id].enabled = val
+            end
+        },
+    }
+
+    local order = 3
+
+    if pack.options then
+        for groupIndex, group in ipairs(pack.options.groups) do
+            args["group:" .. groupIndex] = {
+                type = "header",
+                width = "full",
+                name = group.header,
+                order = order
+            }
+    
+            order = order + 1
+    
+            for itemIndex, item in ipairs(group.items) do
+                if item.type == "TOGGLE" then
+                    args["item:" .. item.id] = {
+                        type = "toggle",
+                        width = "full",
+                        name = item.name,
+                        order = order,
+                        get = function()
+                            return self.db.profile.v1.packOptions[pack.id]["id:" .. item.id]
+                        end,
+                        set = function(_, val)
+                            self.db.profile.v1.packOptions[pack.id]["id:" .. item.id] = val
+                        end
+                    }
+    
+                    order = order + 1
+    
+                    args["itemDesc:" .. item.id] = {
+                        type = "description",
+                        width = "full",
+                        name = item.description,
+                        order = order
+                    }
+                end
+    
+                order = order + 1
+            end
+        end
+    end
+
+    args["danger"] = {
+        type = "header",
+        width = "full",
+        name = "Danger",
+        order = order
     }
 
     order = order + 1
 
-    for encounter, items in pairs(utils:groupTable(pack.items, function(item) return item.encounter end)) do
-        args["encounter:" .. encounter] = {
-            type = "header",
-            width = "full",
-            name = encounters:get(encounter) or "???",
-            order = order
-        }
-
-        order = order + 1
-
-        for packType, header in pairs(listedPackTypes) do
-            local items = utils:filterTable(items, function(item) return item.type == packType end)
-    
-            if #items > 0 then
-                local typeArgs = {}
-
-                args["items:" .. packType] = {
-                    type = "group",
-                    inline = true,
-                    name = header,
-                    order = order,
-                    args = typeArgs
-                }
-
-                local typeOrder = 1
-
-                for _, item in ipairs(items) do
-                    typeArgs["item:" .. item.id] = {
-                        type = "toggle",
-                        name = item.id,
-                        order = typeOrder,
-                        get = function()
-                            local packOptions = db.profile.v1.options.packOptions[pack.id]
-
-                            if packOptions and packOptions[item.id] ~= nil then
-                                return packOptions[item.id]
-                            end
-
-                            return true
-                        end,
-                        set = function(_, val)
-                            local packOptions = db.profile.v1.options.packOptions[pack.id]
-
-                            if not packOptions then
-                                db.profile.v1.options.packOptions[pack.id] = {}
-                            end
-
-                            db.profile.v1.options.packOptions[pack.id][item.id] = val
-                        end
-                    }
-    
-                    typeOrder = typeOrder + 1
-                end
-            end
-
-            order = order + 1
+    args["delete"] = {
+        type = "execute",
+        name = "Delete Pack",
+        order = order,
+        func = function()
+            addon.packId = pack.id
+            _G.StaticPopup_Show("ART_DELETE_PACK")
+            --addon.packId = nil
         end
-    end
+    }
 
     return args
 end
 
-local function packsGroup(db, utils, encounters)
+function Options:packsGroup()
     local group = {
         name = "Packs",
         type = "group",
@@ -131,12 +163,12 @@ local function packsGroup(db, utils, encounters)
 
     local order = 1
 
-    for _, pack in pairs(db.profile.v1.packs) do
+    for _, pack in pairs(self.db.profile.v1.packs) do
         group.args["pack:" .. pack.id] = {
             type = "group",
             name = pack.name,
             order = order,
-            args = packArgs(db, pack, utils, encounters)
+            args = self:packArgs(pack)
         }
 
         order = order + 1
@@ -155,7 +187,7 @@ local function packsGroup(db, utils, encounters)
     return group
 end
 
-local function importGroup(db, utils, import)
+function Options:importGroup()
     return {
         name = "Import",
         type = "group",
@@ -172,19 +204,39 @@ local function importGroup(db, utils, import)
                 multiline = 25,
                 width = "full",
                 order = 2,
-                get = function() return db.profile.v1.options.import end,
+                get = function() return self.db.profile.v1.options.import end,
                 set = function(_, val)
                     if val then
                         val = val:trim()
                     end
 
                     if val and not addon.Base64ParserPrototype:new():isBase64Encoded(val) then
-                        db.profile.v1.options.import = val
+                        self.db.profile.v1.options.import = val
                     else
-                        db.profile.v1.options.import = nil
+                        self.db.profile.v1.options.import = nil
                     end
 
-                    addon:SendMessage(addon.EVENTS.IMPORT_LOADED, import:import(val))
+                    local pack = self.import:import(val)[1]
+
+                    self.db.profile.v1.packs[pack.id] = pack
+                
+                    local packOptions = self.db.profile.v1.packOptions[pack.id]
+                    
+                    if not packOptions then
+                        self.db.profile.v1.packOptions[pack.id] = {}
+                    end
+                
+                    for _, group in ipairs(pack.options.groups) do
+                        self.db.profile.v1.packOptions[pack.id].enabled = true
+                
+                        for _, item in ipairs(group.items) do
+                            if self.db.profile.v1.packOptions[pack.id]["id:" .. item.id] == nil then
+                                self.db.profile.v1.packOptions[pack.id]["id:" .. item.id] = item.default
+                            end
+                        end
+                    end
+
+                    self:notifyChange()
                 end,
                 validate = function(_, val)            
                     if val then
@@ -195,10 +247,10 @@ local function importGroup(db, utils, import)
                         return true
                     end
             
-                    local ok, result = pcall(function() return import:import(val) end)
+                    local ok, result = pcall(function() return self.import:import(val) end)
         
                     if not ok then
-                        return utils:stripErrorFileAndLine(result)
+                        return self.utils:stripErrorFileAndLine(result)
                     end
             
                     return true
@@ -208,7 +260,7 @@ local function importGroup(db, utils, import)
     }
 end
 
-local function lookAndFeelGroup()
+function Options:lookAndFeelGroup()
     return {
         name = "Look and Feel",
         type = "group",
@@ -217,7 +269,8 @@ local function lookAndFeelGroup()
     }
 end
 
-local function optionsTable(db, utils, import, encounters)
+
+function Options:optionsTable()
     return {
         name = "Anti Raid Tools " .. addon.VERSION,
         type = "group",
@@ -229,7 +282,7 @@ local function optionsTable(db, utils, import, encounters)
                 order = 1,
                 func = function()
                     addon.url = "https://discord.gg/antiraidtools"
-                    _G.StaticPopup_Show("ART_Link")
+                    _G.StaticPopup_Show("ART_LINK")
                     addon.url = nil
                 end
             },
@@ -253,23 +306,22 @@ local function optionsTable(db, utils, import, encounters)
                 end,
                 order = 3,
             },
-            packsGroup = packsGroup(db, utils, encounters),
-            importGroup = importGroup(db, utils, import),
-            lookAndFeelGroup = lookAndFeelGroup(),
-            profileGroup = LibStub("AceDBOptions-3.0"):GetOptionsTable(db)
+            packsGroup = self:packsGroup(),
+            importGroup = self:importGroup(),
+            lookAndFeelGroup = self:lookAndFeelGroup(),
+            profileGroup = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
         }
     }
 end
 
-function Options:new(utils, import, db, encounters)
+function Options:new(utils, import, db)
     local instance = setmetatable({}, self)
 
     self.utils = utils or addon.UtilsPrototype:new()
     self.import = import or addon.ImportPrototype:new()
     self.db = assert(db)
-    self.encounters = assert(encounters)
     
-    AceConfigRegistry:RegisterOptionsTable("AntiRaidTools", function() return optionsTable(self.db, self.utils, self.import, self.encounters) end)
+    AceConfigRegistry:RegisterOptionsTable("AntiRaidTools", function() return self:optionsTable() end)
     AceConfigDialog:AddToBlizOptions("AntiRaidTools", "Anti Raid Tools")
 
     return instance

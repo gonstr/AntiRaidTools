@@ -80,9 +80,28 @@ local tts = {
 local pack = {
     type = "PACK",
     version = 1,
+    gameVersion = "CATA",
     name = "The best raid pack",
     id = "Pack-123",
     packVersion = 1,
+    options = {
+        headerTexture = "interface/questionframe/warboardzonescata",
+        headerTexCords = { 0.0009765625, 0.2626953125, 0.001953125, 0.240234375 },
+        groups = {
+            {
+                header = "Halfus Wyrmbreaker",
+                items = {
+                    {
+                        type = "TOGGLE",
+                        name = "Scorching Breath",
+                        description = "Show timers and notifications for Scorching Breath.",
+                        id = "scorching-breath",
+                        default = true
+                    }
+                }
+            }
+        }
+    },
     items = { trigger, timer, state, event, raidFrameIcon, sound, tts }
 }
 
@@ -90,6 +109,7 @@ local function createPack(item)
     return {
         type = "PACK",
         version = 1,
+        gameVersion = "CATA",
         name = "Test Pack",
         id = "test-pack",
         packVersion = 1,
@@ -236,5 +256,76 @@ function TestImportValidator:TestImportTimer()
         local clone = utils:deepClone(timer)
         clone.trigger = nil
         validator:validate({ createPack(clone) })
+    end)
+end
+
+function TestImportValidator:TestImportInvalidPackOptions()
+    local validator = addon.ImportValidatorPrototype:new()
+    local utils = addon.UtilsPrototype:new()
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.headerTexture = nil
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.headerTexCords = { 1, 2 }
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.groups[1].header = nil
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.groups = {}
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.groups[1].header = nil
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.groups[1].items = {}
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.groups[1].items[1].type = nil
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.groups[1].items[1].name = nil
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.groups[1].items[1].description = nil
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.groups[1].items[1].id = nil
+        validator:validate({ clone })
+    end)
+
+    luaunit.assertError(function()
+        local clone = utils:deepClone(pack)
+        clone.options.groups[1].items[1].default = nil
+        validator:validate({ clone })
     end)
 end

@@ -47,7 +47,9 @@ function ImportValidator:new(utils)
     local instance = setmetatable({}, self)
 
     self.utils = utils or addon.UtilsPrototype:new()
-    self.types = { "PACK", "TRIGGER", "TIMER", "STATE", "EVENT", "RAID_FRAME_ICON", "SOUND" }
+    self.itemTypes = { "PACK", "TRIGGER", "TIMER", "STATE", "EVENT", "RAID_FRAME_ICON", "SOUND" }
+    self.optionTypes = { "TOGGLE" }
+    self.gameVersions = { "CATA" }
 
     return instance
 end
@@ -119,7 +121,7 @@ function ImportValidator:validateItem(item, packItem)
 end
 
 function ImportValidator:validateType(item)
-    if not self.utils:tableContains(self.types, item.type) then
+    if not self.utils:tableContains(self.itemTypes, item.type) then
         error("Item has an unknown type: " .. toString(item.type))
     end
 end
@@ -134,6 +136,81 @@ function ImportValidator:validateEncounter(item)
     end
 end
 
+function ImportValidator:validatePackOptions(options)
+    if not options.headerTexture then
+        error("Item of type `PACK` is missing `headerTexture`")
+    end
+
+    if not options.headerTexCords then
+        error("Item of type `PACK` is missing `headerTexCords`")
+    end
+
+    if not self.utils:isArray(options.headerTexCords) then
+        error("Item of type `PACK` has invalid header texture coordinates")
+    end
+
+    if #options.headerTexCords ~= 4 and #options.headerTexCords ~= 8 then
+        error("Item of type `PACK` has invalid header texture coordinates")
+    end
+
+    if not options.groups then
+        error("Item of type `PACK` is missing `groups`")
+    end
+
+    if not self.utils:isArray(options.groups) then
+        error("Item of type `PACK` has an invalid `groups` field. It should be an array")
+    end
+
+    -- if #options.groups == 0 then
+    --     error("Item of type `PACK` is missing `groups`")
+    -- end
+
+    for _, group in ipairs(options.groups) do
+        if not group.header then
+            error("Item of type `PACK` has an options group without `header`")
+        end
+
+        if not group.items then
+            error("Item of type `PACK` has an options group without `items`")
+        end
+    
+        if not self.utils:isArray(group.items) then
+            error("Item of type `PACK` has an invalid `items` field. It should be an array")
+        end
+
+        if #group.items == 0 then
+            error("Item of type `PACK` has an options group without `items`")
+        end
+
+        for _, item in ipairs(group.items) do
+            if not item.type then
+                error("Item of type `PACK` is missing `type` in a options item")
+            end
+
+            if not self.utils:tableContains(self.optionTypes, item.type) then
+                error("Item has an unknown type: " .. toString(item.type))
+            end
+
+            if not item.name then
+                error("Item of type `PACK` is missing `name` in a options item")
+            end
+
+            if not item.description then
+                error("Item of type `PACK` is missing `description` in a options item")
+            end
+
+            if not item.id then
+                error("Item of type `PACK` is missing `id` in a options item")
+            end
+
+            if not item.default then
+                error("Item of type `PACK` is missing `default` in a options item")
+            end
+        end
+    end
+end
+
+
 function ImportValidator:validatePack(item)
     if not item.name then
         error("Item of type `PACK` is missing name")
@@ -141,6 +218,18 @@ function ImportValidator:validatePack(item)
 
     if not item.id then
         error("Item of type `PACK` is missing `id`")
+    end
+
+    if not item.gameVersion then
+        error("Item of type `PACK` is missing `gameVersion`")
+    end
+
+    if not self.utils:tableContains(self.gameVersions, item.gameVersion) then
+        error("Item has an unknown gameVersion: " .. toString(item.type))
+    end
+
+    if not self.utils:isGameVersion(item.gameVersion) then
+        error("Item of type `PACK` has a non matching game version")
     end
 
     if not item.packVersion then
@@ -152,7 +241,7 @@ function ImportValidator:validatePack(item)
     end
 
     if not self.utils:isArray(item.items) then
-        error("Item of type `PACK` has an invalid `items` field. It should be a list")
+        error("Item of type `PACK` has an invalid `items` field. It should be an array")
     end
 
     if #item.items == 0 then
@@ -161,6 +250,10 @@ function ImportValidator:validatePack(item)
 
     for _, item in ipairs(item.items) do
         self:validateItem(item, true)
+    end
+
+    if item.options then
+        self:validatePackOptions(item.options)
     end
 end
 
@@ -252,7 +345,7 @@ function ImportValidator:validateSpellAuraTrigger(trigger)
     end
 
     if not self.utils:isInteger(trigger.spellId) then
-        error("Trigger of type `SPELL_AURA` has an invalid `spellId")
+        error("Trigger of type `SPELL_AURA` has an invalid `spellId`")
     end
 end
 
@@ -262,7 +355,7 @@ function ImportValidator:validateSpellCastTrigger(trigger)
     end
 
     if not self.utils:isInteger(trigger.spellId) then
-        error("Trigger of type `SPELL_AURA` has an invalid `spellId")
+        error("Trigger of type `SPELL_AURA` has an invalid `spellId`")
     end
 end
 
