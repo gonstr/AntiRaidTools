@@ -39,10 +39,16 @@ _G.StaticPopupDialogs["ART_DELETE_PACK"] = {
     text = "Are you sure you want to delete this pack?",
     button1 = _G.YES,
     button2 = _G.NO,
-    OnAccept = function()
-        if addon.packId then
-            addon.db.profile.v1.packs[addon.packId] = nil
-            addon.options:notifyChange()
+    OnShow = function(self)
+        self.packId = addon.packId
+    end,
+    OnHide = function(self)
+        self.packId = nil
+    end,
+    OnAccept = function(self)
+        if self.packId then
+            addon.db.profile.v1.packs[self.packId] = nil
+            addon.options:NotifyChange()
         end
     end,
     timeout = 0,
@@ -58,7 +64,10 @@ local listedPackTypes = {
     ["SOUND"] = "Sounds"
 }
 
-function Options:packArgs(pack)
+function Options:PackArgs(pack)
+    local headerTexture = (pack.options and pack.options.headerTexture) or "interface/questionframe/warboardzonescata"
+    local headreTextureCords = (pack.options and pack.options.headerTexCords) or { 0.0009765625, 0.2626953125, 0.001953125, 0.240234375 }
+
     local args = {
         header = {
             type = "header",
@@ -69,8 +78,9 @@ function Options:packArgs(pack)
             arg = {
                 header = pack.name,
                 version = pack.packVersion,
-                headerTexture = pack.options.headerTexture,
-                headerTexCords = pack.options.headerTexCords
+                headerTexture = headerTexture,
+                headerTexCords = headreTextureCords,
+                author = pack.author
             }
         },
         enabled = {
@@ -145,14 +155,14 @@ function Options:packArgs(pack)
         func = function()
             addon.packId = pack.id
             _G.StaticPopup_Show("ART_DELETE_PACK")
-            --addon.packId = nil
+            addon.packId = nil
         end
     }
 
     return args
 end
 
-function Options:packsGroup()
+function Options:PacksGroup()
     local group = {
         name = "Packs",
         type = "group",
@@ -168,7 +178,7 @@ function Options:packsGroup()
             type = "group",
             name = pack.name,
             order = order,
-            args = self:packArgs(pack)
+            args = self:PackArgs(pack)
         }
 
         order = order + 1
@@ -187,7 +197,7 @@ function Options:packsGroup()
     return group
 end
 
-function Options:importGroup()
+function Options:ImportGroup()
     return {
         name = "Import",
         type = "group",
@@ -210,33 +220,35 @@ function Options:importGroup()
                         val = val:trim()
                     end
 
-                    if val and not addon.Base64ParserPrototype:new():isBase64Encoded(val) then
+                    if val and not addon.Base64ParserPrototype:New():IsBase64Encoded(val) then
                         self.db.profile.v1.options.import = val
                     else
                         self.db.profile.v1.options.import = nil
                     end
 
-                    local pack = self.import:import(val)[1]
+                    local pack = self.import:Import(val)[1]
 
                     self.db.profile.v1.packs[pack.id] = pack
-                
+
                     local packOptions = self.db.profile.v1.packOptions[pack.id]
                     
                     if not packOptions then
                         self.db.profile.v1.packOptions[pack.id] = {}
                     end
+
+                    self.db.profile.v1.packOptions[pack.id].enabled = true
                 
-                    for _, group in ipairs(pack.options.groups) do
-                        self.db.profile.v1.packOptions[pack.id].enabled = true
-                
-                        for _, item in ipairs(group.items) do
-                            if self.db.profile.v1.packOptions[pack.id]["id:" .. item.id] == nil then
-                                self.db.profile.v1.packOptions[pack.id]["id:" .. item.id] = item.default
+                    if pack.options then
+                        for _, group in ipairs(pack.options.groups) do
+                            for _, item in ipairs(group.items) do
+                                if self.db.profile.v1.packOptions[pack.id]["id:" .. item.id] == nil then
+                                    self.db.profile.v1.packOptions[pack.id]["id:" .. item.id] = item.default
+                                end
                             end
                         end
                     end
 
-                    self:notifyChange()
+                    self:NotifyChange()
                 end,
                 validate = function(_, val)            
                     if val then
@@ -247,10 +259,10 @@ function Options:importGroup()
                         return true
                     end
             
-                    local ok, result = pcall(function() return self.import:import(val) end)
+                    local ok, result = pcall(function() return self.import:Import(val) end)
         
                     if not ok then
-                        return self.utils:stripErrorFileAndLine(result)
+                        return self.utils:StripErrorFileAndLine(result)
                     end
             
                     return true
@@ -260,7 +272,7 @@ function Options:importGroup()
     }
 end
 
-function Options:lookAndFeelGroup()
+function Options:LookAndFeelGroup()
     return {
         name = "Look and Feel",
         type = "group",
@@ -270,7 +282,7 @@ function Options:lookAndFeelGroup()
 end
 
 
-function Options:optionsTable()
+function Options:OptionsTable()
     return {
         name = "Anti Raid Tools " .. addon.VERSION,
         type = "group",
@@ -288,45 +300,45 @@ function Options:optionsTable()
             },
             toggleAnchorsButton = {
                 type = "execute",
-                name = "Toggle Anchors",
+                name = "Toggle Frame Lock",
                 func = function()
                     if not InCombatLockdown() then
-                        -- TODO
+                        addon:SendMessage(addon.MESSAGES.ART_TOGGLE_FRAME_LOCK) 
                     end
                 end,
                 order = 2,
             },
-            toggleTestModeButton = {
-                type = "execute",
-                name = "Toggle Test Mode",
-                func = function()
-                    if not InCombatLockdown() then
-                        -- TODO
-                    end
-                end,
-                order = 3,
-            },
-            packsGroup = self:packsGroup(),
-            importGroup = self:importGroup(),
-            lookAndFeelGroup = self:lookAndFeelGroup(),
+            -- toggleTestModeButton = {
+            --     type = "execute",
+            --     name = "Toggle Test Mode",
+            --     func = function()
+            --         if not InCombatLockdown() then
+            --             -- TODO
+            --         end
+            --     end,
+            --     order = 3,
+            -- },
+            packsGroup = self:PacksGroup(),
+            importGroup = self:ImportGroup(),
+            lookAndFeelGroup = self:LookAndFeelGroup(),
             profileGroup = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
         }
     }
 end
 
-function Options:new(utils, import, db)
+function Options:New(db, utils, import)
     local instance = setmetatable({}, self)
 
-    self.utils = utils or addon.UtilsPrototype:new()
-    self.import = import or addon.ImportPrototype:new()
-    self.db = assert(db)
+    instance.utils = utils or addon.UtilsPrototype:New()
+    instance.import = import or addon.ImportPrototype:New()
+    instance.db = assert(db)
     
-    AceConfigRegistry:RegisterOptionsTable("AntiRaidTools", function() return self:optionsTable() end)
+    AceConfigRegistry:RegisterOptionsTable("AntiRaidTools", function() return instance:OptionsTable() end)
     AceConfigDialog:AddToBlizOptions("AntiRaidTools", "Anti Raid Tools")
 
     return instance
 end
 
-function Options:notifyChange()
+function Options:NotifyChange()
     AceConfigRegistry:NotifyChange("AntiRaidTools")
 end

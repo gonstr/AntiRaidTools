@@ -9,12 +9,12 @@ addon.UtilsPrototype = {}
 local Utils = addon.UtilsPrototype
 Utils.__index = Utils
 
-function Utils:new()
+function Utils:New()
     local instance = setmetatable({}, self)
     return instance
 end
 
-function Utils:tableContains(table, val)
+function Utils:TableContains(table, val)
     for _, v in ipairs(table) do
         if v == val then
             return true
@@ -24,16 +24,16 @@ function Utils:tableContains(table, val)
     return false
 end
 
-function Utils:deepClone(val)
+function Utils:DeepClone(val)
     local val_type = type(val)
     local copy
 
     if val_type == 'table' then
         copy = {}
         for k, v in next, val, nil do
-            copy[self:deepClone(k)] = self:deepClone(v)
+            copy[self:DeepClone(k)] = self:DeepClone(v)
         end
-        setmetatable(copy, self:deepClone(getmetatable(val)))
+        setmetatable(copy, self:DeepClone(getmetatable(val)))
     else -- number, string, boolean, etc
         copy = val
     end
@@ -41,7 +41,7 @@ function Utils:deepClone(val)
     return copy
 end
 
-function Utils:deepEqual(val1, val2)
+function Utils:DeepEqual(val1, val2)
     if val1 == val2 then
         return true
     end
@@ -69,7 +69,7 @@ function Utils:deepEqual(val1, val2)
 
     -- Recursively compare elements of both tables
     for k, v in pairs(val1) do
-        if not self:deepEqual(v, val2[k]) then
+        if not self:DeepEqual(v, val2[k]) then
             return false
         end
     end
@@ -77,7 +77,7 @@ function Utils:deepEqual(val1, val2)
     return true
 end
 
-function Utils:isArray(table)
+function Utils:IsArray(table)
     local i = 0
 
     for _ in pairs(table) do
@@ -88,7 +88,7 @@ function Utils:isArray(table)
     return true
 end
 
-function Utils:isInteger(number)
+function Utils:IsInteger(number)
     if number and type(number) == "number" and number == math.floor(number) then
         return true
     end
@@ -96,7 +96,7 @@ function Utils:isInteger(number)
     return false
 end
 
-function Utils:stringJoin(strings, delimiter)
+function Utils:StringJoin(strings, delimiter)
     delimiter = delimiter or ", "
 
     local result = ""
@@ -112,7 +112,7 @@ function Utils:stringJoin(strings, delimiter)
     return result
 end
 
-function Utils:stringEllipsis(str, len)
+function Utils:StringEllipsis(str, len)
     if string.len(str) > len + 3 then
         return str:sub(1, len) .. "..."
     end
@@ -121,11 +121,11 @@ function Utils:stringEllipsis(str, len)
 end
 
 -- Removed code line information from error messages
-function Utils:stripErrorFileAndLine(errorMsg)
+function Utils:StripErrorFileAndLine(errorMsg)
     return gsub(errorMsg, "^.+:%d+: ", "")
 end
 
-function Utils:filterTable(table, filterFunc)
+function Utils:FilterTable(table, filterFunc)
     local result = {}
     
     for _, item in pairs(table) do
@@ -139,7 +139,7 @@ end
 
 -- keyFunc should return a key to group by.
 -- Should probably return a string or number.
-function Utils:groupTable(table, keyFunc)
+function Utils:GroupTable(table, keyFunc)
     local result = {}
     
     for _, item in pairs(table) do
@@ -155,7 +155,7 @@ function Utils:groupTable(table, keyFunc)
     return result
 end
 
-function Utils:isGameVersion(version)
+function Utils:IsGameVersion(version)
     local gameVersion = select(4,GetBuildInfo())
 
     if version == "CATA" then

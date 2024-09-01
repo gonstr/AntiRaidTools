@@ -73,47 +73,47 @@ local invalidJsonImport = [[
 ]]
 
 function TestImport:TestBase64Import()
-    local import = addon.ImportPrototype:new()
+    local import = addon.ImportPrototype:New()
 
-    luaunit.assertIsTable(import:import(base64Import))
+    luaunit.assertIsTable(import:Import(base64Import))
 end
 
 function TestImport:TestMinifiedBase64Import()
-    local import = addon.ImportPrototype:new()
+    local import = addon.ImportPrototype:New()
 
-    luaunit.assertIsTable(import:import(minifiedBase64Import))
+    luaunit.assertIsTable(import:Import(minifiedBase64Import))
 end
 
 function TestImport:TestInvalidBase64Import()
-    local import = addon.ImportPrototype:new()
+    local import = addon.ImportPrototype:New()
 
     luaunit.assertErrorMsgContentEquals("Failed to parse import", function()
-        import:import(invalidBase64Import)
+        import:Import(invalidBase64Import)
     end)
 end
 
 function TestImport:TestJsonImport()
-    local import = addon.ImportPrototype:new()
+    local import = addon.ImportPrototype:New()
 
-    luaunit.assertIsTable(import:import(jsonImport))
+    luaunit.assertIsTable(import:Import(jsonImport))
 end
 
 function TestImport:TestMinifiedJsonImport()
-    local import = addon.ImportPrototype:new()
+    local import = addon.ImportPrototype:New()
 
-    luaunit.assertIsTable(import:import(minifiedJsonImport))
+    luaunit.assertIsTable(import:Import(minifiedJsonImport))
 end
 
 function TestImport:TestEscapedMinifiedJsonImport()
-    local import = addon.ImportPrototype:new()
+    local import = addon.ImportPrototype:New()
 
-    luaunit.assertIsTable(import:import(escapedMinifiedJsonImport))
+    luaunit.assertIsTable(import:Import(escapedMinifiedJsonImport))
 end
 
 function TestImport:TestInvalidJsonImport()
-    local import = addon.ImportPrototype:new()
+    local import = addon.ImportPrototype:New()
 
     luaunit.assertErrorMsgContentEquals("Item of type `EVENT` is missing `id`", function()
-        import:import(invalidJsonImport)
+        import:Import(invalidJsonImport)
     end)
 end

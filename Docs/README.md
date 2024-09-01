@@ -57,6 +57,7 @@ Packs are used as a way to distribute a list of items. This can be used to distr
     "name": "Some raid pack",
     "id": "pack-123",
     "packVersion": 1,
+    "author": "Team ART",
     "options": {
         "headerTexture": "interface/questionframe/warboardzonescata",
         "headerTexCords": [0.0009765625, 0.2626953125, 0.001953125, 0.240234375],
@@ -242,8 +243,8 @@ Triggers and untriggers are used in all the encounter types.
 
 Supported trigger types are:
 - `UNIT_HEALTH`
-- `SPELL_AURA`
 - `SPELL_CAST`
+- `SPELL_AURA`
 - `EMOTE_OR_YELL`
 
 Depending on the trigger type, various other trigger fields are required. All triggers support `countdown`, `delay` and `throttle`.
@@ -270,7 +271,7 @@ requires either `lessThan`, `greaterThan`, `lessThanPct` or `greaterThanPct`.
 ```yaml
 triggers:
     type: SPELL_AURA
-    spell_id: 12345
+    spellId: 12345
 ```
 
 ### SPELL_CAST
@@ -278,7 +279,7 @@ triggers:
 ```yaml
 triggers:
     type: SPELL_CAST
-    spell_id: 12345
+    spellId: 12345
 ```
 
 ### EMOTE_OR_YELL

@@ -24,24 +24,18 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 
 AntiRaidTools.lua
-UI\AceGUI\AntiRaidToolsPackHeader.lua
-UI\AceGUI\AntiRaidToolsPlaceholder.lua
-# Test.lua
 Utils.lua
+ImportValidator.lua
+Import.lua
+Options.lua
+Minimap.lua
 Parsers\Base64.lua
 Parsers\Import.lua
 Parsers\JSON.lua
-ImportValidator.lua
-Import.lua
-# Options\Chat.lua
-# Options\WeakAuras.lua
-# Encounters.lua
-Options.lua
-# State\Spells.lua
-# State\Groups.lua
-# State\Units.lua
-# Controllers\RaidAssignments.lua
-# Controllers\Sync.lua
-# UI\Minimap.lua
-# UI\Overview.lua
-# UI\Notifications.lua
+Controllers\Encounter.lua
+UI\Frames\Container.lua
+UI\Frames\Events.lua
+UI\Frames\Event.lua
+UI\FrameFactory.lua
+UI\AceGUI\AntiRaidToolsPackHeader.lua
+UI\AceGUI\AntiRaidToolsPlaceholder.lua

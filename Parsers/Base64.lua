@@ -211,20 +211,20 @@ addon.Base64ParserPrototype = {}
 local Base64Parser = addon.Base64ParserPrototype
 Base64Parser.__index = Base64Parser
 
-function Base64Parser:new()
+function Base64Parser:New()
     local instance = setmetatable({}, self)
     return instance
 end
 
-function Base64Parser:encode(str)
+function Base64Parser:Encode(str)
     return base64.encode(str)
 end
 
-function Base64Parser:decode(str)
+function Base64Parser:Decode(str)
     return base64.decode(str)
 end
 
-function Base64Parser:isBase64Encoded(str)
+function Base64Parser:IsBase64Encoded(str)
     -- Check if the string length is a multiple of 4
     if #str % 4 ~= 0 then
         return false

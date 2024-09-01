@@ -397,15 +397,15 @@ addon.JsonParserPrototype = {}
 local JsonParser = addon.JsonParserPrototype
 JsonParser.__index = JsonParser
 
-function JsonParser:new()
+function JsonParser:New()
     local instance = setmetatable({}, self)
     return instance
 end
 
-function JsonParser:encode(str)
+function JsonParser:Encode(str)
     return json.encode(str)
 end
 
-function JsonParser:decode(str)
+function JsonParser:Decode(str)
     return json.decode(str)
 end

@@ -7,19 +7,19 @@ addon.ImportParserPrototype = {}
 local ImportParser = addon.ImportParserPrototype
 ImportParser.__index = ImportParser
 
-function ImportParser:new(jsonParser, base64Parser)
+function ImportParser:New(jsonParser, base64Parser)
     local instance = setmetatable({}, self)
 
-    instance.jsonParser = jsonParser or addon.JsonParserPrototype:new()
-    instance.base64Parser = base64Parser or addon.Base64ParserPrototype:new()
+    instance.jsonParser = jsonParser or addon.JsonParserPrototype:New()
+    instance.base64Parser = base64Parser or addon.Base64ParserPrototype:New()
 
     return instance
 end
 
-function ImportParser:import(str)
-    if self.base64Parser:isBase64Encoded(str) then
-        return self.jsonParser:decode(self.base64Parser:decode(str))
+function ImportParser:Import(str)
+    if self.base64Parser:IsBase64Encoded(str) then
+        return self.jsonParser:Decode(self.base64Parser:Decode(str))
     end
 
-    return self.jsonParser:decode(str)
+    return self.jsonParser:Decode(str)
 end

@@ -118,214 +118,214 @@ local function createPack(item)
 end
 
 function TestImportValidator:TestImport()
-    local validator = addon.ImportValidatorPrototype:new()
+    local validator = addon.ImportValidatorPrototype:New()
 
-    luaunit.assertTrue(validator:validate({ pack }))
+    luaunit.assertTrue(validator:Validate({ pack }))
 end
 
 function TestImportValidator:TestImportNoVersion()
-    local validator = addon.ImportValidatorPrototype:new()
-    local utils = addon.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:New()
+    local utils = addon.UtilsPrototype:New()
 
-    local clone = utils:deepClone(pack)
+    local clone = utils:DeepClone(pack)
     clone.version = nil
 
     luaunit.assertError(function()
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 end
 
 function TestImportValidator:TestImportInvalidType()
-    local validator = addon.ImportValidatorPrototype:new()
-    local utils = addon.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:New()
+    local utils = addon.UtilsPrototype:New()
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(trigger)
+        local clone = utils:DeepClone(trigger)
         clone.type = "FOO"
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 end
 
 function TestImportValidator:TestImportNotArray()
-    local validator = addon.ImportValidatorPrototype:new()
+    local validator = addon.ImportValidatorPrototype:New()
 
     luaunit.assertError(function()
-        validator:validate("foo")
+        validator:Validate("foo")
     end)
 
     luaunit.assertError(function()
-        validator:validate({
+        validator:Validate({
             foo = "bar"
         })
     end)
 end
 
 function TestImportValidator:TestImportPack()
-    local validator = addon.ImportValidatorPrototype:new()
-    local utils = addon.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:New()
+    local utils = addon.UtilsPrototype:New()
 
-    luaunit.assertTrue(validator:validate({ pack }))
+    luaunit.assertTrue(validator:Validate({ pack }))
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.name = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.packVersion = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.id = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.items = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.items = {}
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 end
 
 function TestImportValidator:TestImportTrigger()
-    local validator = addon.ImportValidatorPrototype:new()
-    local utils = addon.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:New()
+    local utils = addon.UtilsPrototype:New()
 
-    luaunit.assertTrue(validator:validate({ createPack(trigger) }))
+    luaunit.assertTrue(validator:Validate({ createPack(trigger) }))
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(trigger)
+        local clone = utils:DeepClone(trigger)
         clone.id = nil
-        validator:validate({ createPack(clone) })
+        validator:Validate({ createPack(clone) })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(trigger)
+        local clone = utils:DeepClone(trigger)
         clone.encounter = nil
-        validator:validate({ createPack(clone) })
+        validator:Validate({ createPack(clone) })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(trigger)
+        local clone = utils:DeepClone(trigger)
         clone.triggers = nil
-        validator:validate({ createPack(clone) })
+        validator:Validate({ createPack(clone) })
     end)
 
-    local clone = utils:deepClone(trigger)
+    local clone = utils:DeepClone(trigger)
     clone.untriggers = nil
     
-    luaunit.assertTrue(validator:validate({ createPack(clone) }))
+    luaunit.assertTrue(validator:Validate({ createPack(clone) }))
 end
 
 function TestImportValidator:TestImportTimer()
-    local validator = addon.ImportValidatorPrototype:new()
-    local utils = addon.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:New()
+    local utils = addon.UtilsPrototype:New()
 
-    luaunit.assertTrue(validator:validate({ createPack(timer) }))
+    luaunit.assertTrue(validator:Validate({ createPack(timer) }))
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(timer)
+        local clone = utils:DeepClone(timer)
         clone.id = nil
-        validator:validate({ createPack(clone) })
+        validator:Validate({ createPack(clone) })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(timer)
+        local clone = utils:DeepClone(timer)
         clone.encounter = nil
-        validator:validate({ createPack(clone) })
+        validator:Validate({ createPack(clone) })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(timer)
+        local clone = utils:DeepClone(timer)
         clone.name = nil
-        validator:validate({ createPack(clone) })
+        validator:Validate({ createPack(clone) })
     end)
 
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(timer)
+        local clone = utils:DeepClone(timer)
         clone.trigger = nil
-        validator:validate({ createPack(clone) })
+        validator:Validate({ createPack(clone) })
     end)
 end
 
 function TestImportValidator:TestImportInvalidPackOptions()
-    local validator = addon.ImportValidatorPrototype:new()
-    local utils = addon.UtilsPrototype:new()
+    local validator = addon.ImportValidatorPrototype:New()
+    local utils = addon.UtilsPrototype:New()
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.headerTexture = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.headerTexCords = { 1, 2 }
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.groups[1].header = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.groups = {}
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.groups[1].header = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.groups[1].items = {}
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.groups[1].items[1].type = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.groups[1].items[1].name = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.groups[1].items[1].description = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.groups[1].items[1].id = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 
     luaunit.assertError(function()
-        local clone = utils:deepClone(pack)
+        local clone = utils:DeepClone(pack)
         clone.options.groups[1].items[1].default = nil
-        validator:validate({ clone })
+        validator:Validate({ clone })
     end)
 end

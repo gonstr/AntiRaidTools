@@ -31,6 +31,10 @@ local function Constructor()
     inner.version:SetFont("Fonts/FRIZQT__.TTF", 12)
     inner.version:SetPoint("TOPLEFT", 10, -30)
 
+    inner.author = inner:CreateFontString(nil, "ARTWORK")
+    inner.author:SetFont("Fonts/FRIZQT__.TTF", 12)
+    inner.author:SetPoint("BOTTOMLEFT", 10, 10)
+
     frame:Hide()
 
     local widget = {
@@ -59,6 +63,10 @@ local function Constructor()
 
                 if arg.version then
                     inner.version:SetText(arg.version)
+                end
+
+                if arg.author then
+                    inner.author:SetText("by " .. arg.author)
                 end
             end
         end)

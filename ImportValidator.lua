@@ -7,9 +7,9 @@ addon.ImportValidatorPrototype = {}
 local ImportValidator = addon.ImportValidatorPrototype
 ImportValidator.__index = ImportValidator
 
-local function toString(thing, indent)
-    if type(thing) ~= "table" then
-        return thing or ""
+local function TableToString(maybeTable, indent)
+    if type(maybeTable) ~= "table" then
+        return maybeTable or ""
     end
 
     local result = {}
@@ -18,21 +18,21 @@ local function toString(thing, indent)
     
     table.insert(result, "{\n")
     
-    for k, v in pairs(thing) do
+    for k, v in pairs(maybeTable) do
         local key
         if type(k) == "string" then
             key = string.format("%s[%q] = ", padding, k)
         else
-            key = string.format("%s[%s] = ", padding, toString(k))
+            key = string.format("%s[%s] = ", padding, TableToString(k))
         end
         
         local value
         if type(v) == "table" then
-            value = toString(v, indent + 1)
+            value = TableToString(v, indent + 1)
         elseif type(v) == "string" then
             value = string.format("%q", v)
         else
-            value = toString(v)
+            value = TableToString(v)
         end
         
         table.insert(result, key .. value .. ",\n")
@@ -43,23 +43,23 @@ local function toString(thing, indent)
     return table.concat(result)
 end
 
-function ImportValidator:new(utils)
+function ImportValidator:New(utils)
     local instance = setmetatable({}, self)
 
-    self.utils = utils or addon.UtilsPrototype:new()
-    self.itemTypes = { "PACK", "TRIGGER", "TIMER", "STATE", "EVENT", "RAID_FRAME_ICON", "SOUND" }
-    self.optionTypes = { "TOGGLE" }
-    self.gameVersions = { "CATA" }
+    instance.utils = utils or addon.UtilsPrototype:New()
+    instance.itemTypes = { "PACK", "TRIGGER", "TIMER", "STATE", "EVENT", "RAID_FRAME_ICON", "SOUND" }
+    instance.optionTypes = { "TOGGLE" }
+    instance.gameVersions = { "CATA" }
 
     return instance
 end
 
-function ImportValidator:validate(import)
+function ImportValidator:Validate(import)
     if type(import) ~= "table" then
         error("Import it not a table")
     end
 
-    if not self.utils:isArray(import) then
+    if not self.utils:IsArray(import) then
         error("Import is not an array")
     end
 
@@ -68,13 +68,13 @@ function ImportValidator:validate(import)
     end
 
     for _, item in pairs(import) do
-        self:validateItem(item)
+        self:ValidateItem(item)
     end
     
     return true
 end
 
-function ImportValidator:validateItem(item, packItem)
+function ImportValidator:ValidateItem(item, packItem)
     if not item.type then
         error("Item is missing `type`")
     end
@@ -87,56 +87,56 @@ function ImportValidator:validateItem(item, packItem)
         error("Packs can not contain items of type `PACK`")
     end
 
-    self:validateType(item)
+    self:ValidateType(item)
 
     if item.type == "PACK" then
-        self:validatePack(item)
+        self:ValidatePack(item)
     end
 
     if item.type == "TRIGGER" then
-        self:validateTrigger(item)
+        self:ValidateTrigger(item)
     end
 
     if item.type == "TIMER" then
-        self:validateTimer(item)
+        self:ValidateTimer(item)
     end
 
     if item.type == "STATE" then
-        self:validateState(item)
+        self:ValidateState(item)
     end
 
     if item.type == "EVENT" then
-        self:validateEvent(item)
+        self:ValidateEvent(item)
     end
 
     if item.type == "RAID_FRAME_ICON" then
-        self:validateRaidFrameIcon(item)
+        self:ValidateRaidFrameIcon(item)
     end
 
     if item.type == "SOUND" then
-        self:validateSound(item)
+        self:ValidateSound(item)
     end
 
     return true
 end
 
-function ImportValidator:validateType(item)
-    if not self.utils:tableContains(self.itemTypes, item.type) then
-        error("Item has an unknown type: " .. toString(item.type))
+function ImportValidator:ValidateType(item)
+    if not self.utils:TableContains(self.itemTypes, item.type) then
+        error("Item has an unknown type: " .. TableToString(item.type))
     end
 end
 
-function ImportValidator:validateEncounter(item)
+function ImportValidator:ValidateEncounter(item)
     if not item.encounter then
         error("Item is missing encounter")
     end
 
-    if not self.utils:isInteger(item.encounter) then
-        error("Item has an invalid encounter: " .. toString(item.encounter))
+    if not self.utils:IsInteger(item.encounter) then
+        error("Item has an invalid encounter: " .. TableToString(item.encounter))
     end
 end
 
-function ImportValidator:validatePackOptions(options)
+function ImportValidator:ValidatePackOptions(options)
     if not options.headerTexture then
         error("Item of type `PACK` is missing `headerTexture`")
     end
@@ -145,7 +145,7 @@ function ImportValidator:validatePackOptions(options)
         error("Item of type `PACK` is missing `headerTexCords`")
     end
 
-    if not self.utils:isArray(options.headerTexCords) then
+    if not self.utils:IsArray(options.headerTexCords) then
         error("Item of type `PACK` has invalid header texture coordinates")
     end
 
@@ -157,13 +157,13 @@ function ImportValidator:validatePackOptions(options)
         error("Item of type `PACK` is missing `groups`")
     end
 
-    if not self.utils:isArray(options.groups) then
+    if not self.utils:IsArray(options.groups) then
         error("Item of type `PACK` has an invalid `groups` field. It should be an array")
     end
 
-    -- if #options.groups == 0 then
-    --     error("Item of type `PACK` is missing `groups`")
-    -- end
+    if #options.groups == 0 then
+        error("Item of type `PACK` is missing `groups`")
+    end
 
     for _, group in ipairs(options.groups) do
         if not group.header then
@@ -174,7 +174,7 @@ function ImportValidator:validatePackOptions(options)
             error("Item of type `PACK` has an options group without `items`")
         end
     
-        if not self.utils:isArray(group.items) then
+        if not self.utils:IsArray(group.items) then
             error("Item of type `PACK` has an invalid `items` field. It should be an array")
         end
 
@@ -187,8 +187,8 @@ function ImportValidator:validatePackOptions(options)
                 error("Item of type `PACK` is missing `type` in a options item")
             end
 
-            if not self.utils:tableContains(self.optionTypes, item.type) then
-                error("Item has an unknown type: " .. toString(item.type))
+            if not self.utils:TableContains(self.optionTypes, item.type) then
+                error("Item has an unknown type: " .. TableToString(item.type))
             end
 
             if not item.name then
@@ -211,7 +211,7 @@ function ImportValidator:validatePackOptions(options)
 end
 
 
-function ImportValidator:validatePack(item)
+function ImportValidator:ValidatePack(item)
     if not item.name then
         error("Item of type `PACK` is missing name")
     end
@@ -224,11 +224,11 @@ function ImportValidator:validatePack(item)
         error("Item of type `PACK` is missing `gameVersion`")
     end
 
-    if not self.utils:tableContains(self.gameVersions, item.gameVersion) then
-        error("Item has an unknown gameVersion: " .. toString(item.type))
+    if not self.utils:TableContains(self.gameVersions, item.gameVersion) then
+        error("Item has an unknown gameVersion: " .. TableToString(item.type))
     end
 
-    if not self.utils:isGameVersion(item.gameVersion) then
+    if not self.utils:IsGameVersion(item.gameVersion) then
         error("Item of type `PACK` has a non matching game version")
     end
 
@@ -240,7 +240,7 @@ function ImportValidator:validatePack(item)
         error("Item of type `PACK` is missing items")
     end
 
-    if not self.utils:isArray(item.items) then
+    if not self.utils:IsArray(item.items) then
         error("Item of type `PACK` has an invalid `items` field. It should be an array")
     end
 
@@ -249,16 +249,16 @@ function ImportValidator:validatePack(item)
     end
 
     for _, item in ipairs(item.items) do
-        self:validateItem(item, true)
+        self:ValidateItem(item, true)
     end
 
     if item.options then
-        self:validatePackOptions(item.options)
+        self:ValidatePackOptions(item.options)
     end
 end
 
-function ImportValidator:validateTrigger(item) 
-    self:validateEncounter(item)
+function ImportValidator:ValidateTrigger(item) 
+    self:ValidateEncounter(item)
 
     if not item.id then
         error("Item of type `TRIGGER` is missing `id`")
@@ -268,58 +268,58 @@ function ImportValidator:validateTrigger(item)
         error("Item of type `TRIGGER` is missing `triggers`")
     end
 
-    if not self.utils:isArray(item.triggers) then
+    if not self.utils:IsArray(item.triggers) then
         error("Item of type `TRIGGER` has an invalid `triggers` field. It should be a list")
     end
 
     for _, trigger in ipairs(item.triggers) do
-        self:validateRealTrigger(trigger)
+        self:ValidateRealTrigger(trigger)
     end
 
     if item.untriggers then
-        if not self.utils:isArray(item.untriggers) then
+        if not self.utils:IsArray(item.untriggers) then
             error("Item of type `TRIGGER` has an invalid `untriggers` field. It should be a list")
         end
 
         for _, untrigger in ipairs(item.untriggers) do
-            self:validateRealTrigger(untrigger)
+            self:ValidateRealTrigger(untrigger)
         end
     end
 end
 
-function ImportValidator:validateRealTrigger(trigger)
+function ImportValidator:ValidateRealTrigger(trigger)
     if not trigger.type then
         error("Trigger is missing `type`")
     end
 
     if trigger.type == "UNIT_HEALTH" then
-        self:validateUnitHealthTrigger(trigger)
+        self:ValidateUnitHealthTrigger(trigger)
     elseif trigger.type == "SPELL_AURA" then
-        self:validateSpellAuraTrigger(trigger)
+        self:ValidateSpellAuraTrigger(trigger)
     elseif trigger.type == "SPELL_CAST" then
-        self:validateSpellCastTrigger(trigger)
+        self:ValidateSpellCastTrigger(trigger)
     elseif trigger.type == "EMOTE_OR_YELL" then
-        self:validateEmoteOrYellTrigger(trigger)
+        self:ValidateEmoteOrYellTrigger(trigger)
     end
 
-    if trigger.countdown and not self.utils:isInteger(trigger.countdown) then
+    if trigger.countdown and not self.utils:IsInteger(trigger.countdown) then
         error("Trigger has an invalid `countdown` value")
     end
 
-    if trigger.duration and not self.utils:isInteger(trigger.duration) then
+    if trigger.duration and not self.utils:IsInteger(trigger.duration) then
         error("Trigger has an invalid `duration` value")
     end
 
-    if trigger.delay and not self.utils:isInteger(trigger.delay) then
+    if trigger.delay and not self.utils:IsInteger(trigger.delay) then
         error("Trigger has an invalid `delay` value")
     end
 
-    if trigger.throttle and not self.utils:isInteger(trigger.throttle) then
+    if trigger.throttle and not self.utils:IsInteger(trigger.throttle) then
         error("Trigger has an invalid `throttle` value")
     end
 end
 
-function ImportValidator:validateUnitHealthTrigger(trigger)
+function ImportValidator:ValidateUnitHealthTrigger(trigger)
     if not trigger.unit then
         error("Trigger of type `UNIT_HEALTH` is missing `unit`")
     end
@@ -334,39 +334,39 @@ function ImportValidator:validateUnitHealthTrigger(trigger)
         error("Trigger of type `UNIT_HEALTH` requires exactly one condition (`lessThan`, `greaterThan`, ...)")
     end
 
-    if not self.utils:isInteger(conditions[1]) then
+    if not self.utils:IsInteger(conditions[1]) then
         error("Trigger of type `UNIT_HEALTH` has an invalid condition value: " .. conditions[1])
     end
 end
 
-function ImportValidator:validateSpellAuraTrigger(trigger)
+function ImportValidator:ValidateSpellAuraTrigger(trigger)
     if not trigger.spellId then
         error("Trigger of type `SPELL_AURA` is missing `spellId`")
     end
 
-    if not self.utils:isInteger(trigger.spellId) then
+    if not self.utils:IsInteger(trigger.spellId) then
         error("Trigger of type `SPELL_AURA` has an invalid `spellId`")
     end
 end
 
-function ImportValidator:validateSpellCastTrigger(trigger)
+function ImportValidator:ValidateSpellCastTrigger(trigger)
     if not trigger.spellId then
         error("Trigger of type `SPELL_CAST` is missing `spellId`")
     end
 
-    if not self.utils:isInteger(trigger.spellId) then
+    if not self.utils:IsInteger(trigger.spellId) then
         error("Trigger of type `SPELL_AURA` has an invalid `spellId`")
     end
 end
 
-function ImportValidator:validateEmoteOrYellTrigger(trigger)
+function ImportValidator:ValidateEmoteOrYellTrigger(trigger)
     if not trigger.text then
         error("Trigger of type `EMOTE_OR_YELL` is missing `text`")
     end
 end
 
-function ImportValidator:validateTimer(item)
-    self:validateEncounter(item)
+function ImportValidator:ValidateTimer(item)
+    self:ValidateEncounter(item)
 
     if not item.id then
         error("Item of type `TIMER` is missing `id`")
@@ -381,8 +381,8 @@ function ImportValidator:validateTimer(item)
     end
 end
 
-function ImportValidator:validateState(item)
-    self:validateEncounter(item)
+function ImportValidator:ValidateState(item)
+    self:ValidateEncounter(item)
 
     if not item.id then
         error("Item of type `STATE` is missing `id`")
@@ -397,8 +397,8 @@ function ImportValidator:validateState(item)
     end
 end
 
-function ImportValidator:validateEvent(item)
-    self:validateEncounter(item)
+function ImportValidator:ValidateEvent(item)
+    self:ValidateEncounter(item)
 
     if not item.id then
         error("Item of type `EVENT` is missing `id`")
@@ -413,8 +413,8 @@ function ImportValidator:validateEvent(item)
     end
 end
 
-function ImportValidator:validateRaidFrameIcon(item)
-    self:validateEncounter(item)
+function ImportValidator:ValidateRaidFrameIcon(item)
+    self:ValidateEncounter(item)
 
     if not item.id then
         error("Item of type `RAID_FRAME_ICON` is missing `id`")
@@ -429,8 +429,8 @@ function ImportValidator:validateRaidFrameIcon(item)
     end
 end
 
-function ImportValidator:validateSound(item)
-    self:validateEncounter(item)
+function ImportValidator:ValidateSound(item)
+    self:ValidateEncounter(item)
 
     if not item.id then
         error("Item of type `SOUND` is missing `id`")

@@ -7,7 +7,7 @@
 -- local Encounters = addon.EncountersPrototype
 -- Encounters.__index = Encounters
 
--- function Encounters:new()
+-- function Encounters:New()
 --     local instance = setmetatable({}, self)
 
 --     self.initialized = false

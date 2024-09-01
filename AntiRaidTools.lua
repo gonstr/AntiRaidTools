@@ -1,11 +1,15 @@
 ﻿local addonName, addon = ...
 
-local insert = table.insert
-
 addon = LibStub("AceAddon-3.0"):NewAddon(addon, addonName, "AceConsole-3.0", "AceEvent-3.0")
 
 addon.VERSION = GetAddOnMetadata("AntiRaidTools", "Version")
 addon.IS_DEV = addon.VERSION == '\@project-version\@'
+addon.DEBUG = false
+
+addon.MESSAGES = {
+    ART_TOGGLE_FRAME_LOCK = "ART_TOGGLE_FRAME_LOCK",
+    ART_TRIGGER = "ART_TRIGGER"
+}
 
 -- AceDB defaults
 addon.defaults = {
@@ -37,214 +41,111 @@ addon.defaults = {
 }
 
 function addon:OnInitialize()
-    self.db = LibStub("AceDB-3.0"):New(addonName, self.defaults)
+    self.db = self.db or LibStub("AceDB-3.0"):New(addonName, self.defaults)
 
-    self.utils = self.UtilsPrototype:new()
-    self.jsonParser = self.JsonParserPrototype:new()
-    self.base64Parser = self.Base64ParserPrototype:new()
-    self.importParser = self.ImportParserPrototype:new(self.jsonParser, self.base64Parser)
-    self.importValidator = self.ImportValidatorPrototype:new(self.utils)
-    self.import = self.ImportPrototype:new(self.utils, self.importParser, self.base64Parser, self.importValidator)
+    self.utils = self.UtilsPrototype:New()
+    self.jsonParser = self.JsonParserPrototype:New()
+    self.base64Parser = self.Base64ParserPrototype:New()
+    self.importParser = self.ImportParserPrototype:New(self.jsonParser, self.base64Parser)
+    self.importValidator = self.ImportValidatorPrototype:New(self.utils)
+    self.import = self.ImportPrototype:New(self.utils, self.importParser, self.base64Parser, self.importValidator)
 
-    self.options = self.OptionsPrototype:new(self.utils, self.import, self.db, self.encounters)
+    self.options = self.OptionsPrototype:New(self.db, self.utils, self.import, self.encounters)
+
+    self.minimap = self.MinimapPrototype:New(self.db)
+
+    self.frameFactory = self.FrameFactoryPrototype:New()
 end
 
 function addon:OnEnable()
-    -- self:RegisterEvent("PLAYER_ENTERING_WORLD")
-    -- self:RegisterEvent("ENCOUNTER_START")
-    -- self:RegisterEvent("ENCOUNTER_END")
-    -- self:RegisterEvent("PLAYER_REGEN_ENABLED")
-    -- self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    -- self:RegisterEvent("UNIT_HEALTH")
-    -- self:RegisterEvent("GROUP_ROSTER_UPDATE")
-    -- self:RegisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
-    -- self:RegisterEvent("CHAT_MSG_MONSTER_YELL")
+    self.ui = {
+        eventsContainer = self.frameFactory:AcquireFrame("container", "ARTEventsFrame"),
+        statesContainer = self.frameFactory:AcquireFrame("container", "ARTStatesFrame"),
+        timersContainer = self.frameFactory:AcquireFrame("container", "ARTTimersFrame"),
+        specialsContainer = self.frameFactory:AcquireFrame("container", "ARTSpecialsFrame"),
+        events = self.frameFactory:AcquireFrame("events")
+    }
 
-    -- self:RegisterMessage("ART_WA_EVENT")
+    self.ui.eventsContainer:SetData("Events", 300, 100, "CENTER", 0, 160)
+    self.ui.statesContainer:SetData("States", 200, 200, "CENTER", -360, 120)
+    self.ui.timersContainer:SetData("Timers", 200, 200, "CENTER", 360, 120)
+    self.ui.specialsContainer:SetData("Boss Specials", 300, 100, "TOP", 0, -80)
 
-    -- self:RegisterChatCommand("art", "ChatHandleCommand")
+    self.ui.events:SetData(self.db)
+    self.ui.events:GetFrame():SetAllPoints(self.ui.eventsContainer:GetFrame())
+
+    self.controllers = {
+        encounter = self.EncounterControllerPrototype:New(self.db, self.utils)
+    }
+
+    self:RegisterMessage(self.MESSAGES.ART_TOGGLE_FRAME_LOCK)
+
+    self:RegisterChatCommand("art", "HandleChatCommand")
 end
 
 function addon:OnDisable()
-    -- self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-    -- self:UnregisterEvent("ENCOUNTER_START")
-    -- self:UnregisterEvent("ENCOUNTER_END")
-    -- self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-    -- self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    -- self:UnregisterEvent("UNIT_HEALTH")
-    -- self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-    -- self:UnregisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
-    -- self:UnregisterEvent("CHAT_MSG_MONSTER_YELL")
+    for _, frame in pairs(self.ui) do
+        frame:Release()
+    end
 
-    -- self:UnregisterMessage("ART_WA_EVENT")
+    for _, controller in pairs(self.controllers) do
+        controller:Stop()
+    end
 
-    -- self:UnregisterChatCommand("art")
+    self:UnregisterMessage(self.MESSAGES.ART_TOGGLE_FRAME_LOCK)
+
+    self:UnregisterChatCommand("art")
 end
 
--- function addon:PLAYER_ENTERING_WORLD(_, isialLogin, isReloadingUi)
---     if isInitialLogin or isReloadingUi then
---         self.encounters:init()
---     end
--- end
+function addon:ART_TOGGLE_FRAME_LOCK()
+    -- Just get the lock state of one of the frames
+    local areFramesLocked = self.ui.events:IsFrameLocked()
 
--- function AntiRaidTools:SendRaidMessage(event, data, prefix, prio, callbackFn)
---     if IsInRaid() then
---         local payload = {
---             v = self.VERSION,
---             e = event,
---             d = data,
---         }
+    self.ui.eventsContainer:SetFrameLock(not areFramesLocked)
+    self.ui.statesContainer:SetFrameLock(not areFramesLocked)
+    self.ui.timersContainer:SetFrameLock(not areFramesLocked)
+    self.ui.specialsContainer:SetFrameLock(not areFramesLocked)
+end
 
---         if not prefix then
---             prefix = self.PREFIX_MAIN
---         end
+function addon:HandleChatCommand(input)
+    if not input or input:trim() == "" then
+        InterfaceOptionsFrame_OpenToCategory("Anti Raid Tools")
+    else
+        input = input:trim()
 
---         if not prio then
---             prio = "NORMAL"
---         end
+        if input == "debug" then
+            self.DEBUG = not self.DEBUG
+            self:Print("Debug:", self.DEBUG)
+        elseif input == "teststart" then
+            self:TestStart()
+        elseif input == "testend" then
+            self:TestEnd()
+        end
+    end
+end
 
---         self:SendCommMessage(prefix, self:Serialize(payload), "RAID", nil, prio, callbackFn)
---     end
--- end
+function addon:Debug(name, obj)
+    if self.DEBUG then
+        self:Print(name .. ":", obj)
 
--- function AntiRaidTools:OnCommReceived(prefix, message, _, sender)
---     if prefix == self.PREFIX_MAIN or prefix == self.PREFIX_SYNC or prefix == self.PREFIX_SYNC_PROGRESS then
---         local ok, payload = self:Deserialize(message)
---         if ok then
---             self:SyncSetClientVersion(sender, payload.v)
+        if DevTool then
+            DevTool:AddData(obj or name, name)
+        end
+    end 
+end
 
---             if payload.e == "SYNC_REQ_VERSIONS" then
---                 if self.DEBUG then self:Print("Received message SYNC_REQ_VERSIONS:", sender) end
---                 self:SyncSendVersion()
---             elseif payload.e == "SYNC_STATUS" then
---                 if sender ~= UnitName("player") then
---                     if self.DEBUG then self:Print("Received message SYNC_STATUS:", sender) end
---                     self:SyncHandleStatus(payload.d)
---                 end
---             elseif payload.e == "SYNC_PROG" then
---                 if sender ~= UnitName("player") and payload.d.encountersId ~= self.db.profile.data.encountersId then
---                     if self.DEBUG then self:Print("Received message SYNC_PROG:", sender, payload.d.progress) end
---                     self.db.profile.data.encountersProgress = payload.d.progress
---                     self.db.profile.data.encountersId = nil
---                     self.db.profile.data.encounters = {}
---                     self:OverviewUpdate()
---                 end
---             elseif payload.e == "SYNC" then
---                 if sender ~= UnitName("player") then
---                     if self.DEBUG then self:Print("Received message SYNC") end
---                     self.db.profile.data.encountersProgress = nil
---                     self.db.profile.data.encountersId = payload.d.encountersId
---                     self.db.profile.data.encounters = payload.d.encounters
---                     self:OverviewUpdate()
---                 end
---             elseif payload.e == "ACT_GRPS" then
---                 if self.DEBUG then self:Print("Received message ACT_GRPS") end
---                 self:GroupsSetAllActive(payload.d)
---                 self:OverviewUpdateActiveGroups()
---             elseif payload.e == "TRIGGER" then
---                 if self.DEBUG then self:Print("Received message TRIGGER") end
---                 self:NotificationsShowRaidAssignment(payload.d.uuid, payload.d.countdown)
---                 self:NotificationsUpdateSpells()
---             end
---         end
---     end
--- end
+function addon:TestStart()
+    self.controllers.encounter:ENCOUNTER_START(nil, 1035)
 
--- function AntiRaidTools:ART_WA_EVENT(_, event, ...)
---     if event == "WA_NUMEN_TIMER" then
---         self:RaidAssignmentsHandleFojjiNumenTimer(...)
---     end
--- end
+    C_Timer.After(2, function()
+        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 355737)
+    end)
 
--- function AntiRaidTools:ENCOUNTER_START(_, encounterId)
---     if self.DEBUG then self:Print("ENCOUNTER_START") end
---     self:OverviewSelectEncounter(encounterId)
---     self:RaidAssignmentsStartEncounter(encounterId)
--- end
+    -- C_Timer.After(4, function()
+    --     self.controllers.encounter:RAID_BOSS_EMOTE(nil, "throws a |cff5599FFdark|r magic into the cauldron!")
+    -- end)
+end
 
--- function AntiRaidTools:ENCOUNTER_END()
---     if self.DEBUG then self:Print("ENCOUNTER_END") end
---     self:RaidAssignmentsEndEncounter()
---     self:SpellsResetCache()
---     self:UnitsResetDeadCache()
---     self:OverviewUpdateSpells()
---     self:NotificationsUpdateSpells()
--- end
-
--- function AntiRaidTools:PLAYER_REGEN_ENABLED()
---     -- This is just another way of registering an encounter ending
---     if not UnitIsDeadOrGhost("player") then
---         self:RaidAssignmentsEndEncounter()
---         self:SpellsResetCache()
---         self:UnitsResetDeadCache()
---         self:OverviewUpdateSpells()
---         self:NotificationsUpdateSpells()
---     end
--- end
-
--- function AntiRaidTools:UNIT_HEALTH(_, unitId)
---     local guid = UnitGUID(unitId)
-
---     if self:UnitsIsDead(guid) and UnitHealth(unitId) > 0 and not UnitIsGhost(unitId) then
---         if self.DEBUG then self:Print("Handling cached unit coming back to life") end
---         self:UnitsClearDead(guid)
---         self:RaidAssignmentsUpdateGroups()
---         self:OverviewUpdateSpells()
---         self:NotificationsUpdateSpells()
---     end
-
---     self:RaidAssignmentsHandleUnitHealth(unitId)
--- end
-
--- function AntiRaidTools:GROUP_ROSTER_UPDATE()
---     self:OverviewUpdateSpells()
---     self:NotificationsUpdateSpells()
-
---     if IsInRaid() and not self.sentRaidSync then
---         self.sentRaidSync = true
---         self:SyncSendStatus()
---     else
---         self.sentRaidSync = false
---     end
--- end
-
--- function AntiRaidTools:COMBAT_LOG_EVENT_UNFILTERED()
---     local _, subEvent, _,_, sourceName, _, _, destGUID, destName, _, _,spellId = CombatLogGetCurrentEventInfo()
---     self:HandleCombatLog(subEvent, sourceName, destGUID, destName, spellId)
--- end
-
--- function AntiRaidTools:CHAT_MSG_RAID_BOSS_EMOTE(_, text)
---     self:RaidAssignmentsHandleRaidBossEmote(text)
--- end
-
--- function AntiRaidTools:CHAT_MSG_MONSTER_YELL(_, text)
---     self:RaidAssignmentsHandleRaidBossEmote(text)
--- end
-
--- function AntiRaidTools:HandleCombatLog(subEvent, sourceName, destGUID, destName, spellId)
---     if subEvent == "SPELL_CAST_START" then
---         self:RaidAssignmentsHandleSpellCast(subEvent, spellId)
---     elseif subEvent == "SPELL_CAST_SUCCESS" then
---         self:SpellsCacheCast(sourceName, spellId, function()
---             self:OverviewUpdateSpells()
---             self:NotificationsUpdateSpells()
---         end)
---         self:RaidAssignmentsHandleSpellCast(subEvent, spellId)
---         self:RaidAssignmentsUpdateGroups()
-
---         local spell = self:SpellsGetSpell(spellId)
---         if spell then
---             local AntiRaidTools = self
---             C_Timer.NewTimer(spell.duration, function() AntiRaidTools:RaidAssignmentsUpdateGroups() end)
---         end
---     elseif subEvent == "SPELL_AURA_APPLIED" then
---         self:RaidAssignmentsHandleSpellAura(subEvent, spellId)
---     elseif subEvent == "UNIT_DIED" then
---         if self:IsFriendlyRaidMemberOrPlayer(destGUID) then
---             self:UnitsSetDead(destGUID)
---             self:RaidAssignmentsUpdateGroups()
---             self:OverviewUpdateSpells()
---             self:NotificationsUpdateSpells()
---         end
---     end
--- end
+function addon:TestEnd()
+    self.controllers.encounter:ENCOUNTER_END()
+end

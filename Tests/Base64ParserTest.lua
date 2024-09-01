@@ -8,19 +8,19 @@ local testString = [[
 ]]
 
 function TestBase64Parser:TestEncode()
-    local parser = addon.Base64ParserPrototype:new()
+    local parser = addon.Base64ParserPrototype:New()
 
-    luaunit.assertEquals(parser:encode(testString), "ICAgIHsKICAgICAgICAidGVzdCI6IDEyMywKICAgICAgICAiZm9vIjogWyJiYXIiXSwKICAgIH0K")
+    luaunit.assertEquals(parser:Encode(testString), "ICAgIHsKICAgICAgICAidGVzdCI6IDEyMywKICAgICAgICAiZm9vIjogWyJiYXIiXSwKICAgIH0K")
 end
 
 function TestBase64Parser:TestDecode()
-    local parser = addon.Base64ParserPrototype:new()
+    local parser = addon.Base64ParserPrototype:New()
 
-    luaunit.assertEquals(parser:decode("ICAgIHsKICAgICAgICAidGVzdCI6IDEyMywKICAgICAgICAiZm9vIjogWyJiYXIiXSwKICAgIH0K"), testString)
+    luaunit.assertEquals(parser:Decode("ICAgIHsKICAgICAgICAidGVzdCI6IDEyMywKICAgICAgICAiZm9vIjogWyJiYXIiXSwKICAgIH0K"), testString)
 end
 
 function TestBase64Parser:TestFailDecode()
-    local parser = addon.Base64ParserPrototype:new()
+    local parser = addon.Base64ParserPrototype:New()
 
-    luaunit.assertError(function() parser:decode("543(-#)") end)
+    luaunit.assertError(function() parser:Decode("543(-#)") end)
 end
