@@ -8,10 +8,10 @@ EventFrame.__index = EventFrame
 function EventFrame:New()
     local instance = setmetatable({}, self)
 
-    instance.frame = CreateFrame("Frame", nil, UIParent, "BackdropTempalte")
+    instance.frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     instance.frame:SetBackdrop({ bgFile = "Interface\\Cooldown\\LoC-ShadowBG" })
     instance.frame:SetBackdropColor(0, 0, 0, 0.6)
-    instance.frame:SetSize(200, 100)
+    instance.frame:SetSize(200, 50)
     instance.frame:Hide()
 
     return instance
@@ -22,10 +22,14 @@ function EventFrame:GetFrame()
 end
 
 function EventFrame:OnAcquire()
+    addon:Debug("EventFrame:OnAcquire")
+
     self.frame:Show()
 end
 
 function EventFrame:OnRelease()
+    addon:Debug("EventFrame:OnRelease")
+
     self.frame:Hide()
 end
 

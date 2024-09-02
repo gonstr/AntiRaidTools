@@ -69,7 +69,7 @@ end
 
 function EncounterController:ENCOUNTER_START(_, encounterId)
     addon:Debug("EncounterController:ENCOUNTER_START", encounterId)
-    
+
     self:Reset()
 
     -- Populate triggers cache
@@ -77,38 +77,57 @@ function EncounterController:ENCOUNTER_START(_, encounterId)
         for _, item in ipairs(pack.items) do
             if item.type == "TRIGGER" and item.encounter == encounterId then
                 for _, trigger in ipairs(item.triggers) do
-                    local clone = self.utils:DeepClone(trigger)
-
-                    local cacheKey = TriggersCacheKeyForTrigger(clone)
+                    local cacheKey = TriggersCacheKeyForTrigger(trigger)
 
                     if not self.triggersCache[cacheKey] then
                         self.triggersCache[cacheKey] = {}
                     end
 
-                    insert(self.triggersCache[cacheKey] , clone)
+                    insert(self.triggersCache[cacheKey] , {
+                        item = item,
+                        trigger = trigger,
+                        untrigger = false,
+                        lastTriggerTime = nil
+                    })
                 end
 
-                for _, untrigger in ipairs(item.untriggers) do
-                    local clone = self.utils:DeepClone(untrigger)
-
-                    local cacheKey = TriggersCacheKeyForTrigger(clone)
-
-                    if not self.triggersCache[cacheKey] then
-                        self.triggersCache[cacheKey] = {}
+                if item.untriggers then
+                    for _, untrigger in ipairs(item.untriggers) do
+                        local cacheKey = TriggersCacheKeyForTrigger(untrigger)
+    
+                        if not self.triggersCache[cacheKey] then
+                            self.triggersCache[cacheKey] = {}
+                        end
+                        
+                        insert(self.triggersCache[cacheKey], {
+                            item = item,
+                            trigger = trigger,
+                            -- Triggers and untrigger are more or less the same thing, so we can put them
+                            -- in the same cache, but mark them as an untrigger.
+                            untrigger = true,
+                            lastTriggerTime = nil
+                        })
                     end
-
-                    -- We set `isUntrigger` true to mark that this as an untrigger.
-                    -- Internally triggers and untriggers are the same thing so it make
-                    -- sense to just add them to the triggers cache here.
-                    clone.isUntrigger = true
-                    
-                    insert(self.triggersCache[cacheKey], clone)
                 end
             end
         end
     end
 
     self.inEncounter = true
+end
+
+function EncounterController:TriggerThrottled(trigger)
+    local throttle = trigger.trigger.throttle
+
+    if throttle then
+        local lastTriggerTime = trigger.lastTriggerTime
+
+        if lastTriggerTime then
+            return lastTriggerTime + throttle <= GetTime()
+        end
+    end
+
+    return false
 end
 
 function EncounterController:ENCOUNTER_END()
@@ -136,19 +155,19 @@ function EncounterController:UNIT_HEALTH(_, unitId)
 
         if triggers then
             for _, trigger in ipairs(triggers) do
-                if trigger.unit == unitId then
+                if trigger.trigger.unit == unitId then
                     -- We only allow unit health triggers to trigger once
-                    if not trigger.triggered then
+                    if not trigger.lastTriggerTime then
                         local health = UnitHealth(unitId)
                         local maxHealth = UnitHealthMax(unitId)
                         local pct = health / maxHealth * 100
                 
-                        if (trigger.lessThan and health < trigger.lessThan)
-                        or (trigger.greaterThan and health > trigger.greaterThan)
-                        or (trigger.lessThanPct and pct < trigger.lessThanPct)
-                        or (trigger.greaterThanpct and pct > trigger.greaterThanPct)
+                        if (trigger.trigger.lessThan and health < trigger.trigger.lessThan)
+                        or (trigger.trigger.greaterThan and health > trigger.trigger.greaterThan)
+                        or (trigger.trigger.lessThanPct and pct < trigger.trigger.lessThanPct)
+                        or (trigger.trigger.greaterThanpct and pct > trigger.trigger.greaterThanPct)
                         then
-                            trigger.triggered = true
+                            trigger.lastTriggerTime = GetTime()
                             addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
                         end
                     end
@@ -179,12 +198,14 @@ function EncounterController:HandleSpellCast(subEvent, spellId)
 
     if triggers then
         for _, trigger in ipairs(triggers) do
-            if trigger.spellId == spellId then
-                local _, _, _, castTime = GetSpellInfo(spellId)
-
-                -- We don't want to handle a spell casts twice so we only look for start events or success events for instant cast spells
-                if subEvent == "SPELL_CAST_START" or (subEvent == "SPELL_CAST_SUCCESS" and castTime > 0) then
-                    addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
+            if not self:TriggerThrottled(trigger) then
+                if trigger.trigger.spellId == spellId then
+                    local _, _, _, castTime = GetSpellInfo(spellId)
+    
+                    -- We don't want to handle a spell casts twice so we only look for start events or success events for instant cast spells
+                    if subEvent == "SPELL_CAST_START" or (subEvent == "SPELL_CAST_SUCCESS" and castTime > 0) then
+                        addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
+                    end
                 end
             end
         end
@@ -198,8 +219,10 @@ function EncounterController:HandleSpellAura(spellId)
 
     if triggers then
         for _, trigger in ipairs(triggers) do
-            if trigger.spellId == spellId then
-                addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
+            if not self:TriggerThrottled(trigger) then
+                if trigger.trigger.spellId == spellId then
+                    addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
+                end
             end
         end
     end
@@ -236,8 +259,10 @@ function EncounterController:HandleEmoteOrYell(text)
 
     if triggers then
         for _, trigger in ipairs(triggers) do
-            if text:match(trigger.text) ~= nil then
-                addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
+            if not self:TriggerThrottled(trigger) then
+                if text:match(trigger.trigger.text) ~= nil then
+                    addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
+                end
             end
         end
     end

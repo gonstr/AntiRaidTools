@@ -1,7 +1,7 @@
 local addonName, addon = ...
 
 local insert = table.insert
-local sort = table.sort
+local remove = table.remove
 
 local AceEvent = LibStub("AceEvent-3.0")
 
@@ -23,8 +23,9 @@ function EventsFrame:New()
     return instance
 end
 
-function EventsFrame:SetData(db)
+function EventsFrame:SetData(db, frameFactory)
     self.db = db
+    self.frameFactory = frameFactory
 end
 
 function EventsFrame:GetFrame()
@@ -32,7 +33,7 @@ function EventsFrame:GetFrame()
 end
 
 function EventsFrame:OnAcquire()
-    addon:Debug("EventsFrame:OnAcquire", encounterId)
+    addon:Debug("EventsFrame:OnAcquire")
 
     self:RegisterEvent("ENCOUNTER_START")
     self:RegisterEvent("ENCOUNTER_END")
@@ -42,7 +43,7 @@ function EventsFrame:OnAcquire()
 end
 
 function EventsFrame:OnRelease()
-    addon:Debug("EventsFrame:OnRelease", encounterId)
+    addon:Debug("EventsFrame:OnRelease")
 
     self:UnregisterEvent("ENCOUNTER_START")
     self:UnregisterEvent("ENCOUNTER_END")
@@ -52,20 +53,52 @@ function EventsFrame:OnRelease()
 end
 
 function EventsFrame:Reset()
-    addon:Debug("EventsFrame:Reset", encounterId)
+    addon:Debug("EventsFrame:Reset")
 
     self.eventsCache = {}
 
-    if not self.events then
-        self.events = {}
+    if not self.eventFrames then
+        self.eventFrames = {}
     end
 
-    for _, event in ipairs(self.events) do
-        event:Release()
+    for i, event in ipairs(self.eventFrames) do
+        event.frame:Release()
+        self.eventFrames[i] = nil
+    end
+end
+
+function EventsFrame:Update()
+    addon:Debug("EventsFrame:Update")
+
+    self:ReleaseEvents()
+    self:DoLayout()
+end
+
+function EventsFrame:ReleaseEvents()
+    addon:Debug("EventsFrame:ReleaseEvents")
+
+    for i, event in ipairs(self.eventFrames) do
+        if event.expirationTime <= GetTime() then
+            event.frame:Release()
+            remove(self.eventFrames, i)
+        end
+    end
+end
+
+function EventsFrame:DoLayout()
+    addon:Debug("EventsFrame:DoLayout")
+
+    local totalFrames = #self.eventFrames
+
+    for i, event in ipairs(self.eventFrames) do
+        local ofsy = (totalFrames - i) * event.frame:GetFrame():GetHeight() + (totalFrames - i) * 5
+        event.frame:GetFrame():SetPoint("BOTTOM", self.frame, "BOTTOM", 0, ofsy)
     end
 end
 
 function EventsFrame:ENCOUNTER_START(_, encounterId)
+    addon:Debug("EventsFrame:ENCOUNTER_START", encounterId)
+
     self:Reset()
 
     -- Populate events cache
@@ -83,28 +116,49 @@ function EventsFrame:ENCOUNTER_START(_, encounterId)
 end
 
 function EventsFrame:ENCOUNTER_END()
+    addon:Debug("EventsFrame:ENCOUNTER_END")
+
     self:Reset()
 end
 
+function EventsFrame:TriggerCountdown(trigger)
+    if trigger.countdown then
+        return trigger.countdown
+    end
+
+    if trigger.type == "SPELL_CAST" then
+        return select(4, GetSpellInfo(trigger.spellId))
+    end
+
+    return 0
+end
+
 function EventsFrame:ART_TRIGGER(_, trigger)
-    local events = self.eventsCache[trigger.id]
+    addon:Debug("EventsFrame:ART_TRIGGER", trigger)
+
+    local events = self.eventsCache[trigger.item.id]
 
     if events then
-        for _, event in pairs(events) do
-            insert(self.events, {
-                triggerTime = GetTime(),
-                event = addon.frameFactory:AcquireFrame("event")
+        for _, event in ipairs(events) do
+            addon:Debug("EventsFrame:ART_TRIGGER", "Creating Event Frame")
+
+            local eventFrame = self.frameFactory:AcquireFrame("event")
+
+            local countdown = self:TriggerCountdown(trigger.trigger)
+            local duration = 5
+            local expirationTime = GetTime() + countdown + duration
+
+            insert(self.eventFrames, {
+                event = event,
+                frame = eventFrame,
+                countdown = countdown,
+                duration = duration,
+                expirationTime = expirationTime
             })
+
+            C_Timer.After(countdown + duration, function() self:Update() end)
         end
     end
 
-    self:DoLayout()
-end
-
-function EventsFrame:DoLayout()
-    sort(self.events, function(a, b) return a.triggerTime - b.triggerTime end)
-
-    for i, event in ipairs(self.events) do
-        event:SetPoint("BOTTOM", (i - 1) * event:GetFrame():GetHeight())
-    end
+    self:Update()
 end

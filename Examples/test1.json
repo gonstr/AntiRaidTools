@@ -10,9 +10,16 @@
             "type": "TRIGGER",
             "version": 1,
             "encounter": 1035,
-            "triggers": [{ "type": "SPELL_CAST", "spellId": 355737 }],
+            "triggers": [{ "type": "SPELL_CAST", "spellId": 77679 }],
             "untriggers": [{ "type": "EMOTE_OR_YELL", "text": "dark.*into the cauldron" }],
             "id": "trigger-1"
+        },
+        {
+            "type": "TRIGGER",
+            "version": 1,
+            "encounter": 1035,
+            "triggers": [{ "type": "SPELL_CAST", "spellId": 78225 }],
+            "id": "trigger-2"
         },
         {
             "type": "EVENT",
@@ -21,6 +28,14 @@
             "id": "event-1",
             "name": "${ctx.trigger.spellName} on ${ctx.trigger.destUnit} for ${string.format('%.2f', ctx.trigger.amount)}",
             "trigger": "trigger-1"
+        },
+        {
+            "type": "EVENT",
+            "version": 1,
+            "encounter": 1035,
+            "id": "event-1",
+            "name": "Trigger 2",
+            "trigger": "trigger-2"
         }
     ]
 }]

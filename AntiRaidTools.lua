@@ -71,7 +71,7 @@ function addon:OnEnable()
     self.ui.timersContainer:SetData("Timers", 200, 200, "CENTER", 360, 120)
     self.ui.specialsContainer:SetData("Boss Specials", 300, 100, "TOP", 0, -80)
 
-    self.ui.events:SetData(self.db)
+    self.ui.events:SetData(self.db, self.frameFactory)
     self.ui.events:GetFrame():SetAllPoints(self.ui.eventsContainer:GetFrame())
 
     self.controllers = {
@@ -99,7 +99,7 @@ end
 
 function addon:ART_TOGGLE_FRAME_LOCK()
     -- Just get the lock state of one of the frames
-    local areFramesLocked = self.ui.events:IsFrameLocked()
+    local areFramesLocked = self.ui.eventsContainer:IsFrameLocked()
 
     self.ui.eventsContainer:SetFrameLock(not areFramesLocked)
     self.ui.statesContainer:SetFrameLock(not areFramesLocked)
@@ -114,7 +114,7 @@ function addon:HandleChatCommand(input)
         input = input:trim()
 
         if input == "debug" then
-            self.DEBUG = not self.DEBUG
+            self.DEBUG = true
             self:Print("Debug:", self.DEBUG)
         elseif input == "teststart" then
             self:TestStart()
@@ -136,9 +136,14 @@ end
 
 function addon:TestStart()
     self.controllers.encounter:ENCOUNTER_START(nil, 1035)
+    self.ui.events:ENCOUNTER_START(nil, 1035)
 
     C_Timer.After(2, function()
-        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 355737)
+        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 77679)
+    end)
+
+    C_Timer.After(4, function()
+        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 78225)
     end)
 
     -- C_Timer.After(4, function()

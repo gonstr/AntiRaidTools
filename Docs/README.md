@@ -292,7 +292,7 @@ triggers:
 
 ### Countdown, duration, delay and throttle
 
-For most triggers, `countdown` and `duration` fields can also be set.
+For most triggers, `countdown`, `delay` and `throttle` fields can also be set.
 
 `countdown` is used in the user interface for triggers where it makes sense to do a countdown. For `SPELL_CAST` triggers the countdown will be the casttime of the spell if one exists.
 
