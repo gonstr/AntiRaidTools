@@ -1,5 +1,8 @@
 ﻿local addonName, addon = ...
 
+local insert = table.insert
+local remove = table.remove
+
 addon = LibStub("AceAddon-3.0"):NewAddon(addon, addonName, "AceConsole-3.0", "AceEvent-3.0")
 
 addon.VERSION = GetAddOnMetadata("AntiRaidTools", "Version")
@@ -46,14 +49,11 @@ function addon:OnInitialize()
     self.utils = self.UtilsPrototype:New()
     self.jsonParser = self.JsonParserPrototype:New()
     self.base64Parser = self.Base64ParserPrototype:New()
-    self.importParser = self.ImportParserPrototype:New(self.jsonParser, self.base64Parser)
-    self.importValidator = self.ImportValidatorPrototype:New(self.utils)
-    self.import = self.ImportPrototype:New(self.utils, self.importParser, self.base64Parser, self.importValidator)
-
-    self.options = self.OptionsPrototype:New(self.db, self.utils, self.import, self.encounters)
-
+    self.importParser = self.ImportParserPrototype:New()
+    self.importValidator = self.ImportValidatorPrototype:New()
+    self.import = self.ImportPrototype:New()
+    self.options = self.OptionsPrototype:New(self.db)
     self.minimap = self.MinimapPrototype:New(self.db)
-
     self.frameFactory = self.FrameFactoryPrototype:New()
 end
 
@@ -66,17 +66,19 @@ function addon:OnEnable()
         events = self.frameFactory:AcquireFrame("events")
     }
 
-    self.ui.eventsContainer:SetData("Events", 300, 100, "CENTER", 0, 160)
+    self.ui.eventsContainer:SetData("Events", 300, 130, "CENTER", 0, 160)
     self.ui.statesContainer:SetData("States", 200, 200, "CENTER", -360, 120)
     self.ui.timersContainer:SetData("Timers", 200, 200, "CENTER", 360, 120)
     self.ui.specialsContainer:SetData("Boss Specials", 300, 100, "TOP", 0, -80)
 
-    self.ui.events:SetData(self.db, self.frameFactory)
+    self.ui.events:SetData(self.db)
     self.ui.events:GetFrame():SetAllPoints(self.ui.eventsContainer:GetFrame())
 
     self.controllers = {
-        encounter = self.EncounterControllerPrototype:New(self.db, self.utils)
+        encounter = self.EncounterControllerPrototype:New(self.db)
     }
+
+    self.animations = self.AnimationBuilderPrototype:New()
 
     self:RegisterMessage(self.MESSAGES.ART_TOGGLE_FRAME_LOCK)
 
@@ -139,11 +141,11 @@ function addon:TestStart()
     self.ui.events:ENCOUNTER_START(nil, 1035)
 
     C_Timer.After(2, function()
-        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 77679)
+        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 77679, "Maloriak", "Anti")
     end)
 
     C_Timer.After(4, function()
-        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 78225)
+        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 78225, "Maloriak", "Mage")
     end)
 
     -- C_Timer.After(4, function()

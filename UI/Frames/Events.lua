@@ -23,9 +23,8 @@ function EventsFrame:New()
     return instance
 end
 
-function EventsFrame:SetData(db, frameFactory)
+function EventsFrame:SetData(db)
     self.db = db
-    self.frameFactory = frameFactory
 end
 
 function EventsFrame:GetFrame()
@@ -71,7 +70,7 @@ function EventsFrame:Update()
     addon:Debug("EventsFrame:Update")
 
     self:ReleaseEvents()
-    self:DoLayout()
+    self:UpdateLayout()
 end
 
 function EventsFrame:ReleaseEvents()
@@ -85,14 +84,33 @@ function EventsFrame:ReleaseEvents()
     end
 end
 
-function EventsFrame:DoLayout()
-    addon:Debug("EventsFrame:DoLayout")
+function EventsFrame:UpdateLayout()
+    addon:Debug("EventsFrame:UpdateLayout")
 
     local totalFrames = #self.eventFrames
 
     for i, event in ipairs(self.eventFrames) do
+        if event.new then
+            -- New event. Animate alpha.
+            addon.animations:Animate(event.uuid .. ":Alpha", 0, 1, 0.2, function(val)
+                event.frame:GetFrame():SetAlpha(val)
+            end, "SINUSOIDAL_IN")
+
+            event.new = false
+        end
+
+        local currentOfsy = select(5, event.frame:GetFrame():GetPoint(1)) or 0
         local ofsy = (totalFrames - i) * event.frame:GetFrame():GetHeight() + (totalFrames - i) * 5
-        event.frame:GetFrame():SetPoint("BOTTOM", self.frame, "BOTTOM", 0, ofsy)
+
+        if ofsy == currentOfsy then
+            -- Same offset. No need to animate.
+            event.frame:GetFrame():SetPoint("BOTTOM", self.frame, "BOTTOM", 0, 0)
+        else
+            -- New offset. Animate change.
+            addon.animations:Animate(event.uuid .. ":Ofsy", currentOfsy, ofsy, 0.1, function(val)
+                event.frame:GetFrame():SetPoint("BOTTOM", self.frame, "BOTTOM", 0, val)
+            end, "SINUSOIDAL_IN_OUT")
+        end
     end
 end
 
@@ -121,42 +139,37 @@ function EventsFrame:ENCOUNTER_END()
     self:Reset()
 end
 
-function EventsFrame:TriggerCountdown(trigger)
-    if trigger.countdown then
-        return trigger.countdown
-    end
-
-    if trigger.type == "SPELL_CAST" then
-        return select(4, GetSpellInfo(trigger.spellId))
-    end
-
-    return 0
-end
-
 function EventsFrame:ART_TRIGGER(_, trigger)
     addon:Debug("EventsFrame:ART_TRIGGER", trigger)
 
-    local events = self.eventsCache[trigger.item.id]
+    local events = self.eventsCache[trigger.id]
 
     if events then
         for _, event in ipairs(events) do
             addon:Debug("EventsFrame:ART_TRIGGER", "Creating Event Frame")
 
-            local eventFrame = self.frameFactory:AcquireFrame("event")
+            local eventFrame = addon.frameFactory:AcquireFrame("event")
 
-            local countdown = self:TriggerCountdown(trigger.trigger)
             local duration = 5
-            local expirationTime = GetTime() + countdown + duration
+            local countdown = trigger.ctx.castTime or 0
+            local expirationTime = GetTime() + duration + countdown
+
+            eventFrame:SetData(event, trigger.ctx)
 
             insert(self.eventFrames, {
                 event = event,
                 frame = eventFrame,
-                countdown = countdown,
-                duration = duration,
-                expirationTime = expirationTime
+                expirationTime = expirationTime,
+                uuid = addon.utils:GenerateUUID(),
+                new = true
             })
 
-            C_Timer.After(countdown + duration, function() self:Update() end)
+            -- Ensure there is only a maximum of two events
+            while #self.eventFrames > 2 do
+                table.remove(self.eventFrames, 1)
+            end
+
+            C_Timer.After(duration + countdown, function() self:Update() end)
         end
     end
 

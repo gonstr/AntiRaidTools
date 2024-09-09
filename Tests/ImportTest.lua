@@ -1,8 +1,3 @@
--- Mocks
-GetBuildInfo = function()
-    return "9.0.2", "36665", "Nov 17 2020", 40002
-end
-
 TestImport = {}
 
 local base64Import = "W3sNCiAgICAidHlwZSI6ICJQQUNLIiwNCiAgICAidmVyc2lvbiI6IDEsDQogICAgImdhbWVWZXJzaW9uIjogIkNBVEEiLA0KICAgICJuYW1lIjogIlRoZSBiZXN0IHJhaWQgcGFjayIsDQogICAgImlkIjogInBhY2stMTIzIiwNCiAgICAicGFja1ZlcnNpb24iOiAxLA0KICAgICJpdGVtcyI6IFsNCiAgICAgICAgew0KICAgICAgICAgICAgInR5cGUiOiAiVFJJR0dFUiIsDQogICAgICAgICAgICAidmVyc2lvbiI6IDEsDQogICAgICAgICAgICAiZW5jb3VudGVyIjogMTA0MCwNCiAgICAgICAgICAgICJ0cmlnZ2VycyI6IFt7ICJ0eXBlIjogIlNQRUxMX0FVUkEiLCAic3BlbGxJZCI6IDEyMzQsICJkZWxheSI6IDEwLCAidGhyb3R0bGUiOiAzIH1dLA0KICAgICAgICAgICAgInVudHJpZ2dlcnMiOiBbeyAidHlwZSI6ICJFTU9URV9PUl9ZRUxMIiwgInRleHQiOiAiVGhpcyBlbmRzIG5vdyEiIH1dLA0KICAgICAgICAgICAgImlkIjogInRyaWdnZXItMSIsDQogICAgICAgIH0sDQogICAgICAgIHsNCiAgICAgICAgICAgICJ0eXBlIjogIkVWRU5UIiwNCiAgICAgICAgICAgICJ2ZXJzaW9uIjogMSwNCiAgICAgICAgICAgICJpZCI6ICJldmVudC0xIiwNCiAgICAgICAgICAgICJlbmNvdW50ZXIiOiAxMDQwLA0KICAgICAgICAgICAgIm5hbWUiOiAiJHtjdHgudHJpZ2dlci5zcGVsbE5hbWV9IG9uICR7Y3R4LnRyaWdnZXIuZGVzdFVuaXR9IGZvciAke3N0cmluZy5mb3JtYXQoJyUuMmYnLCBjdHgudHJpZ2dlci5hbW91bnQpfSIsDQogICAgICAgICAgICAidHJpZ2dlciI6ICJ0cmlnZ2VyLTEiLA0KICAgICAgICB9DQogICAgXQ0KfV0="
@@ -73,47 +68,33 @@ local invalidJsonImport = [[
 ]]
 
 function TestImport:TestBase64Import()
-    local import = addon.ImportPrototype:New()
-
-    luaunit.assertIsTable(import:Import(base64Import))
+    luaunit.assertIsTable(addon.import:Import(base64Import))
 end
 
 function TestImport:TestMinifiedBase64Import()
-    local import = addon.ImportPrototype:New()
-
-    luaunit.assertIsTable(import:Import(minifiedBase64Import))
+    luaunit.assertIsTable(addon.import:Import(minifiedBase64Import))
 end
 
 function TestImport:TestInvalidBase64Import()
-    local import = addon.ImportPrototype:New()
-
     luaunit.assertErrorMsgContentEquals("Failed to parse import", function()
-        import:Import(invalidBase64Import)
+        addon.import:Import(invalidBase64Import)
     end)
 end
 
 function TestImport:TestJsonImport()
-    local import = addon.ImportPrototype:New()
-
-    luaunit.assertIsTable(import:Import(jsonImport))
+    luaunit.assertIsTable(addon.import:Import(jsonImport))
 end
 
 function TestImport:TestMinifiedJsonImport()
-    local import = addon.ImportPrototype:New()
-
-    luaunit.assertIsTable(import:Import(minifiedJsonImport))
+    luaunit.assertIsTable(addon.import:Import(minifiedJsonImport))
 end
 
 function TestImport:TestEscapedMinifiedJsonImport()
-    local import = addon.ImportPrototype:New()
-
-    luaunit.assertIsTable(import:Import(escapedMinifiedJsonImport))
+    luaunit.assertIsTable(addon.import:Import(escapedMinifiedJsonImport))
 end
 
 function TestImport:TestInvalidJsonImport()
-    local import = addon.ImportPrototype:New()
-
     luaunit.assertErrorMsgContentEquals("Item of type `EVENT` is missing `id`", function()
-        import:Import(invalidJsonImport)
+        addon.import:Import(invalidJsonImport)
     end)
 end

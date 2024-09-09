@@ -37,5 +37,6 @@ UI\Frames\Container.lua
 UI\Frames\Events.lua
 UI\Frames\Event.lua
 UI\FrameFactory.lua
+UI\AnimationBuilder.lua
 UI\AceGUI\AntiRaidToolsPackHeader.lua
 UI\AceGUI\AntiRaidToolsPlaceholder.lua

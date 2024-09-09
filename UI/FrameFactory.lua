@@ -1,6 +1,6 @@
-local insert = table.insert
-
 local addonName, addon = ...
+
+local insert = table.insert
 
 addon.FrameFactoryPrototype = {}
 

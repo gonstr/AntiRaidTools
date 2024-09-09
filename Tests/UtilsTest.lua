@@ -3,53 +3,47 @@ local insert = table.insert
 TestUtils = {}
 
 function TestUtils:TestTableContains()
-    local utils = addon.UtilsPrototype:New()
-
-    luaunit.assertTrue(utils:TableContains({"foo", "bar"}, "foo"))
-    luaunit.assertTrue(utils:TableContains({1, 2, 3}, 2))
-    luaunit.assertTrue(utils:TableContains({false, true}, true))
-    luaunit.assertTrue(utils:TableContains({false, true}, false))
+    luaunit.assertTrue(addon.utils:TableContains({"foo", "bar"}, "foo"))
+    luaunit.assertTrue(addon.utils:TableContains({1, 2, 3}, 2))
+    luaunit.assertTrue(addon.utils:TableContains({false, true}, true))
+    luaunit.assertTrue(addon.utils:TableContains({false, true}, false))
 
     local testTable = {}
     insert(testTable, "foo")
     insert(testTable, "bar")
-    luaunit.assertTrue(utils:TableContains(testTable, "foo"))
+    luaunit.assertTrue(addon.utils:TableContains(testTable, "foo"))
 
-    luaunit.assertFalse(utils:TableContains({"foo", "bar"}, "baz"))
-    luaunit.assertFalse(utils:TableContains({1, 2, 3}, 5))
-    luaunit.assertFalse(utils:TableContains({{ "foo "}}, { "bar"}))
-    luaunit.assertFalse(utils:TableContains({false, true}, nil))
+    luaunit.assertFalse(addon.utils:TableContains({"foo", "bar"}, "baz"))
+    luaunit.assertFalse(addon.utils:TableContains({1, 2, 3}, 5))
+    luaunit.assertFalse(addon.utils:TableContains({{ "foo "}}, { "bar"}))
+    luaunit.assertFalse(addon.utils:TableContains({false, true}, nil))
 
-    luaunit.assertFalse(utils:TableContains({
+    luaunit.assertFalse(addon.utils:TableContains({
         a = "foo",
         b = "bar"
     }, "foo"))
 end
 
 function TestUtils:TestDeepCloneAndDeepEqual()
-    local utils = addon.UtilsPrototype:New()
-
     local t1 = {
         a = "b",
         b = { 1, 2 }
     }
 
-    local c1 = utils:DeepClone(t1)
+    local c1 = addon.utils:DeepClone(t1)
 
-    luaunit.assertTrue(utils:DeepEqual(t1, c1))
+    luaunit.assertTrue(addon.utils:DeepEqual(t1, c1))
 
     local t2 = { 1, 2, 3, 4 }
 
-    local c2 = utils:DeepClone(t2)
+    local c2 = addon.utils:DeepClone(t2)
 
-    luaunit.assertTrue(utils:DeepEqual(t2, c2))
+    luaunit.assertTrue(addon.utils:DeepEqual(t2, c2))
 end
 
 function TestUtils:TestStripErrorFileAndLine()
-    local utils = addon.UtilsPrototype:New()
-
-    luaunit.assertEquals(utils:StripErrorFileAndLine("Foo/Bar/Baz.lua:303: Some error"), "Some error")
-    luaunit.assertEquals(utils:StripErrorFileAndLine("Some error"), "Some error")
+    luaunit.assertEquals(addon.utils:StripErrorFileAndLine("Foo/Bar/Baz.lua:303: Some error"), "Some error")
+    luaunit.assertEquals(addon.utils:StripErrorFileAndLine("Some error"), "Some error")
 end
 
 local event = {
@@ -62,8 +56,6 @@ local event = {
 }
 
 function TestUtils:TestFilterTable()
-    local utils = addon.UtilsPrototype:New()
-
     local items = {
         {
             type = "EVENT",
@@ -91,13 +83,11 @@ function TestUtils:TestFilterTable()
         }
     }
 
-    luaunit.assertEquals(#utils:FilterTable(items, function(item) return item.type == "EVENT" end), 2)
-    luaunit.assertEquals(#utils:FilterTable(items, function(item) return item.encounter == 1050 end), 1)
+    luaunit.assertEquals(#addon.utils:FilterTable(items, function(item) return item.type == "EVENT" end), 2)
+    luaunit.assertEquals(#addon.utils:FilterTable(items, function(item) return item.encounter == 1050 end), 1)
 end
 
 function TestUtils:TestGroupTable()
-    local utils = addon.UtilsPrototype:New()
-
     local items = {
         {
             type = "EVENT",
@@ -126,15 +116,34 @@ function TestUtils:TestGroupTable()
     }
 
     do
-        local groups = utils:GroupTable(items, function(item) return item.type end)
+        local groups = addon.utils:GroupTable(items, function(item) return item.type end)
         luaunit.assertEquals(#groups["EVENT"], 2)
         luaunit.assertEquals(#groups["RAID_FRAME_ICON"], 1)
     end
 
     do
-        local groups = utils:GroupTable(items, function(item) return item.id end)
+        local groups = addon.utils:GroupTable(items, function(item) return item.id end)
         luaunit.assertEquals(#groups["event-1"], 1)
         luaunit.assertEquals(#groups["event-2"], 1)
         luaunit.assertEquals(#groups["raid-icon-1"], 1)
     end
+end
+
+function TestUtils:TestStringInterpolate()
+    luaunit.assertEquals(addon.utils:StringInterpolate("${ctx.trigger.spellName} on ${string.upper(ctx.trigger.destUnit)}", {
+        ctx = {
+            trigger = {
+                spellName = "Shadow Trap",
+                destUnit = "Anti"
+            }
+        }
+    }), "Shadow Trap on ANTI")
+
+    luaunit.assertEquals(addon.utils:StringInterpolate("${ctx.trigger.spellName} on ${string.upper(ctx.trigger.destUnit)}", {
+        ctx = {
+            trigger = {
+                spellName = "Shadow Trap"
+            }
+        }
+    }), "Shadow Trap on ???")
 end

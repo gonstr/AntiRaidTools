@@ -226,7 +226,7 @@ function Options:ImportGroup()
                         self.db.profile.v1.options.import = nil
                     end
 
-                    local pack = self.import:Import(val)[1]
+                    local pack = addon.import:Import(val)[1]
 
                     self.db.profile.v1.packs[pack.id] = pack
 
@@ -259,10 +259,10 @@ function Options:ImportGroup()
                         return true
                     end
             
-                    local ok, result = pcall(function() return self.import:Import(val) end)
+                    local ok, result = pcall(function() return addon.import:Import(val) end)
         
                     if not ok then
-                        return self.utils:StripErrorFileAndLine(result)
+                        return addon.utils:StripErrorFileAndLine(result)
                     end
             
                     return true
@@ -326,12 +326,10 @@ function Options:OptionsTable()
     }
 end
 
-function Options:New(db, utils, import)
+function Options:New(db)
     local instance = setmetatable({}, self)
 
-    instance.utils = utils or addon.UtilsPrototype:New()
-    instance.import = import or addon.ImportPrototype:New()
-    instance.db = assert(db)
+    instance.db = db
     
     AceConfigRegistry:RegisterOptionsTable("AntiRaidTools", function() return instance:OptionsTable() end)
     AceConfigDialog:AddToBlizOptions("AntiRaidTools", "Anti Raid Tools")

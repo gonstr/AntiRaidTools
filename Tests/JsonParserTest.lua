@@ -1,32 +1,22 @@
 TestJsonParser = {}
 
 function TestJsonParser:TestEncode()
-    local parser = addon.JsonParserPrototype:New()
-
-    luaunit.assertEquals(parser:Encode({ foo = "bar" }), '{"foo":"bar"}')
+    luaunit.assertEquals(addon.jsonParser:Encode({ foo = "bar" }), '{"foo":"bar"}')
 end
 
 function TestJsonParser:TestDecodeObject()
-    local parser = addon.JsonParserPrototype:New()
-
-    luaunit.assertEquals(parser:Decode('{ "foo": "bar" }'), { foo = "bar" })
+    luaunit.assertEquals(addon.jsonParser:Decode('{ "foo": "bar" }'), { foo = "bar" })
 end
 
 function TestJsonParser:TestDecodeArray()
-    local parser = addon.JsonParserPrototype:New()
-
-    luaunit.assertEquals(parser:Decode('["foo", "bar"]'), { "foo", "bar" })
+    luaunit.assertEquals(addon.jsonParser:Decode('["foo", "bar"]'), { "foo", "bar" })
 end
 
 function TestJsonParser:TestFailDecode()
-    local parser = addon.JsonParserPrototype:New()
-
-    luaunit.assertError(function() parser:Decode('["foo", {"bar"]') end)
+    luaunit.assertError(function() addon.jsonParser:Decode('["foo", {"bar"]') end)
 end
 
 function TestJsonParser:TestDecodeImport()
-    local parser = addon.JsonParserPrototype:New()
-
     local import = [[
         [{
             "type": "PACK",
@@ -93,5 +83,5 @@ function TestJsonParser:TestDecodeImport()
         }
     }
 
-    luaunit.assertEquals(parser:Decode(import), expectedResult)
+    luaunit.assertEquals(addon.jsonParser:Decode(import), expectedResult)
 end

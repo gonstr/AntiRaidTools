@@ -9,6 +9,18 @@ loadfile("Import.lua")(addonName, addon)
 loadfile("ImportValidator.lua")(addonName, addon)
 loadfile("Utils.lua")(addonName, addon)
 
+addon.utils = addon.UtilsPrototype:New()
+addon.jsonParser = addon.JsonParserPrototype:New()
+addon.base64Parser = addon.Base64ParserPrototype:New()
+addon.importParser = addon.ImportParserPrototype:New()
+addon.importValidator = addon.ImportValidatorPrototype:New()
+addon.import = addon.ImportPrototype:New()
+
+-- Polyfills
+function GetBuildInfo()
+    return "9.0.2", "36665", "Nov 17 2020", 40002
+end
+
 require("Tests/JsonParserTest")
 require("Tests/Base64ParserTest")
 require("Tests/ImportParserTest")

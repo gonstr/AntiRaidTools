@@ -25,11 +25,10 @@ local function TriggersCacheKeyForTrigger(trigger)
     error("Unknown trigger type: " .. trigger.type)
 end
 
-function EncounterController:New(db, utils)
+function EncounterController:New(db)
     local instance = setmetatable({}, self)
 
     instance.db = db
-    instance.utils = utils
 
     AceEvent:Embed(instance)
 
@@ -85,8 +84,8 @@ function EncounterController:ENCOUNTER_START(_, encounterId)
 
                     insert(self.triggersCache[cacheKey] , {
                         item = item,
-                        trigger = trigger,
-                        untrigger = false,
+                        rawTrigger = trigger,
+                        isUntrigger = false,
                         lastTriggerTime = nil
                     })
                 end
@@ -101,10 +100,10 @@ function EncounterController:ENCOUNTER_START(_, encounterId)
                         
                         insert(self.triggersCache[cacheKey], {
                             item = item,
-                            trigger = trigger,
+                            rawTrigger = trigger,
                             -- Triggers and untrigger are more or less the same thing, so we can put them
                             -- in the same cache, but mark them as an untrigger.
-                            untrigger = true,
+                            isUntrigger = true,
                             lastTriggerTime = nil
                         })
                     end
@@ -117,7 +116,7 @@ function EncounterController:ENCOUNTER_START(_, encounterId)
 end
 
 function EncounterController:TriggerThrottled(trigger)
-    local throttle = trigger.trigger.throttle
+    local throttle = trigger.rawTrigger.throttle
 
     if throttle then
         local lastTriggerTime = trigger.lastTriggerTime
@@ -162,13 +161,24 @@ function EncounterController:UNIT_HEALTH(_, unitId)
                         local maxHealth = UnitHealthMax(unitId)
                         local pct = health / maxHealth * 100
                 
-                        if (trigger.trigger.lessThan and health < trigger.trigger.lessThan)
-                        or (trigger.trigger.greaterThan and health > trigger.trigger.greaterThan)
-                        or (trigger.trigger.lessThanPct and pct < trigger.trigger.lessThanPct)
-                        or (trigger.trigger.greaterThanpct and pct > trigger.trigger.greaterThanPct)
+                        if (trigger.rawTrigger.lessThan and health < trigger.rawTrigger.lessThan)
+                        or (trigger.rawTrigger.greaterThan and health > trigger.rawTrigger.greaterThan)
+                        or (trigger.rawTrigger.lessThanPct and pct < trigger.rawTrigger.lessThanPct)
+                        or (trigger.rawTrigger.greaterThanpct and pct > trigger.rawTrigger.greaterThanPct)
                         then
                             trigger.lastTriggerTime = GetTime()
-                            addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
+
+                            addon:SendMessage(addon.MESSAGES.ART_TRIGGER, {
+                                id = trigger.item.id,
+                                trigger = trigger.rawTrigger,
+                                ctx = {
+                                    trigger = {
+                                        health = health,
+                                        maxHealth = maxHealth,
+                                        pct = pct
+                                    }
+                                }
+                            })
                         end
                     end
                 end
@@ -184,14 +194,14 @@ function EncounterController:COMBAT_LOG_EVENT_UNFILTERED()
         local _, subEvent, _, _, sourceName, _, _, destGUID, destName, _, _, spellId = CombatLogGetCurrentEventInfo()
 
         if subEvent == "SPELL_CAST_START" or subEvent == "SPELL_CAST_SUCCESS" then
-            self:HandleSpellCast(subEvent, spellId)
+            self:HandleSpellCast(subEvent, spellId, sourceName, destName)
         elseif subEvent == "SPELL_AURA_APPLIED" then
-            self:HandleSpellAura(spellId)
+            self:HandleSpellAura(spellId, sourceName, destName)
         end
     end
 end
 
-function EncounterController:HandleSpellCast(subEvent, spellId)
+function EncounterController:HandleSpellCast(subEvent, spellId, sourceName, destName)
     addon:Debug("EncounterController:HandleSpellCast", { subEvent = subEvent, spellId = spellId })
 
     local triggers = self.triggersCache[TriggersCacheKey("SPELL_CAST", spellId)]
@@ -199,12 +209,25 @@ function EncounterController:HandleSpellCast(subEvent, spellId)
     if triggers then
         for _, trigger in ipairs(triggers) do
             if not self:TriggerThrottled(trigger) then
-                if trigger.trigger.spellId == spellId then
-                    local _, _, _, castTime = GetSpellInfo(spellId)
+                if trigger.rawTrigger.spellId == spellId then
+                    local spellName, _, _, castTime = GetSpellInfo(spellId)
     
                     -- We don't want to handle a spell casts twice so we only look for start events or success events for instant cast spells
                     if subEvent == "SPELL_CAST_START" or (subEvent == "SPELL_CAST_SUCCESS" and castTime > 0) then
-                        addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
+                        addon:SendMessage(addon.MESSAGES.ART_TRIGGER, {
+                            id = trigger.item.id,
+                            trigger = trigger.rawTrigger,
+                            ctx = {
+                                trigger = {
+                                    spellId = spellId,
+                                    spellName = spellName,
+                                    subEvent = subEvent,
+                                    castTime = castTime,
+                                    sourceName = sourceName,
+                                    destName = destName
+                                }
+                            }
+                        })
                     end
                 end
             end
@@ -212,7 +235,7 @@ function EncounterController:HandleSpellCast(subEvent, spellId)
     end
 end
 
-function EncounterController:HandleSpellAura(spellId)
+function EncounterController:HandleSpellAura(spellId, sourceName, destName)
     addon:Debug("EncounterController:HandleSpellAura", spellId)
 
     local triggers = self.triggersCache[TriggersCacheKey("SPELL_AURA", spellId)]
@@ -220,39 +243,49 @@ function EncounterController:HandleSpellAura(spellId)
     if triggers then
         for _, trigger in ipairs(triggers) do
             if not self:TriggerThrottled(trigger) then
-                if trigger.trigger.spellId == spellId then
-                    addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
+                if trigger.rawTrigger.spellId == spellId then
+                    addon:SendMessage(addon.MESSAGES.ART_TRIGGER, {
+                        id = trigger.item.id,
+                        trigger = trigger.rawTrigger,
+                        ctx = {
+                            trigger = {
+                                spellId = spellId,
+                                sourceName = sourceName,
+                                destName = destName
+                            }
+                        }
+                    })
                 end
             end
         end
     end
 end
 
-function EncounterController:RAID_BOSS_EMOTE(_, text)
+function EncounterController:RAID_BOSS_EMOTE(_, text, playerName)
     if self.inEncounter then
         addon:Debug("EncounterController:RAID_BOSS_EMOTE", text)
 
-        self:HandleEmoteOrYell(text)
+        self:HandleEmoteOrYell(text, playerName)
     end
 end
 
-function EncounterController:CHAT_MSG_RAID_BOSS_EMOTE(_, text)
+function EncounterController:CHAT_MSG_RAID_BOSS_EMOTE(_, text, playerName)
     if self.inEncounter then    
         addon:Debug("EncounterController:RAID_BOSS_EMOTE", text)
 
-        self:HandleEmoteOrYell(text)
+        self:HandleEmoteOrYell(text, playerName)
     end
 end
 
-function EncounterController:CHAT_MSG_MONSTER_YELL(_, text)
+function EncounterController:CHAT_MSG_MONSTER_YELL(_, text, playerName)
     if self.inEncounter then
         addon:Debug("EncounterController:CHAT_MSG_MONSTER_YELL", text)
 
-        self:HandleEmoteOrYell(text)
+        self:HandleEmoteOrYell(text, playerName)
     end
 end
 
-function EncounterController:HandleEmoteOrYell(text)
+function EncounterController:HandleEmoteOrYell(text, playerName)
     addon:Debug("EncounterController:HandleEmoteOrYell", text)
 
     local triggers = self.triggersCache[TriggersCacheKey("EMOTE_OR_YELL", text)]
@@ -260,8 +293,16 @@ function EncounterController:HandleEmoteOrYell(text)
     if triggers then
         for _, trigger in ipairs(triggers) do
             if not self:TriggerThrottled(trigger) then
-                if text:match(trigger.trigger.text) ~= nil then
-                    addon:SendMessage(addon.MESSAGES.ART_TRIGGER, trigger)
+                if text:match(trigger.rawTrigger.text) ~= nil then
+                    addon:SendMessage(addon.MESSAGES.ART_TRIGGER, {
+                        id = trigger.item.id,
+                        trigger = trigger.rawTrigger,
+                        ctx = {
+                            trigger = {
+                                playerName = playerName,
+                            }
+                        }
+                    })
                 end
             end
         end

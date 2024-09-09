@@ -43,10 +43,9 @@ local function TableToString(maybeTable, indent)
     return table.concat(result)
 end
 
-function ImportValidator:New(utils)
+function ImportValidator:New()
     local instance = setmetatable({}, self)
 
-    instance.utils = utils or addon.UtilsPrototype:New()
     instance.itemTypes = { "PACK", "TRIGGER", "TIMER", "STATE", "EVENT", "RAID_FRAME_ICON", "SOUND" }
     instance.optionTypes = { "TOGGLE" }
     instance.gameVersions = { "CATA" }
@@ -59,7 +58,7 @@ function ImportValidator:Validate(import)
         error("Import it not a table")
     end
 
-    if not self.utils:IsArray(import) then
+    if not addon.utils:IsArray(import) then
         error("Import is not an array")
     end
 
@@ -121,7 +120,7 @@ function ImportValidator:ValidateItem(item, packItem)
 end
 
 function ImportValidator:ValidateType(item)
-    if not self.utils:TableContains(self.itemTypes, item.type) then
+    if not addon.utils:TableContains(self.itemTypes, item.type) then
         error("Item has an unknown type: " .. TableToString(item.type))
     end
 end
@@ -131,7 +130,7 @@ function ImportValidator:ValidateEncounter(item)
         error("Item is missing encounter")
     end
 
-    if not self.utils:IsInteger(item.encounter) then
+    if not addon.utils:IsInteger(item.encounter) then
         error("Item has an invalid encounter: " .. TableToString(item.encounter))
     end
 end
@@ -145,7 +144,7 @@ function ImportValidator:ValidatePackOptions(options)
         error("Item of type `PACK` is missing `headerTexCords`")
     end
 
-    if not self.utils:IsArray(options.headerTexCords) then
+    if not addon.utils:IsArray(options.headerTexCords) then
         error("Item of type `PACK` has invalid header texture coordinates")
     end
 
@@ -157,7 +156,7 @@ function ImportValidator:ValidatePackOptions(options)
         error("Item of type `PACK` is missing `groups`")
     end
 
-    if not self.utils:IsArray(options.groups) then
+    if not addon.utils:IsArray(options.groups) then
         error("Item of type `PACK` has an invalid `groups` field. It should be an array")
     end
 
@@ -174,7 +173,7 @@ function ImportValidator:ValidatePackOptions(options)
             error("Item of type `PACK` has an options group without `items`")
         end
     
-        if not self.utils:IsArray(group.items) then
+        if not addon.utils:IsArray(group.items) then
             error("Item of type `PACK` has an invalid `items` field. It should be an array")
         end
 
@@ -187,7 +186,7 @@ function ImportValidator:ValidatePackOptions(options)
                 error("Item of type `PACK` is missing `type` in a options item")
             end
 
-            if not self.utils:TableContains(self.optionTypes, item.type) then
+            if not addon.utils:TableContains(self.optionTypes, item.type) then
                 error("Item has an unknown type: " .. TableToString(item.type))
             end
 
@@ -224,11 +223,11 @@ function ImportValidator:ValidatePack(item)
         error("Item of type `PACK` is missing `gameVersion`")
     end
 
-    if not self.utils:TableContains(self.gameVersions, item.gameVersion) then
+    if not addon.utils:TableContains(self.gameVersions, item.gameVersion) then
         error("Item has an unknown gameVersion: " .. TableToString(item.type))
     end
 
-    if not self.utils:IsGameVersion(item.gameVersion) then
+    if not addon.utils:IsGameVersion(item.gameVersion) then
         error("Item of type `PACK` has a non matching game version")
     end
 
@@ -240,7 +239,7 @@ function ImportValidator:ValidatePack(item)
         error("Item of type `PACK` is missing items")
     end
 
-    if not self.utils:IsArray(item.items) then
+    if not addon.utils:IsArray(item.items) then
         error("Item of type `PACK` has an invalid `items` field. It should be an array")
     end
 
@@ -268,7 +267,7 @@ function ImportValidator:ValidateTrigger(item)
         error("Item of type `TRIGGER` is missing `triggers`")
     end
 
-    if not self.utils:IsArray(item.triggers) then
+    if not addon.utils:IsArray(item.triggers) then
         error("Item of type `TRIGGER` has an invalid `triggers` field. It should be a list")
     end
 
@@ -277,7 +276,7 @@ function ImportValidator:ValidateTrigger(item)
     end
 
     if item.untriggers then
-        if not self.utils:IsArray(item.untriggers) then
+        if not addon.utils:IsArray(item.untriggers) then
             error("Item of type `TRIGGER` has an invalid `untriggers` field. It should be a list")
         end
 
@@ -302,19 +301,19 @@ function ImportValidator:ValidateRealTrigger(trigger)
         self:ValidateEmoteOrYellTrigger(trigger)
     end
 
-    if trigger.countdown and not self.utils:IsInteger(trigger.countdown) then
+    if trigger.countdown and not addon.utils:IsInteger(trigger.countdown) then
         error("Trigger has an invalid `countdown` value")
     end
 
-    if trigger.duration and not self.utils:IsInteger(trigger.duration) then
+    if trigger.duration and not addon.utils:IsInteger(trigger.duration) then
         error("Trigger has an invalid `duration` value")
     end
 
-    if trigger.delay and not self.utils:IsInteger(trigger.delay) then
+    if trigger.delay and not addon.utils:IsInteger(trigger.delay) then
         error("Trigger has an invalid `delay` value")
     end
 
-    if trigger.throttle and not self.utils:IsInteger(trigger.throttle) then
+    if trigger.throttle and not addon.utils:IsInteger(trigger.throttle) then
         error("Trigger has an invalid `throttle` value")
     end
 end
@@ -334,7 +333,7 @@ function ImportValidator:ValidateUnitHealthTrigger(trigger)
         error("Trigger of type `UNIT_HEALTH` requires exactly one condition (`lessThan`, `greaterThan`, ...)")
     end
 
-    if not self.utils:IsInteger(conditions[1]) then
+    if not addon.utils:IsInteger(conditions[1]) then
         error("Trigger of type `UNIT_HEALTH` has an invalid condition value: " .. conditions[1])
     end
 end
@@ -344,7 +343,7 @@ function ImportValidator:ValidateSpellAuraTrigger(trigger)
         error("Trigger of type `SPELL_AURA` is missing `spellId`")
     end
 
-    if not self.utils:IsInteger(trigger.spellId) then
+    if not addon.utils:IsInteger(trigger.spellId) then
         error("Trigger of type `SPELL_AURA` has an invalid `spellId`")
     end
 end
@@ -354,7 +353,7 @@ function ImportValidator:ValidateSpellCastTrigger(trigger)
         error("Trigger of type `SPELL_CAST` is missing `spellId`")
     end
 
-    if not self.utils:IsInteger(trigger.spellId) then
+    if not addon.utils:IsInteger(trigger.spellId) then
         error("Trigger of type `SPELL_AURA` has an invalid `spellId`")
     end
 end
