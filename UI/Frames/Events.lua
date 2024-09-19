@@ -54,7 +54,7 @@ end
 function EventsFrame:Reset()
     addon:Debug("EventsFrame:Reset")
 
-    self.eventsCache = {}
+    self.triggerCache = {}
 
     if not self.eventFrames then
         self.eventFrames = {}
@@ -69,33 +69,55 @@ end
 function EventsFrame:Update()
     addon:Debug("EventsFrame:Update")
 
-    self:ReleaseEvents()
-    self:UpdateLayout()
+    self:Update()
 end
 
-function EventsFrame:ReleaseEvents()
-    addon:Debug("EventsFrame:ReleaseEvents")
+function EventsFrame:CreateEvent(event, ctx)
+    local frame = addon.frameFactory:AcquireFrame("event")
 
+    local duration = 5
+    local countdown = ctx.castTime or 0
+    local expirationTime = GetTime() + duration + countdown
+
+    frame:SetData(event, ctx)
+
+    insert(self.eventFrames, {
+        event = event,
+        frame = frame,
+        expirationTime = expirationTime,
+        uuid = addon.utils:GenerateUUID(),
+        new = true
+    })
+
+    
+    C_Timer.After(duration + countdown, function() self:Update() end)
+end
+
+function EventsFrame:ReleaseEvent(uuid)
     for i, event in ipairs(self.eventFrames) do
-        if event.expirationTime <= GetTime() then
+        if event.uuid == uuid then
             event.frame:Release()
             remove(self.eventFrames, i)
         end
     end
 end
 
-function EventsFrame:UpdateLayout()
+function EventsFrame:Update()
     addon:Debug("EventsFrame:UpdateLayout")
 
     local totalFrames = #self.eventFrames
 
     for i, event in ipairs(self.eventFrames) do
+        if event.expirationTime <= GetTime() then
+            -- Event should be released
+            addon.animations:AnimateFrameAlpha(event.frame:GetFrame(), 1, 0, 0.2)
+
+            C_Timer.After(0.2, function() self:ReleaseEvent(event.uuid) end)
+        end
+
         if event.new then
             -- New event. Animate alpha.
-            addon.animations:Animate(event.uuid .. ":Alpha", 0, 1, 0.2, function(val)
-                event.frame:GetFrame():SetAlpha(val)
-            end, "SINUSOIDAL_IN")
-
+            addon.animations:AnimateFrameAlpha(event.frame:GetFrame(), 0, 1, 0.2)
             event.new = false
         end
 
@@ -107,9 +129,7 @@ function EventsFrame:UpdateLayout()
             event.frame:GetFrame():SetPoint("BOTTOM", self.frame, "BOTTOM", 0, 0)
         else
             -- New offset. Animate change.
-            addon.animations:Animate(event.uuid .. ":Ofsy", currentOfsy, ofsy, 0.1, function(val)
-                event.frame:GetFrame():SetPoint("BOTTOM", self.frame, "BOTTOM", 0, val)
-            end, "SINUSOIDAL_IN_OUT")
+            addon.animations:AnimateFramePoint(event.frame:GetFrame(), "BOTTOM", self.frame, currentOfsy, ofsy, 0.1)
         end
     end
 end
@@ -119,15 +139,15 @@ function EventsFrame:ENCOUNTER_START(_, encounterId)
 
     self:Reset()
 
-    -- Populate events cache
+    -- Populate cache
     for _, pack in pairs(self.db.profile.v1.packs) do
         for _, item in ipairs(pack.items) do
             if item.type == "EVENT" and item.encounter == encounterId then
-                if not self.eventsCache[item.trigger] then
-                    self.eventsCache[item.trigger] = {}
+                if not self.triggerCache[item.trigger] then
+                    self.triggerCache[item.trigger] = {}
                 end
 
-                insert(self.eventsCache[item.trigger], item)
+                insert(self.triggerCache[item.trigger], item)
             end
         end
     end
@@ -142,34 +162,18 @@ end
 function EventsFrame:ART_TRIGGER(_, trigger)
     addon:Debug("EventsFrame:ART_TRIGGER", trigger)
 
-    local events = self.eventsCache[trigger.id]
+    local events = self.triggerCache[trigger.id]
 
     if events then
         for _, event in ipairs(events) do
-            addon:Debug("EventsFrame:ART_TRIGGER", "Creating Event Frame")
+            if event['if'] == nil or addon.utils:StringInterpolate(event['if'], trigger.ctx) == "true" then
+                self:CreateEvent(event, trigger.ctx)
 
-            local eventFrame = addon.frameFactory:AcquireFrame("event")
-
-            local duration = 5
-            local countdown = trigger.ctx.castTime or 0
-            local expirationTime = GetTime() + duration + countdown
-
-            eventFrame:SetData(event, trigger.ctx)
-
-            insert(self.eventFrames, {
-                event = event,
-                frame = eventFrame,
-                expirationTime = expirationTime,
-                uuid = addon.utils:GenerateUUID(),
-                new = true
-            })
-
-            -- Ensure there is only a maximum of two events
-            while #self.eventFrames > 2 do
-                table.remove(self.eventFrames, 1)
+                -- Ensure there is only a maximum of three events
+                while #self.eventFrames > 3 do
+                    self:ReleaseEvent(self.eventFrames[1].uuid)
+                end
             end
-
-            C_Timer.After(duration + countdown, function() self:Update() end)
         end
     end
 

@@ -13,7 +13,8 @@ function FrameFactory:New()
     instance.framePrototypes = {
         container = addon.ContainerFramePrototype,
         events = addon.EventsFramePrototype,
-        event = addon.EventFramePrototype
+        event = addon.EventFramePrototype,
+        bar = addon.BarFramePrototype
     }
     
     instance.frames = {}

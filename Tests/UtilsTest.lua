@@ -74,7 +74,7 @@ function TestUtils:TestFilterTable()
             trigger = "trigger-1",
         },
         {
-            type = "RAID_FRAME_ICON",
+            type = "UNIT_FRAME_ICON",
             version = 1,
             id = "raid-icon-1",
             encounter = 1050,
@@ -106,7 +106,7 @@ function TestUtils:TestGroupTable()
             trigger = "trigger-1",
         },
         {
-            type = "RAID_FRAME_ICON",
+            type = "UNIT_FRAME_ICON",
             version = 1,
             id = "raid-icon-1",
             encounter = 1050,
@@ -118,7 +118,7 @@ function TestUtils:TestGroupTable()
     do
         local groups = addon.utils:GroupTable(items, function(item) return item.type end)
         luaunit.assertEquals(#groups["EVENT"], 2)
-        luaunit.assertEquals(#groups["RAID_FRAME_ICON"], 1)
+        luaunit.assertEquals(#groups["UNIT_FRAME_ICON"], 1)
     end
 
     do
@@ -131,19 +131,15 @@ end
 
 function TestUtils:TestStringInterpolate()
     luaunit.assertEquals(addon.utils:StringInterpolate("${ctx.trigger.spellName} on ${string.upper(ctx.trigger.destUnit)}", {
-        ctx = {
-            trigger = {
-                spellName = "Shadow Trap",
-                destUnit = "Anti"
-            }
+        trigger = {
+            spellName = "Shadow Trap",
+            destUnit = "Anti"
         }
     }), "Shadow Trap on ANTI")
 
     luaunit.assertEquals(addon.utils:StringInterpolate("${ctx.trigger.spellName} on ${string.upper(ctx.trigger.destUnit)}", {
-        ctx = {
-            trigger = {
-                spellName = "Shadow Trap"
-            }
+        trigger = {
+            spellName = "Shadow Trap"
         }
     }), "Shadow Trap on ???")
 end

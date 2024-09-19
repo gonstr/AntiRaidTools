@@ -37,7 +37,6 @@ function EncounterController:New(db)
     instance:RegisterEvent("PLAYER_REGEN_ENABLED")
     instance:RegisterEvent("UNIT_HEALTH")
     instance:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    instance:RegisterEvent("RAID_BOSS_EMOTE")
     instance:RegisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
     instance:RegisterEvent("CHAT_MSG_MONSTER_YELL")
 
@@ -54,7 +53,6 @@ function EncounterController:Stop()
     self:UnregisterEvent("PLAYER_REGEN_ENABLED")
     self:UnregisterEvent("UNIT_HEALTH")
     self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    self:UnregisterEvent("RAID_BOSS_EMOTE")
     self:UnregisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
     self:UnregisterEvent("CHAT_MSG_MONSTER_YELL")
 end
@@ -173,6 +171,7 @@ function EncounterController:UNIT_HEALTH(_, unitId)
                                 trigger = trigger.rawTrigger,
                                 ctx = {
                                     trigger = {
+                                        unitId = unitId,
                                         health = health,
                                         maxHealth = maxHealth,
                                         pct = pct
@@ -191,17 +190,17 @@ function EncounterController:COMBAT_LOG_EVENT_UNFILTERED()
     if self.inEncounter then
         addon:Debug("EncounterController:COMBAT_LOG_EVENT_UNFILTERED")
 
-        local _, subEvent, _, _, sourceName, _, _, destGUID, destName, _, _, spellId = CombatLogGetCurrentEventInfo()
+        local _, subEvent, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _, spellId = CombatLogGetCurrentEventInfo()
 
         if subEvent == "SPELL_CAST_START" or subEvent == "SPELL_CAST_SUCCESS" then
-            self:HandleSpellCast(subEvent, spellId, sourceName, destName)
+            self:HandleSpellCast(subEvent, spellId, sourceGUID, sourceName, destGUID, destName)
         elseif subEvent == "SPELL_AURA_APPLIED" then
-            self:HandleSpellAura(spellId, sourceName, destName)
+            self:HandleSpellAura(spellId, sourceGUID, sourceName, destGUID, destName)
         end
     end
 end
 
-function EncounterController:HandleSpellCast(subEvent, spellId, sourceName, destName)
+function EncounterController:HandleSpellCast(subEvent, spellId, sourceGUID, sourceName, destGUID, destName)
     addon:Debug("EncounterController:HandleSpellCast", { subEvent = subEvent, spellId = spellId })
 
     local triggers = self.triggersCache[TriggersCacheKey("SPELL_CAST", spellId)]
@@ -219,11 +218,13 @@ function EncounterController:HandleSpellCast(subEvent, spellId, sourceName, dest
                             trigger = trigger.rawTrigger,
                             ctx = {
                                 trigger = {
+                                    countdown = trigger.rawTrigger.countdown or castTime,
                                     spellId = spellId,
                                     spellName = spellName,
                                     subEvent = subEvent,
-                                    castTime = castTime,
+                                    sourceGUID = sourceGUID,
                                     sourceName = sourceName,
+                                    destGUID = destGUID,
                                     destName = destName
                                 }
                             }
@@ -235,7 +236,7 @@ function EncounterController:HandleSpellCast(subEvent, spellId, sourceName, dest
     end
 end
 
-function EncounterController:HandleSpellAura(spellId, sourceName, destName)
+function EncounterController:HandleSpellAura(spellId, sourceGUID, sourceName, destGUID, destName)
     addon:Debug("EncounterController:HandleSpellAura", spellId)
 
     local triggers = self.triggersCache[TriggersCacheKey("SPELL_AURA", spellId)]
@@ -250,7 +251,9 @@ function EncounterController:HandleSpellAura(spellId, sourceName, destName)
                         ctx = {
                             trigger = {
                                 spellId = spellId,
+                                sourceGUID = sourceGUID,
                                 sourceName = sourceName,
+                                destGUID = destGUID,
                                 destName = destName
                             }
                         }
@@ -261,31 +264,23 @@ function EncounterController:HandleSpellAura(spellId, sourceName, destName)
     end
 end
 
-function EncounterController:RAID_BOSS_EMOTE(_, text, playerName)
-    if self.inEncounter then
-        addon:Debug("EncounterController:RAID_BOSS_EMOTE", text)
-
-        self:HandleEmoteOrYell(text, playerName)
-    end
-end
-
-function EncounterController:CHAT_MSG_RAID_BOSS_EMOTE(_, text, playerName)
+function EncounterController:CHAT_MSG_RAID_BOSS_EMOTE(_, text, sourceName, _, _, destName, _, _, _, _, _, _, sourceGUID)
     if self.inEncounter then    
-        addon:Debug("EncounterController:RAID_BOSS_EMOTE", text)
+        addon:Debug("EncounterController:CHAT_MSG_RAID_BOSS_EMOTE", text)
 
-        self:HandleEmoteOrYell(text, playerName)
+        self:HandleEmoteOrYell(text, sourceGUID, sourceName, destName)
     end
 end
 
-function EncounterController:CHAT_MSG_MONSTER_YELL(_, text, playerName)
+function EncounterController:CHAT_MSG_MONSTER_YELL(_, text, sourceName, _, _, destName, _, _, _, _, _, _, sourceGUID)
     if self.inEncounter then
         addon:Debug("EncounterController:CHAT_MSG_MONSTER_YELL", text)
 
-        self:HandleEmoteOrYell(text, playerName)
+        self:HandleEmoteOrYell(text, sourceGUID, sourceName, destName)
     end
 end
 
-function EncounterController:HandleEmoteOrYell(text, playerName)
+function EncounterController:HandleEmoteOrYell(text, sourceGUID, sourceName, destName)
     addon:Debug("EncounterController:HandleEmoteOrYell", text)
 
     local triggers = self.triggersCache[TriggersCacheKey("EMOTE_OR_YELL", text)]
@@ -299,7 +294,10 @@ function EncounterController:HandleEmoteOrYell(text, playerName)
                         trigger = trigger.rawTrigger,
                         ctx = {
                             trigger = {
-                                playerName = playerName,
+                                text = text,
+                                sourceGUID = sourceGUID,
+                                sourceName = sourceName,
+                                destName = destName
                             }
                         }
                     })

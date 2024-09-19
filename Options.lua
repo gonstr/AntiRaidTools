@@ -60,7 +60,7 @@ local listedPackTypes = {
     ["TIMER"] = "Timers",
     ["STATE"] = "State",
     ["EVENT"] = "Events",
-    ["RAID_FRAME_ICON"] = "Raid Frame Icons",
+    ["UNIT_FRAME_ICON"] = "Unit Frame Icons",
     ["SOUND"] = "Sounds"
 }
 

@@ -2,46 +2,47 @@
 
 ## Import API format
 
-The import should be a list of items. The list should be valid `json`. The import can also be base64 encoded.
+The import should be a list of items. The list should be valid json. The import can also be base64 encoded.
 
-Every item follow a specific schema. All items have the required fields `type` and `version`.
+Every item follow a specific schema. All items have the required fields type and version.
 
 An example import could look like this:
 
 ```json
 [{
-    "type": "PACK",
+  "type": "PACK",
+  "version": 1,
+  "name": "Some raid pack",
+  "id": "pack-123",
+  "packVersion": 1,
+  "items": [{
+    "type": "EVENT",
     "version": 1,
-    "name": "Some raid pack",
-    "id": "pack-123",
-    "packVersion": 1,
-    "items": [{
-        "type": "TIMER",
-        "version": 1,
-        "id": "timer-1",
-        "triggers": [{ "type": "UNIT_HEALTH", "unit": "boss1", "lessThanPct": 80 }],
-        "untriggers": [{ "type": "EMOTE_OR_YELL", "text": "This ends now!" }],
-        "name": "Some ability",
-    }]
+    "id": "event-1",
+    "encounter": 1040,
+    "name": "${ctx.trigger.spellName} on ${ctx.trigger.destUnit} for ${string.format('%.2f'), ctx.trigger.amount)}",
+    "trigger": "trigger-1",
+  }]
 }]
 ```
 
 ### Item types
 
-For `type`, the supported values are:
+For type, the supported values are:
+
 - `PACK`
 - `TRIGGER`
-- `TIMER`
-- `STATE`
 - `EVENT`
-- `RAID_FRAME_ICON`
+- `UNIT_FRAME_ICON`
+- `UNIT_FRAME_GLOW`
+- `COMM`
 - `SOUND`
 
-Fow now, all types are of version `1`. 
+Fow now, all types are of version 1. 
 
 ### encounterId
 
-Most list items only make sense within an encounter, and requires an `encounter` field.
+Most list items only make sense within an encounter, and requires an encounter field.
 
 See https://wowpedia.fandom.com/wiki/DungeonEncounterID for a list of values.
 
@@ -51,43 +52,42 @@ Packs are used as a way to distribute a list of items. This can be used to distr
 
 ```json
 {
-    "type": "PACK",
-    "version": 1,
-    "gameVersion": "CATA",
-    "name": "Some raid pack",
-    "id": "pack-123",
-    "packVersion": 1,
-    "author": "Team ART",
-    "options": {
-        "headerTexture": "interface/questionframe/warboardzonescata",
-        "headerTexCords": [0.0009765625, 0.2626953125, 0.001953125, 0.240234375],
-        "groups": [{
-            "header": "Boss name",
-            "items": [{
-                "type": "TOGGLE",
-                "name": "Some ability",
-                "description": "Enable notifications and raid icons for ability 123",
-                "id": "ability-1",
-                "default": true
-            }]
-        }]
-    },
-    "items": [{
-        "type": "TRIGGER",
-        "version": 1,
-        "id": "trigger-1",
-        "encounter": 1035,
-        "triggers": [{ "type": "SPELL_AURA", "spellId": 1234 }],
-        "untriggers": [{ "type": "EMOTE_OR_YELL", "text": "This ends now!" }],
-    },{
-        "type": "TIMER",
-        "version": 1,
-        "load": "${ctx.pack.options.ability-1}",
-        "id": "timer-1",
-        "encounter": 1035,
-        "trigger": "trigger-1",
+  "type": "PACK",
+  "version": 1,
+  "gameVersion": "CATA",
+  "name": "Some raid pack",
+  "id": "pack-123",
+  "packVersion": 1,
+  "author": "Team ART",
+  "options": {
+    "headerTexture": "interface/questionframe/warboardzonescata",
+    "headerTexCords": [0.0009765625, 0.2626953125, 0.001953125, 0.240234375],
+    "groups": [{
+      "header": "Boss name",
+      "items": [{
+        "type": "TOGGLE",
         "name": "Some ability",
+        "description": "Enable notifications and raid icons for ability 123",
+        "id": "ability-1",
+        "default": true
+      }]
     }]
+  },
+  "items": [{
+      "type": "TRIGGER",
+      "version": 1,
+      "id": "trigger-1",
+      "encounter": 1035,
+      "triggers": [{ "type": "SPELL_AURA", "spellId": 1234 }],
+      "untriggers": [{ "type": "EMOTE_OR_YELL", "text": "This ends now!" }],
+    },{
+      "type": "EVENT",
+      "version": 1,
+      "id": "event-1",
+      "encounter": 1040,
+      "name": "${ctx.trigger.spellName} on ${ctx.trigger.destUnit} for ${string.format('%.2f'), ctx.trigger.amount)}",
+      "trigger": "trigger-1",
+  }]
 }
 ```
 
@@ -99,49 +99,11 @@ Example trigger:
 
 ```json
 {
-    "type": "TRIGGER",
-    "version": 1,
-    "id": "trigger-1",
-    "triggers": [{ "type": "SPELL_AURA", "spellId": "1234" }],
-    "untriggers": [{ "type": "EMOTE_OR_YELL", "text": "This ends now!" }],
-}
-```
-
-## Timers
-
-A timer represent a boss timer.
-
-Example trigger:
-
-```json
-{
-    "type": "TIMER",
-    "version": 1,
-    "id": "timer-1",
-    "encounter": 1040,
-    "name": "Boss ability",
-    "trigger": "trigger-1",
-    "group": "boss1",
-}
-```
-
-`group` is optional.
-
-## States
-
-States represent some encounter state that we want to show. For example, the health of an encounter add. A debuff on a tank.
-
-Example state:
-
-```json
-{
-    "type": "STATE",
-    "version": 1,
-    "id": "state-1",
-    "encounter": 1040,
-    "name": "Some debuff",
-    "trigger": "trigger-1",
-    "group": "tank-debuffs",
+  "type": "TRIGGER",
+  "version": 1,
+  "id": "trigger-1",
+  "triggers": [{ "type": "SPELL_AURA", "spellId": "1234" }],
+  "untriggers": [{ "type": "EMOTE_OR_YELL", "text": "This ends now!" }],
 }
 ```
 
@@ -153,16 +115,17 @@ Example state:
 
 ```json
 {
-    "type": "EVENT",
-    "version": 1,
-    "id": "event-1",
-    "encounter": 1040,
-    "name": "${ctx.trigger.spellName} on ${ctx.trigger.destUnit} for ${string.format('%.2f'), ctx.trigger.amount)}",
-    "trigger": "trigger-1",
+  "type": "EVENT",
+  "version": 1,
+  "id": "event-1",
+  "encounter": 1040,
+  "name": "${utils:FormatColor(ctx.trigger.spellName, 'RED')}",
+  "warn": "${ctx.trigger.destName == UnitName('player')}",
+  "trigger": "trigger-1",
 }
 ```
 
-## Raid Frame icons
+## Unit Frame Icons
 
 Represents a raid frame icon.
 
@@ -170,16 +133,54 @@ Example state:
 
 ```json
 {
-    "type": "RAID_FRAME_ICON",
-    "version": 1,
-    "id": "raid-frame-icon-1",
-    "encounter": 1040,
-    "trigger": "trigger-1",
-    "icon": "Ability_rogue_deviouspoisons",
+  "type": "UNIT_FRAME_ICON",
+  "version": 1,
+  "id": "unit-frame-icon-1",
+  "encounter": 1040,
+  "trigger": "trigger-1",
+  "icon": "Ability_rogue_deviouspoisons",
 }
 ```
 
-`icon` is optional.
+if icon is not provided, it will be infered from the trigger.
+
+## Unit Frame Glow
+
+Represents a raid frame border glow.
+
+Example state:
+
+```json
+{
+  "type": "UNIT_FRAME_GLOW",
+  "version": 1,
+  "id": "unit-frame-glow-1",
+  "encounter": 1040,
+  "trigger": "trigger-1",
+  "type": "AUTOCAST",
+  "color": [ 0.95, 0.95, 0.32, 1 ]
+}
+```
+
+color is RGBA and is optional. type can be AUTOCAST, PIXEL or BUTTON.
+
+## Comm
+
+Represents a some form of communication (say, yell).
+
+Example comm:
+
+```json
+{
+  "type": "COMM",
+  "version": 1,
+  "id": "say-1",
+  "encounter": 1040,
+  "trigger": "trigger-1",
+  "type": "SAY",
+  "text": "Ability on me!",
+}
+```
 
 ## Sounds
 
@@ -189,51 +190,52 @@ Example sound:
 
 ```json
 {
-    "type": "SOUND",
-    "version": 1,
-    "id": "sound-1",
-    "encounter": 1040,
-    "trigger": "trigger-1",
-    "sound": "Ability_rogue_deviouspoisons",
+  "type": "SOUND",
+  "version": 1,
+  "id": "sound-1",
+  "encounter": 1040,
+  "trigger": "trigger-1",
+  "sound": "Ability_rogue_deviouspoisons",
 }
 ```
 
-`icon` is optional.
+icon is optional.
 
 ## Conditional loading
 
 If you created a pack with options, you might want to conditionally load an item.
 
 Example:
+
 ```json
 {
-    "type": "PACK",
-    "version": 1,
-    "name": "Some raid pack",
-    "id": "pack-123",
-    "packVersion": 1,
-    "options": [{
-        "sections": [{
-            "header": "Boss name",
-            "subSections": [{
-                "header": "Events",
-                "items": [{
-                    "type": "TOGGLE",
-                    "name": "Some ability",
-                    "id": "ability-1",
-                    "default": true
-                }] 
-            }]
+  "type": "PACK",
+  "version": 1,
+  "name": "Some raid pack",
+  "id": "pack-123",
+  "packVersion": 1,
+  "options": [{
+    "sections": [{
+      "header": "Boss name",
+      "subSections": [{
+        "header": "Events",
+        "items": [{
+          "type": "TOGGLE",
+          "name": "Some ability",
+          "id": "ability-1",
+          "default": true
         }]
-    }],
-    "items": [{
-        "type": "TIMER",
-        "version": 1,
-        "load": "${ctx.pack.options.ability-1}",
-        "id": "timer-1",
-        "trigger": "trigger-1",
-        "name": "Some ability",
+      }]
     }]
+  }],
+  "items": [{
+    "type": "EVENT",
+    "version": 1,
+    "id": "event-1",
+    "encounter": 1040,
+    "name": "${ctx.trigger.spellName} on ${ctx.trigger.destUnit} for ${string.format('%.2f'), ctx.trigger.amount)}",
+    "trigger": "trigger-1"
+  }]
 }
 ```
 
@@ -242,12 +244,13 @@ Example:
 Triggers and untriggers are used in all the encounter types.
 
 Supported trigger types are:
+
 - `UNIT_HEALTH`
 - `SPELL_CAST`
 - `SPELL_AURA`
 - `EMOTE_OR_YELL`
 
-Depending on the trigger type, various other trigger fields are required. All triggers support `countdown`, `delay` and `throttle`.
+Depending on the trigger type, various other trigger fields are required. All triggers support countdown, delay and throttle.
 
 Example trigger:
 
@@ -257,73 +260,49 @@ Example trigger:
 
 ### UNIT_HEALTH
 
-```yaml
-triggers:
-    type: UNIT_HEALTH
-    unit: boss1
-    lessThanPct: 20
+```json
+"triggers": {
+  "type": "UNIT_HEALTH",
+  "unit": "boss1",
+  "lessThanPct": 20
+}
 ```
 
 requires either `lessThan`, `greaterThan`, `lessThanPct` or `greaterThanPct`.
 
 ### SPELL_AURA
 
-```yaml
-triggers:
-    type: SPELL_AURA
-    spellId: 12345
+```json
+"triggers": {
+  "type": "SPELL_AURA",
+  "spellId": 12345
+}
 ```
 
 ### SPELL_CAST
 
-```yaml
-triggers:
-    type: SPELL_CAST
-    spellId: 12345
+```json
+"triggers": {
+  "type": "SPELL_CAST",
+  "spellId": 12345
+}
 ```
 
 ### EMOTE_OR_YELL
 
-```yaml
-triggers:
-    type: EMOTE_OR_YELL
-    text: "The air crackles with energy!"
+```json
+"triggers": {
+  "type": "EMOTE_OR_YELL",
+  "text": "The air crackles with energy!"
+}
 ```
 
 ### Countdown, duration, delay and throttle
 
 For most triggers, `countdown`, `delay` and `throttle` fields can also be set.
 
-`countdown` is used in the user interface for triggers where it makes sense to do a countdown. For `SPELL_CAST` triggers the countdown will be the casttime of the spell if one exists.
+countdown is used in the user interface for triggers where it makes sense to do a countdown. For SPELL_CAST triggers the countdown will be the casttime of the spell if one exists.
 
-`delay` delays the trigger.
+delay delays the trigger.
 
-`throttle` prevents the trigger from being triggered multiple times within a time window.
-
-## Example Import
-
-```json
-[{
-    "type": "PACK",
-    "version": 1,
-    "name": "The best raid pack",
-    "packVersion": 1,
-    "items": [
-        {
-            "type": "TRIGGER",
-            "version": 1,
-            "encounter": 1040,
-            "triggers": [{ "type": "SPELL_AURA", "spellId": "1234", "delay": 10, "throttle": 3 }],
-            "untriggers": [{ "type": "EMOTE_OR_YELL", "text": "This ends now!" }],
-            "id": "trigger-1",
-        },
-        {
-            "type": "EVENT",
-            "version": 1,
-            "encounter": 1040,
-            "name": "${ctx.trigger.spellName} on ${ctx.trigger.destUnit} for ${string.format('%.2f', ctx.trigger.amount)}",
-            "trigger": "trigger-1",
-        }
-    ]
-}]
-```
+throttle prevents the trigger from being triggered multiple times within a time window.

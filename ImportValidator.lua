@@ -46,7 +46,9 @@ end
 function ImportValidator:New()
     local instance = setmetatable({}, self)
 
-    instance.itemTypes = { "PACK", "TRIGGER", "TIMER", "STATE", "EVENT", "RAID_FRAME_ICON", "SOUND" }
+    instance.itemTypes = { "PACK", "TRIGGER", "EVENT", "UNIT_FRAME_ICON", "UNIT_FRAME_GLOW", "COMM", "SOUND" }
+    instance.commChannels = { "SAY", "YELL" }
+    instance.glowTypes = { "AUTOCAST", "PIXEL", "BUTTON" }
     instance.optionTypes = { "TOGGLE" }
     instance.gameVersions = { "CATA" }
 
@@ -96,20 +98,20 @@ function ImportValidator:ValidateItem(item, packItem)
         self:ValidateTrigger(item)
     end
 
-    if item.type == "TIMER" then
-        self:ValidateTimer(item)
-    end
-
-    if item.type == "STATE" then
-        self:ValidateState(item)
-    end
-
     if item.type == "EVENT" then
         self:ValidateEvent(item)
     end
 
-    if item.type == "RAID_FRAME_ICON" then
-        self:ValidateRaidFrameIcon(item)
+    if item.type == "COMM" then
+        self:ValidateComm(item)
+    end
+
+    if item.type == "UNIT_FRAME_ICON" then
+        self:ValidateUnitFrameIcon(item)
+    end
+
+    if item.type == "UNIT_FRAME_GLOW" then
+        self:ValidateUnitFrameGlow(item)
     end
 
     if item.type == "SOUND" then
@@ -364,38 +366,6 @@ function ImportValidator:ValidateEmoteOrYellTrigger(trigger)
     end
 end
 
-function ImportValidator:ValidateTimer(item)
-    self:ValidateEncounter(item)
-
-    if not item.id then
-        error("Item of type `TIMER` is missing `id`")
-    end
-
-    if not item.name then
-        error("Item of type `TIMER` is missing `name`")
-    end
-
-    if not item.trigger then
-        error("Item of type `TIMER` is missing `trigger`")
-    end
-end
-
-function ImportValidator:ValidateState(item)
-    self:ValidateEncounter(item)
-
-    if not item.id then
-        error("Item of type `STATE` is missing `id`")
-    end
-
-    if not item.name then
-        error("Item of type `STATE` is missing `name`")
-    end
-
-    if not item.trigger then
-        error("Item of type `STATE` is missing `trigger`")
-    end
-end
-
 function ImportValidator:ValidateEvent(item)
     self:ValidateEncounter(item)
 
@@ -410,21 +380,81 @@ function ImportValidator:ValidateEvent(item)
     if not item.trigger then
         error("Item of type `EVENT` is missing `trigger`")
     end
+
+    if item.highlight then
+        if not addon.utils:IsArray(item.highlight) then
+            error("Item has an unknown highlight field: " .. TableToString(item.highlight))
+        end
+
+        if #item.highlight ~= 4 then
+            error("Item has an unknown highlight field: " .. TableToString(item.highlight))
+        end
+    end
 end
 
-function ImportValidator:ValidateRaidFrameIcon(item)
+function ImportValidator:ValidateComm(item)
     self:ValidateEncounter(item)
 
     if not item.id then
-        error("Item of type `RAID_FRAME_ICON` is missing `id`")
+        error("Item of type `COMM` is missing `id`")
     end
 
     if not item.trigger then
-        error("Item of type `RAID_FRAME_ICON` is missing `trigger`")
+        error("Item of type `COMM` is missing `trigger`")
     end
 
-    if not item.icon then
-        error("Item of type `RAID_FRAME_ICON` is missing `icon`")
+    if not item.type then
+        error("Item of type `COMM` is missing `type`")
+    end
+
+    if not addon.utils:TableContains(self.commChannels, item.channel) then
+        error("Item has an unknown channel: " .. TableToString(item.channel))
+    end
+
+    if not item.text then
+        error("Item of type `COMM` is missing `text`")
+    end
+end
+
+function ImportValidator:ValidateUnitFrameIcon(item)
+    self:ValidateEncounter(item)
+
+    if not item.id then
+        error("Item of type `UNIT_FRAME_ICON` is missing `id`")
+    end
+
+    if not item.trigger then
+        error("Item of type `UNIT_FRAME_ICON` is missing `trigger`")
+    end
+end
+
+function ImportValidator:ValidateUnitFrameGlow(item)
+    self:ValidateEncounter(item)
+
+    if not item.id then
+        error("Item of type `UNIT_FRAME_GLOW` is missing `id`")
+    end
+
+    if not item.trigger then
+        error("Item of type `UNIT_FRAME_GLOW` is missing `trigger`")
+    end
+
+    if not item.glow then
+        error("Item of type `UNIT_FRAME_GLOW` is missing `type`")
+    end
+
+    if not addon.utils:TableContains(self.glowTypes, item.glow) then
+        error("Item has an unknown glow type: " .. TableToString(item.glow))
+    end
+
+    if item.color then
+        if not addon.utils:IsArray(item.color) then
+            error("Item has an unknown color field: " .. TableToString(item.color))
+        end
+
+        if #item.color ~= 4 then
+            error("Item has an unknown color field: " .. TableToString(item.color))
+        end
     end
 end
 
@@ -439,11 +469,7 @@ function ImportValidator:ValidateSound(item)
         error("Item of type `SOUND` is missing `trigger`")
     end
 
-    if item.sound and item.tts then
-        error("Item of type `SOUND` has both `sound` and `tts`")
-    end
-
-    if not item.sound and not item.tts then
-        error("Item of type `SOUND` is missing `sound` or `tts`")
+    if not item.file and not item.tts then
+        error("Item of type `SOUND` is missing both `file` and `tts`")
     end
 end

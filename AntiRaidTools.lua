@@ -55,31 +55,29 @@ function addon:OnInitialize()
     self.options = self.OptionsPrototype:New(self.db)
     self.minimap = self.MinimapPrototype:New(self.db)
     self.frameFactory = self.FrameFactoryPrototype:New()
+    self.animations = self.AnimationBuilderPrototype:New()
 end
 
 function addon:OnEnable()
     self.ui = {
         eventsContainer = self.frameFactory:AcquireFrame("container", "ARTEventsFrame"),
-        statesContainer = self.frameFactory:AcquireFrame("container", "ARTStatesFrame"),
-        timersContainer = self.frameFactory:AcquireFrame("container", "ARTTimersFrame"),
         specialsContainer = self.frameFactory:AcquireFrame("container", "ARTSpecialsFrame"),
         events = self.frameFactory:AcquireFrame("events")
     }
 
-    self.ui.eventsContainer:SetData("Events", 300, 130, "CENTER", 0, 160)
-    self.ui.statesContainer:SetData("States", 200, 200, "CENTER", -360, 120)
-    self.ui.timersContainer:SetData("Timers", 200, 200, "CENTER", 360, 120)
-    self.ui.specialsContainer:SetData("Boss Specials", 300, 100, "TOP", 0, -80)
+    self.ui.eventsContainer:SetData("Events", 300, 190, "CENTER", 0, 160)
+    self.ui.specialsContainer:SetData("Boss Specials", 300, 100, "TOP", 0, -60)
 
     self.ui.events:SetData(self.db)
     self.ui.events:GetFrame():SetAllPoints(self.ui.eventsContainer:GetFrame())
 
     self.controllers = {
-        encounter = self.EncounterControllerPrototype:New(self.db)
+        encounter = self.EncounterControllerPrototype:New(self.db),
+        sounds = self.SoundsPrototype:New(self.db),
+        comms = self.CommsPrototype:New(self.db),
+        unitFrames = self.UnitFramesPrototype:New(self.db)
     }
-
-    self.animations = self.AnimationBuilderPrototype:New()
-
+    
     self:RegisterMessage(self.MESSAGES.ART_TOGGLE_FRAME_LOCK)
 
     self:RegisterChatCommand("art", "HandleChatCommand")
@@ -104,8 +102,6 @@ function addon:ART_TOGGLE_FRAME_LOCK()
     local areFramesLocked = self.ui.eventsContainer:IsFrameLocked()
 
     self.ui.eventsContainer:SetFrameLock(not areFramesLocked)
-    self.ui.statesContainer:SetFrameLock(not areFramesLocked)
-    self.ui.timersContainer:SetFrameLock(not areFramesLocked)
     self.ui.specialsContainer:SetFrameLock(not areFramesLocked)
 end
 
@@ -138,14 +134,25 @@ end
 
 function addon:TestStart()
     self.controllers.encounter:ENCOUNTER_START(nil, 1035)
+    self.controllers.sounds:ENCOUNTER_START(nil, 1035)
+    self.controllers.comms:ENCOUNTER_START(nil, 1035)
+    self.controllers.unitFrames:ENCOUNTER_START(nil, 1035)
     self.ui.events:ENCOUNTER_START(nil, 1035)
 
     C_Timer.After(2, function()
-        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 77679, "Maloriak", "Anti")
+        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 77679, nil, "Maloriak", nil, "Anticipâte")
     end)
 
     C_Timer.After(4, function()
-        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 78225, "Maloriak", "Mage")
+        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 78225, nil, "Maloriak", nil, "Mage")
+    end)
+
+    C_Timer.After(5, function()
+        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 78225, nil, "Maloriak", nil, "Mage")
+    end)
+
+    C_Timer.After(7, function()
+        self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 77679, nil, "Maloriak", nil, "Rayemental")
     end)
 
     -- C_Timer.After(4, function()
@@ -155,4 +162,8 @@ end
 
 function addon:TestEnd()
     self.controllers.encounter:ENCOUNTER_END()
+    self.controllers.sounds:ENCOUNTER_END()
+    self.controllers.comms:ENCOUNTER_END()
+    self.controllers.unitFrames:ENCOUNTER_END()
+    self.ui.events:ENCOUNTER_END()
 end

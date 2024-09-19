@@ -16,6 +16,8 @@ addon.importParser = addon.ImportParserPrototype:New()
 addon.importValidator = addon.ImportValidatorPrototype:New()
 addon.import = addon.ImportPrototype:New()
 
+addon.Debug = function() end
+
 -- Polyfills
 function GetBuildInfo()
     return "9.0.2", "36665", "Nov 17 2020", 40002

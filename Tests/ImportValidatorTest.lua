@@ -21,26 +21,6 @@ local trigger = {
     }
 }
 
-local timer = {
-    type = "TIMER",
-    version = 1,
-    id = "timer-1",
-    encounter = 1040,
-    name = "Boss ability",
-    trigger = "trigger-1",
-    group = "Boss1",
-}
-
-local state = {
-    type = "STATE",
-    version = 1,
-    id = "timer-1",
-    encounter = 1040,
-    name = "Boss ability",
-    trigger = "trigger-1",
-    group = "Boss1",
-}
-
 local event = {
     type = "EVENT",
     version = 1,
@@ -51,12 +31,22 @@ local event = {
 }
 
 local raidFrameIcon = {
-    type = "RAID_FRAME_ICON",
+    type = "UNIT_FRAME_ICON",
     version = 1,
     id = "raid-icon-1",
     encounter = 1040,
     trigger = "trigger-1",
     icon = "Ability_rogue_deviouspoisons"
+}
+
+local comm = {
+    type = "COMM",
+    version = 1,
+    id = "say-1",
+    encounter = 1040,
+    trigger = "trigger-1",
+    channel = "SAY",
+    text = "Ability on me!"
 }
 
 local sound = {
@@ -65,7 +55,7 @@ local sound = {
     id = "sound-1",
     encounter = 1040,
     trigger = "trigger-1",
-    sound = "Interface\\AddOns\\addon\\Media\\PowerAuras_Sounds_Sonar.mp3"
+    file = "Interface\\AddOns\\addon\\Media\\PowerAuras_Sounds_Sonar.mp3"
 }
 
 local tts = {
@@ -102,7 +92,7 @@ local pack = {
             }
         }
     },
-    items = { trigger, timer, state, event, raidFrameIcon, sound, tts }
+    items = { trigger, event, raidFrameIcon, comm, sound, tts }
 }
 
 local function createPack(item)
@@ -211,34 +201,6 @@ function TestImportValidator:TestImportTrigger()
     luaunit.assertTrue(addon.importValidator:Validate({ createPack(clone) }))
 end
 
-function TestImportValidator:TestImportTimer()
-    luaunit.assertTrue(addon.importValidator:Validate({ createPack(timer) }))
-
-    luaunit.assertError(function()
-        local clone = addon.utils:DeepClone(timer)
-        clone.id = nil
-        addon.importValidator:Validate({ createPack(clone) })
-    end)
-
-    luaunit.assertError(function()
-        local clone = addon.utils:DeepClone(timer)
-        clone.encounter = nil
-        addon.importValidator:Validate({ createPack(clone) })
-    end)
-
-    luaunit.assertError(function()
-        local clone = addon.utils:DeepClone(timer)
-        clone.name = nil
-        addon.importValidator:Validate({ createPack(clone) })
-    end)
-
-
-    luaunit.assertError(function()
-        local clone = addon.utils:DeepClone(timer)
-        clone.trigger = nil
-        addon.importValidator:Validate({ createPack(clone) })
-    end)
-end
 
 function TestImportValidator:TestImportInvalidPackOptions()
     luaunit.assertError(function()
