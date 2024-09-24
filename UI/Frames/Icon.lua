@@ -50,8 +50,6 @@ function IconFrame:Update()
     
     if self.duration and self.expirationTime then
         self.frame.cooldown:SetCooldown(self.expirationTime - self.duration, self.duration)
-
-        self:ScheduleRelease(self.expirationTime - GetTime())
     end
 
     self.frame.icon:SetTexture(self.icon)

@@ -63,7 +63,7 @@ function UnitFrames:Reset()
 end
 
 function UnitFrames:Update()
-    -- Icons
+    -- Icons, pass 1
     for _, icons in pairs(self.frameIcons) do
         for i, icon in ipairs(icons) do
             if icon.frame and icon.expirationTime <= GetTime() then
@@ -81,18 +81,25 @@ function UnitFrames:Update()
                 if unitFrame then
                     icon.frame:GetFrame():SetParent(unitFrame)
                     icon.frame:GetFrame():SetFrameLevel(10000)
-                    icon.frame:GetFrame():SetPoint("CENTER", unitFrame, "CENTER", 0, 0)
                 end
 
                 if icon.duration and icon.icon then
-                    icon.frame:SetData(icon.icon, icon.duration, icon.expirationTime)
+                    if icon.hideCooldown then
+                        icon.frame:SetData(icon.icon)
+                    else
+                        icon.frame:SetData(icon.icon, icon.duration, icon.expirationTime)
+                    end
                 else
                     -- No duration set, try finding aura by spellId
                     if icon.spellId then
                         local aura = addon.utils:GetUnitAuraBySpellId(icon.unitId, icon.spellId)
 
                         if aura then
-                            icon.frame:SetData(aura.icon, aura.duration, aura.expirationTime)
+                            if icon.hideCooldown then
+                                icon.frame:SetData(aura.icon)
+                            else
+                                icon.frame:SetData(aura.icon, aura.duration, aura.expirationTime)
+                            end
                             icon.expirationTime = aura.expirationTime
                         end
                     end
@@ -104,6 +111,15 @@ function UnitFrames:Update()
 
                 icon.updateFunc = C_Timer.After(icon.expirationTime - GetTime(), function() self:Update() end)
             end
+        end
+    end
+
+    -- Icons, pass 2 (Positioning)
+    for unitId, icons in pairs(self.frameIcons) do
+        local unitFrame = LGF.GetFrame(unitId)
+
+        if unitFrame then
+            addon.utils:SetGridOffsets(addon.utils:TableMap(icons, function(icon) return icon.frame:GetFrame() end), unitFrame, 2)
         end
     end
 
@@ -290,9 +306,15 @@ function UnitFrames:ART_TRIGGER(_, trigger)
                                     unitId = unitId,
                                     spellId = trigger.ctx.trigger.spellId,
                                     duration = 5,
+                                    hideCooldown = item.hideCooldown,
                                     icon = item.icon,
                                     expirationTime = GetTime() + 5,
                                 })
+
+                                -- Ensure there is only a maximum of four icons
+                                while #self.frameIcons[unitId] > 4 do
+                                    self.frameIcons[unitId][1].expirationTime = 0
+                                end
                             end
                         end
                     end

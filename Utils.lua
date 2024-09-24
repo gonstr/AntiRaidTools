@@ -25,6 +25,16 @@ function Utils:TableContains(table, val)
     return false
 end
 
+function Utils:TableMap(table, func)
+    local new_table = {}
+
+    for i, v in ipairs(table) do
+        new_table[i] = func(v, i)
+    end
+    
+    return new_table
+end
+
 function Utils:DeepClone(val)
     local val_type = type(val)
     local copy
@@ -341,4 +351,25 @@ end
 
 function Utils:InterpolateIf(item, ctx)
     return item['if'] == nil or self:StringInterpolate(item['if'], ctx) == "true"
+end
+
+function Utils:SetGridOffsets(frames, parent, columns)
+    if #frames > 0 then
+        columns = math.min(#frames, columns)
+ 
+        local elementWidth, elementHeight = frames[1]:GetSize()
+
+        local rows = math.ceil(#frames / columns)
+
+        for i, frame in ipairs(frames) do
+            local col = (i - 1) % columns
+            local row = math.floor((i - 1) / columns)
+
+            local ofsx = (col * elementWidth) - ((columns - 1) * elementWidth / 2)
+            local ofsy = -((row * elementHeight) - ((rows - 1) * elementHeight / 2))
+
+            frame:ClearAllPoints()
+            frame:SetPoint("CENTER", parent, "CENTER", ofsx, ofsy)
+        end
+    end
 end

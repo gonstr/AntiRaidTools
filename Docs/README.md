@@ -138,6 +138,7 @@ Example state:
   "id": "unit-frame-icon-1",
   "encounter": 1040,
   "trigger": "trigger-1",
+  "hideCooldown" : true,
   "icon": "Ability_rogue_deviouspoisons",
 }
 ```
