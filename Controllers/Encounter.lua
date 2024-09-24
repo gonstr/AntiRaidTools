@@ -16,7 +16,7 @@ end
 local function TriggersCacheKeyForTrigger(trigger)
     if trigger.type == "UNIT_HEALTH" then
         return TriggersCacheKey(trigger.type, trigger.unit)
-    elseif trigger.type == "SPELL_CAST" or trigger.type == "SPELL_AURA" then
+    elseif trigger.type == "SPELL_CAST" or trigger.type == "SPELL_AURA" or trigger.type == "SPELL_AURA_REMOVED" then
         return TriggersCacheKey(trigger.type, trigger.spellId)
     elseif trigger.type == "EMOTE_OR_YELL" then
         return TriggersCacheKey(trigger.type, trigger.text)
@@ -83,7 +83,7 @@ function EncounterController:ENCOUNTER_START(_, encounterId)
                     insert(self.triggersCache[cacheKey] , {
                         item = item,
                         rawTrigger = trigger,
-                        isUntrigger = false,
+                        untrigger = false,
                         lastTriggerTime = nil
                     })
                 end
@@ -98,10 +98,10 @@ function EncounterController:ENCOUNTER_START(_, encounterId)
                         
                         insert(self.triggersCache[cacheKey], {
                             item = item,
-                            rawTrigger = trigger,
+                            rawTrigger = untrigger,
                             -- Triggers and untrigger are more or less the same thing, so we can put them
                             -- in the same cache, but mark them as an untrigger.
-                            isUntrigger = true,
+                            untrigger = true,
                             lastTriggerTime = nil
                         })
                     end
@@ -168,7 +168,9 @@ function EncounterController:UNIT_HEALTH(_, unitId)
 
                             addon:SendMessage(addon.MESSAGES.ART_TRIGGER, {
                                 id = trigger.item.id,
-                                trigger = trigger.rawTrigger,
+                                untrigger = trigger.untrigger,
+                                duration = trigger.rawTrigger.duration,
+                                countdown = trigger.rawTrigger.countdown,
                                 ctx = {
                                     trigger = {
                                         unitId = unitId,
@@ -194,8 +196,10 @@ function EncounterController:COMBAT_LOG_EVENT_UNFILTERED()
 
         if subEvent == "SPELL_CAST_START" or subEvent == "SPELL_CAST_SUCCESS" then
             self:HandleSpellCast(subEvent, spellId, sourceGUID, sourceName, destGUID, destName)
-        elseif subEvent == "SPELL_AURA_APPLIED" then
+        elseif subEvent == "SPELL_AURA_APPLIED" or subEvent == "SPELL_AURA_REFRESH" then
             self:HandleSpellAura(spellId, sourceGUID, sourceName, destGUID, destName)
+        elseif subEvent == "SPELL_AURA_REMOVED" then
+            self:HandleSpellAuraRemoved(spellId, sourceGUID, sourceName, destGUID, destName)
         end
     end
 end
@@ -215,7 +219,9 @@ function EncounterController:HandleSpellCast(subEvent, spellId, sourceGUID, sour
                     if subEvent == "SPELL_CAST_START" or (subEvent == "SPELL_CAST_SUCCESS" and castTime > 0) then
                         addon:SendMessage(addon.MESSAGES.ART_TRIGGER, {
                             id = trigger.item.id,
-                            trigger = trigger.rawTrigger,
+                            untrigger = trigger.untrigger,
+                            duration = trigger.rawTrigger.duration,
+                            countdown = trigger.rawTrigger.countdown,
                             ctx = {
                                 trigger = {
                                     countdown = trigger.rawTrigger.countdown or castTime,
@@ -247,7 +253,39 @@ function EncounterController:HandleSpellAura(spellId, sourceGUID, sourceName, de
                 if trigger.rawTrigger.spellId == spellId then
                     addon:SendMessage(addon.MESSAGES.ART_TRIGGER, {
                         id = trigger.item.id,
-                        trigger = trigger.rawTrigger,
+                        untrigger = trigger.untrigger,
+                        duration = trigger.rawTrigger.duration,
+                        countdown = trigger.rawTrigger.countdown,
+                        ctx = {
+                            trigger = {
+                                spellId = spellId,
+                                sourceGUID = sourceGUID,
+                                sourceName = sourceName,
+                                destGUID = destGUID,
+                                destName = destName
+                            }
+                        }
+                    })
+                end
+            end
+        end
+    end
+end
+
+function EncounterController:HandleSpellAuraRemoved(spellId, sourceGUID, sourceName, destGUID, destName)
+    addon:Debug("EncounterController:HandleSpellAuraRemoved", spellId)
+
+    local triggers = self.triggersCache[TriggersCacheKey("SPELL_AURA_REMOVED", spellId)]
+
+    if triggers then
+        for _, trigger in ipairs(triggers) do
+            if not self:TriggerThrottled(trigger) then
+                if trigger.rawTrigger.spellId == spellId then
+                    addon:SendMessage(addon.MESSAGES.ART_TRIGGER, {
+                        id = trigger.item.id,
+                        untrigger = trigger.untrigger,
+                        duration = trigger.rawTrigger.duration,
+                        countdown = trigger.rawTrigger.countdown,
                         ctx = {
                             trigger = {
                                 spellId = spellId,
@@ -291,7 +329,9 @@ function EncounterController:HandleEmoteOrYell(text, sourceGUID, sourceName, des
                 if text:match(trigger.rawTrigger.text) ~= nil then
                     addon:SendMessage(addon.MESSAGES.ART_TRIGGER, {
                         id = trigger.item.id,
-                        trigger = trigger.rawTrigger,
+                        untrigger = trigger.untrigger,
+                        duration = trigger.rawTrigger.duration,
+                        countdown = trigger.rawTrigger.countdown,
                         ctx = {
                             trigger = {
                                 text = text,

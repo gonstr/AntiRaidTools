@@ -301,18 +301,44 @@ function Utils:Format(str, format)
     return str
 end
 
-function Utils:SetAtlasTextureSizeByWidth(frame, atlas, width)
-    local info = C_Texture.GetAtlasInfo(atlas)
+function Utils:GetUnitAuraBySpellId(unitId, spellId)
+    for i = 1, 40 do
+        do
+            local name, icon, count, debuffType, duration, expirationTime, source, _, _, _spellId = UnitBuff(unitId, i)
 
-    if info then
-        frame:SetWidth(width)
+            if spellId == _spellId then
+                return {
+                    name = name,
+                    icon = icon,
+                    count = count,
+                    debuffType = debuffType,
+                    duration = duration,
+                    expirationTime = expirationTime,
+                    source = source,
+                    spellId = spellId
+                }
+            end
+        end
+        
+        do
+            local name, icon, count, debuffType, duration, expirationTime, source, _, _, _spellId = UnitDebuff(unitId, i)
 
-        local ar = info.height / info.width
-        local height = width * ar
-
-        frame:SetHeight(height)
-
-        instance.frame.highlight:SetPoint("BOTTOM", 0, -5)
-        instance.frame.highlight:SetAtlas("BossBanner-BgBanner-Bottom")
+            if spellId == _spellId then
+                return {
+                    name = name,
+                    icon = icon,
+                    count = count,
+                    debuffType = debuffType,
+                    duration = duration,
+                    expirationTime = expirationTime,
+                    source = source,
+                    spellId = spellId
+                }
+            end
+        end
     end
+end
+
+function Utils:InterpolateIf(item, ctx)
+    return item['if'] == nil or self:StringInterpolate(item['if'], ctx) == "true"
 end

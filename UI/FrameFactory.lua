@@ -14,7 +14,8 @@ function FrameFactory:New()
         container = addon.ContainerFramePrototype,
         events = addon.EventsFramePrototype,
         event = addon.EventFramePrototype,
-        bar = addon.BarFramePrototype
+        bar = addon.BarFramePrototype,
+        icon = addon.IconFramePrototype
     }
     
     instance.frames = {}
@@ -48,7 +49,21 @@ function FrameFactory:AcquireFrame(frameType, ...)
 
     function frame:Release()
         self._acquired = false
+
+        if self._releaseTimer then
+            self._releaseTimer:Cancel()
+            self._releaseTimer = nil
+        end
+
         self:OnRelease()
+    end
+
+    function frame:ScheduleRelease(time)
+        if self._releaseTimer then
+            self._releaseTimer:Cancel()
+        end
+
+        self.releaseTimer = C_Timer.NewTimer(time, function() self:Release() end)
     end
 
     insert(self.frames[frameType], frame)

@@ -20,6 +20,8 @@ function Sounds:New(db)
     instance:RegisterEvent("ENCOUNTER_END")
     instance:RegisterMessage("ART_TRIGGER")
 
+    instance.triggerCache = {}
+    
     instance:Reset()
 
     return instance
@@ -69,13 +71,17 @@ function Sounds:ART_TRIGGER(_, trigger)
 
     if sounds then
         for _, sound in ipairs(sounds) do
-            if sound.file then
-                PlaySoundFile(sound.file, "Master")
-            end
-
-            if sound.tts then
-                local voice = C_VoiceChat.GetTtsVoices()[2].voiceID
-                C_VoiceChat.SpeakText(voice, sound.tts, 1, 0, 100)
+            if addon.utils:InterpolateIf(sound, trigger.ctx) then
+                if not trigger.untrigger then
+                    if sound.file then
+                        PlaySoundFile(sound.file, "Master")
+                    end
+        
+                    if sound.tts then
+                        local voice = C_VoiceChat.GetTtsVoices()[2].voiceID
+                        C_VoiceChat.SpeakText(voice, sound.tts, 1, 0, 100)
+                    end
+                end
             end
         end
     end

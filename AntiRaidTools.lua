@@ -143,6 +143,10 @@ function addon:TestStart()
         self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 77679, nil, "Maloriak", nil, "Anticipâte")
     end)
 
+    C_Timer.After(2, function()
+        self.controllers.encounter:HandleSpellAura(53563, nil, "Anticipâte", nil, "Anticipâte")
+    end)
+
     C_Timer.After(4, function()
         self.controllers.encounter:HandleSpellCast("SPELL_CAST_START", 78225, nil, "Maloriak", nil, "Mage")
     end)

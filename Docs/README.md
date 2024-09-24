@@ -248,6 +248,7 @@ Supported trigger types are:
 - `UNIT_HEALTH`
 - `SPELL_CAST`
 - `SPELL_AURA`
+- `SPELL_AURA_REMOVED`
 - `EMOTE_OR_YELL`
 
 Depending on the trigger type, various other trigger fields are required. All triggers support countdown, delay and throttle.
@@ -272,9 +273,20 @@ requires either `lessThan`, `greaterThan`, `lessThanPct` or `greaterThanPct`.
 
 ### SPELL_AURA
 
+Triggers on both `SPELL_AURA_APPLIED` and `SPELL_AURA_REFRESH`.
+
 ```json
 "triggers": {
   "type": "SPELL_AURA",
+  "spellId": 12345
+}
+```
+
+### SPELL_AURA_REMOVED
+
+```json
+"triggers": {
+  "type": "SPELL_AURA_REMOVED",
   "spellId": 12345
 }
 ```
@@ -299,10 +311,22 @@ requires either `lessThan`, `greaterThan`, `lessThanPct` or `greaterThanPct`.
 
 ### Countdown, duration, delay and throttle
 
-For most triggers, `countdown`, `delay` and `throttle` fields can also be set.
+For most triggers, `countdown`, `duration`, `delay` and `throttle` fields can also be set.
 
-countdown is used in the user interface for triggers where it makes sense to do a countdown. For SPELL_CAST triggers the countdown will be the casttime of the spell if one exists.
+All fields are optional.
 
-delay delays the trigger.
+#### Countdown
 
-throttle prevents the trigger from being triggered multiple times within a time window.
+Used in the user interface for triggers where it makes sense to do a countdown. For `SPELL_CAST` triggers countdown will be the casttime of the spell if one exists.
+
+#### Duration
+
+How long the trigger will be active for. The defualt is `5` seconds.
+
+#### Delay
+
+Delay the trigger execution. If an `untrigger` triggers during the delay, the trigger will be cancelled before it's run.
+
+#### Throttle
+
+Prevents the trigger from being triggered multiple times within a time window.

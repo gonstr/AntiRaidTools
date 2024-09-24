@@ -18,6 +18,9 @@ function EventsFrame:New()
     instance.frame = CreateFrame("Frame", nil, UIParent)
     instance.frame:Hide()
 
+    instance.triggerCache = {}
+    instance.eventFrames = {}
+
     instance:Reset()
 
     return instance
@@ -56,10 +59,6 @@ function EventsFrame:Reset()
 
     self.triggerCache = {}
 
-    if not self.eventFrames then
-        self.eventFrames = {}
-    end
-
     for i, event in ipairs(self.eventFrames) do
         event.frame:Release()
         self.eventFrames[i] = nil
@@ -72,10 +71,9 @@ function EventsFrame:Update()
     self:Update()
 end
 
-function EventsFrame:CreateEvent(event, ctx)
+function EventsFrame:CreateEvent(event, ctx, duration)
     local frame = addon.frameFactory:AcquireFrame("event")
 
-    local duration = 5
     local countdown = ctx.castTime or 0
     local expirationTime = GetTime() + duration + countdown
 
@@ -166,12 +164,23 @@ function EventsFrame:ART_TRIGGER(_, trigger)
 
     if events then
         for _, event in ipairs(events) do
-            if event['if'] == nil or addon.utils:StringInterpolate(event['if'], trigger.ctx) == "true" then
-                self:CreateEvent(event, trigger.ctx)
+            if addon.utils:InterpolateIf(event, trigger.ctx) then
+                if trigger.untrigger then
+                    -- Untrigger
+                    for _, event in ipairs(self.eventFrames) do
+                        if event.event.trigger == trigger.id then
+                            event.expirationTime = 0
+                            self:Update()
+                        end
+                    end
+                else
+                    -- Trigger
+                    self:CreateEvent(event, trigger.ctx, trigger.duration or 5)
 
-                -- Ensure there is only a maximum of three events
-                while #self.eventFrames > 3 do
-                    self:ReleaseEvent(self.eventFrames[1].uuid)
+                    -- Ensure there is only a maximum of three events
+                    while #self.eventFrames > 3 do
+                        self:ReleaseEvent(self.eventFrames[1].uuid)
+                    end
                 end
             end
         end

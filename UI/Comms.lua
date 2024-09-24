@@ -20,6 +20,8 @@ function Comms:New(db)
     instance:RegisterEvent("ENCOUNTER_END")
     instance:RegisterMessage("ART_TRIGGER")
 
+    instance.triggerCache = {}
+    
     instance:Reset()
 
     return instance
@@ -71,7 +73,11 @@ function Comms:ART_TRIGGER(_, trigger)
 
         if comms then
             for _, comm in ipairs(comms) do
-                pcall(function() SendChatMessage(addon.utils:StringInterpolate(comm.text, trigger.ctx), comm.channel) end)
+                if addon.utils:InterpolateIf(comm, trigger.ctx) then
+                    if not trigger.untrigger then
+                        pcall(function() SendChatMessage(addon.utils:StringInterpolate(comm.text, trigger.ctx), comm.channel) end)
+                    end
+                end
             end
         end
     end

@@ -1,6 +1,7 @@
 local addonName, addon = ...
 
 local insert = table.insert
+local remove = table.remove
 
 local AceEvent = LibStub("AceEvent-3.0")
 local LGF = LibStub("LibGetFrame-1.0")
@@ -22,6 +23,12 @@ function UnitFrames:New(db)
     instance:RegisterEvent("ENCOUNTER_END")
     instance:RegisterMessage("ART_TRIGGER")
 
+    -- key = unitId, values = list of icons/glows
+    instance.frameIcons = {}
+    instance.frameGlows = {}
+
+    instance.triggerCache = {}
+
     instance:Reset()
 
     LGF:ScanForUnitFrames()
@@ -38,7 +45,114 @@ end
 function UnitFrames:Reset()
     addon:Debug("Sounds:Reset")
 
+    for _, icons in pairs(self.frameIcons) do
+        for _, icon in ipairs(icons) do
+            icon.expirationTime = 0
+        end
+    end
+
+    for _, glows in pairs(self.frameGlows) do
+        for _, glow in ipairs(glows) do
+            glow.expirationTime = 0
+        end
+    end
+
+    self:Update()
+
     self.triggerCache = {}
+end
+
+function UnitFrames:Update()
+    -- Icons
+    for _, icons in pairs(self.frameIcons) do
+        for i, icon in ipairs(icons) do
+            if icon.frame and icon.expirationTime <= GetTime() then
+                icon.frame:Release()
+
+                remove(icons, i)
+            else
+                if not icon.frame then
+                    -- Only create frame once
+                    icon.frame = addon.frameFactory:AcquireFrame("icon")
+                end
+
+                local unitFrame = LGF.GetFrame(icon.unitId)
+
+                if unitFrame then
+                    icon.frame:GetFrame():SetParent(unitFrame)
+                    icon.frame:GetFrame():SetFrameLevel(10000)
+                    icon.frame:GetFrame():SetPoint("CENTER", unitFrame, "CENTER", 0, 0)
+                end
+
+                if icon.duration and icon.icon then
+                    icon.frame:SetData(icon.icon, icon.duration, icon.expirationTime)
+                else
+                    -- No duration set, try finding aura by spellId
+                    if icon.spellId then
+                        local aura = addon.utils:GetUnitAuraBySpellId(icon.unitId, icon.spellId)
+
+                        if aura then
+                            icon.frame:SetData(aura.icon, aura.duration, aura.expirationTime)
+                            icon.expirationTime = aura.expirationTime
+                        end
+                    end
+                end
+
+                if icon.updateFunc then
+                    icon.updateFunc:Cancel()
+                end
+
+                icon.updateFunc = C_Timer.After(icon.expirationTime - GetTime(), function() self:Update() end)
+            end
+        end
+    end
+
+    -- Glows
+    for _, glows in pairs(self.frameGlows) do
+        for i, glow in ipairs(glows) do
+            if glow.unitFrame and glow.expirationTime <= GetTime() then
+                if glow.glow == "AUTOCAST" then
+                    LCG.AutoCastGlow_Stop(glow.unitFrame)
+                elseif glow.glow == "BUTTON" then
+                    LCG.ButtonGlow_Stop(glow.unitFrame)
+                elseif glow.glow == "PIXEL" then
+                    LCG.PixelGlow_Stop(glow.unitFrame)
+                end
+
+                remove(glows, i)
+            else
+                glow.unitFrame = LGF.GetFrame(glow.unitId)
+            
+                if not glow.autocastGlowActive and glow.glow == "AUTOCAST" then
+                    LCG.AutoCastGlow_Start(glow.unitFrame, glow.color)
+                    glow.autocastGlowActive = true
+                elseif not glow.buttonGlowActive and glow.glow == "BUTTON" then
+                    LCG.ButtonGlow_Start(glow.unitFrame, glow.color)
+                    glow.buttonGlowActive = true
+                elseif not glow.pixelGlowActive and glow.glow == "PIXEL" then
+                    LCG.PixelGlow_Start(glow.unitFrame, glow.color)
+                    glow.pixelGlowActive = true
+                end
+
+                if not glow.duration then
+                    -- No duration set, try finding aura by spellId
+                    if glow.spellId then
+                        local aura = addon.utils:GetUnitAuraBySpellId(glow.unitId, glow.spellId)
+
+                        if aura then
+                            glow.expirationTime = aura.expirationTime
+                        end
+                    end
+                end
+
+                if glow.updateFunc then
+                    glow.updateFunc:Cancel()
+                end
+
+                glow.updateFunc = C_Timer.After(glow.expirationTime - GetTime(), function() self:Update() end)
+            end
+        end
+    end
 end
 
 function UnitFrames:ENCOUNTER_START(_, encounterId)
@@ -66,6 +180,43 @@ function UnitFrames:ENCOUNTER_END()
     self:Reset()
 end
 
+function UnitFrames:GetUnitIdByCtx(ctx)
+    addon:Debug("UnitFrames:GetUnitIdByCtx", ctx)
+
+    if ctx.trigger.unitId then
+        return ctx.trigger.unitId
+    end
+
+    if ctx.trigger.destName then
+        return addon.utils:GetUnitIDByName(ctx.trigger.destName) 
+    end
+end
+
+function UnitFrames:FindFrameIcon(unitId, fields)
+    addon:Debug("UnitFrames:FindFrameIcon", { unitId = unitId, fields = fields })
+
+    if unitId then
+        local icons = self.frameIcons[unitId]
+
+        if icons then
+            for _, icon in ipairs(icons) do
+                local fieldsMatch = true
+                
+                for k, v in pairs(fields) do
+                    if icon[k] ~= v then
+                        fieldsMatch = false
+                        break
+                    end
+                end
+
+                if fieldsMatch then
+                    return icon
+                end
+            end
+        end
+    end
+end
+
 function UnitFrames:ART_TRIGGER(_, trigger)
     addon:Debug("UnitFrames:ART_TRIGGER", trigger)
 
@@ -73,34 +224,82 @@ function UnitFrames:ART_TRIGGER(_, trigger)
 
     if items then
         for _, item in ipairs(items) do
-            if item.type == "UNIT_FRAME_GLOW" then
-                local unitId = trigger.ctx.trigger.unitId
-                local destName = trigger.ctx.trigger.destName
+            if addon.utils:InterpolateIf(item, trigger.ctx) then
+                if trigger.untrigger then
+                    -- Untrigger
+                    local unitId = self:GetUnitIdByCtx(trigger.ctx)
 
-                if not unitId and destName then
-                    unitId = addon.utils:GetUnitIDByName(destName)
-                end
+                    if unitId then
+                        if item.type == "UNIT_FRAME_GLOW" then
+                            local glows = self.frameGlows[unitId]
 
-                if unitId then
-                    local frame = LGF.GetFrame(unitId)
+                            if glows then
+                                for _, glow in ipairs(glows) do
+                                    if glow.glow == item.glow then
+                                        glow.expirationTime = 0
+                                    end
+                                end
+                            end
+                        elseif item.type == "UNIT_FRAME_ICON" then
+                            local icons = self.frameIcons[unitId]
 
-                    if frame then
-                        if item.glow == "AUTOCAST" then
-                            LCG.AutoCastGlow_Start(frame, item.color)
-                        elseif item.glow == "BUTTON" then
-                            LCG.ButtonGlow_Start(frame, item.color)
-                        elseif item.glow == "PIXEL" then
-                            LCG.PixelGlow_Start(frame, item.color)
+                            if icons then
+                                for _, icon in ipairs(icons) do
+                                    if icon.spellId == trigger.ctx.trigger.spellId then
+                                        icon.expirationTime = 0
+                                    end
+                                end
+                            end
                         end
+                    end
+                else
+                    -- Trigger
+                    local unitId = self:GetUnitIdByCtx(trigger.ctx)
 
-                        C_Timer.After(5, function()
-                            LCG.AutoCastGlow_Stop(frame)
-                            LCG.ButtonGlow_Stop(frame)
-                            LCG.PixelGlow_Stop(frame)
-                        end)
+                    if unitId then
+                        if item.type == "UNIT_FRAME_GLOW" then
+                            if not self.frameGlows[unitId] then
+                                self.frameGlows[unitId] = {}
+                            end
+
+                            insert(self.frameGlows[unitId], {
+                                type = item.type,
+                                unitId = unitId,
+                                spellId = trigger.ctx.trigger.spellId,
+                                glow = item.glow,
+                                color = item.color,
+                                duration = trigger.duration,
+                                expirationTime = GetTime() + (trigger.duration or 5),
+                            })
+                        elseif item.type == "UNIT_FRAME_ICON" then
+                            local existingIconEffect = self:FindFrameIcon(unitId, {
+                                type = "UNIT_FRAME_ICON",
+                                spellId = trigger.ctx.trigger.spellId
+                            })
+
+                            if existingIconEffect then
+                                existingIconEffect.duration = 5
+                                existingIconEffect.expirationTime = GetTime() + 5
+                            else
+                                if not self.frameIcons[unitId] then
+                                    self.frameIcons[unitId] = {}
+                                end
+
+                                insert(self.frameIcons[unitId], {
+                                    type = item.type,
+                                    unitId = unitId,
+                                    spellId = trigger.ctx.trigger.spellId,
+                                    duration = 5,
+                                    icon = item.icon,
+                                    expirationTime = GetTime() + 5,
+                                })
+                            end
+                        end
                     end
                 end
             end
         end
     end
+
+    self:Update()
 end
